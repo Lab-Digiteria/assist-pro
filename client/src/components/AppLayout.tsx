@@ -1,6 +1,8 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { cn } from "@/lib/utils";
+import { SubscriptionGuard } from "./SubscriptionGuard";
+import { TrialBanner } from "./TrialBanner";
 import {
   BarChart3,
   Box,
@@ -181,6 +183,9 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Trial Banner */}
+        <TrialBanner />
+
         {/* Top bar (mobile) */}
         <header className="lg:hidden flex items-center gap-3 px-4 py-3 border-b bg-white">
           <button onClick={() => setSidebarOpen(true)}>
@@ -189,13 +194,15 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
           <span className="font-semibold text-sm">{title ?? "Assist-Pró"}</span>
         </header>
 
-        {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
-          {title && (
-            <h1 className="text-xl font-bold text-foreground mb-6 hidden lg:block">{title}</h1>
-          )}
-          {children}
-        </main>
+        {/* Page Content — bloqueado se subscription inativa */}
+        <SubscriptionGuard>
+          <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+            {title && (
+              <h1 className="text-xl font-bold text-foreground mb-6 hidden lg:block">{title}</h1>
+            )}
+            {children}
+          </main>
+        </SubscriptionGuard>
       </div>
     </div>
   );

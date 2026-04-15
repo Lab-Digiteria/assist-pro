@@ -1,9 +1,11 @@
 import { TRPCError } from "@trpc/server";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 import {
   addTenantMember,
   createTenant,
   getAllTenants,
+  getDb,
   getTenantByMember,
   getTenantByOwner,
   getTenantMembers,
@@ -11,6 +13,7 @@ import {
   updateMemberRole,
   updateTenantStatus,
 } from "../db";
+import { subscriptions } from "../../drizzle/schema";
 import { protectedProcedure, router } from "../_core/trpc";
 import { validateCNPJ, validateCPF } from "../../shared/utils";
 import { runStripeReconciliation } from "../stripe-reconcile";
@@ -105,6 +108,53 @@ export const tenantsRouter = router({
       const tenant = await getTenantByOwner(ctx.user.id);
       if (!tenant) throw new TRPCError({ code: "NOT_FOUND" });
       await removeTenantMember(input.memberId);
+      return { success: true };
+    }),
+
+  // Admin: extend trial
+  adminExtendTrial: protectedProcedure
+    .input(z.object({ tenantId: z.number(), days: z.number().min(1).max(90) }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const [sub] = await db.select().from(subscriptions).where(eq(subscriptions.tenantId, input.tenantId)).limit(1);
+      if (sub) {
+        const currentEnd = sub.trialEndsAt ? new Date(sub.trialEndsAt) : new Date();
+        const newEnd = new Date(currentEnd.getTime() + input.days * 86400000);
+        await db.update(subscriptions)
+          .set({ trialEndsAt: newEnd, status: "trialing", updatedAt: new Date() })
+          .where(eq(subscriptions.tenantId, input.tenantId));
+      }
+      await updateTenantStatus(input.tenantId, "trial");
+      return { success: true };
+    }),
+
+  // Admin: suspend tenant
+  adminSuspend: protectedProcedure
+    .input(z.object({ tenantId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await db.update(subscriptions)
+        .set({ status: "suspended", updatedAt: new Date() })
+        .where(eq(subscriptions.tenantId, input.tenantId));
+      await updateTenantStatus(input.tenantId, "suspended");
+      return { success: true };
+    }),
+
+  // Admin: reactivate tenant
+  adminReactivate: protectedProcedure
+    .input(z.object({ tenantId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await db.update(subscriptions)
+        .set({ status: "active", updatedAt: new Date() })
+        .where(eq(subscriptions.tenantId, input.tenantId));
+      await updateTenantStatus(input.tenantId, "active");
       return { success: true };
     }),
 

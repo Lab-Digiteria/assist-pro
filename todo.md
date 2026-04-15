@@ -89,3 +89,27 @@
 - [x] Seção CTA final com formulário de lead
 - [x] Footer com logo, Termos, Privacidade e copyright
 - [x] Paleta: azul #1B4F8A, canela #C4733A, cinza #6B7280, amarelo #E8C547, branco #FFFFFF
+
+## SaaS_Core — Migração do OficinaPro
+
+- [x] Schema: tabela plans com priceMonthly, trialDays, stripePriceId
+- [x] Schema: tabela subscriptions com status (trialing/active/past_due/suspended/canceled/expired), trialEndsAt, stripeSubscriptionId
+- [x] Schema: tabela leads com campos corretos (phone, companyName, document, source, userId, tenantId, status)
+- [x] Schema: tabela billingEvents para event sourcing
+- [x] Schema: tabela userPasswords para auth própria
+- [x] Schema: tabela stripeEvents para idempotência
+- [x] Backend: router lead.register (publicProcedure) — cria user+tenant+subscription(trialing)+lead em transação atômica
+- [x] Backend: JWT próprio para tenants (não depende de Manus OAuth)
+- [x] Backend: router lead.login — autenticação por email+senha
+- [x] Backend: router subscriptions.mySubscription — retorna status + trialDaysLeft
+- [x] Backend: router subscriptions.listPlans — lista planos disponíveis
+- [x] Backend: Stripe Checkout com price_data inline (sem Price IDs fixos)
+- [x] Backend: Webhook Stripe — ativa subscription ao receber checkout.session.completed
+- [x] Backend: Idempotência real no webhook (tabela stripeEvents)
+- [x] Backend: Admin extendTrial, adminSuspend, adminReactivate
+- [x] Frontend: Formulário de cadastro de trial na landing page (nome, empresa, CPF/CNPJ, WhatsApp, email, senha)
+- [x] Frontend: Tela de Login (/login) com email e senha
+- [x] Frontend: TrialBanner — exibe dias restantes do trial no topo do sistema
+- [x] Frontend: SubscriptionGuard — tela de bloqueio para status inválidos
+- [x] Frontend: Admin — gestão completa de tenants com extendTrial, suspend, reactivate e leads
+- [x] Seed dos 3 planos no banco (Mensal R$99, Anual R$799, Vitalício R$1.499)

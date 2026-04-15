@@ -354,3 +354,65 @@ export const stripeEvents = mysqlTable("stripeEvents", {
   eventType: varchar("eventType", { length: 100 }).notNull(),
   processedAt: timestamp("processedAt").defaultNow().notNull(),
 });
+
+// ─── PLANS ───────────────────────────────────────────────────────────────────
+export const plans = mysqlTable("plans", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  slug: varchar("slug", { length: 50 }).notNull().unique(),
+  priceMonthly: int("priceMonthly").notNull(),
+  trialDays: int("trialDays").default(14).notNull(),
+  stripePriceId: varchar("stripePriceId", { length: 100 }),
+  isLifetime: boolean("isLifetime").default(false).notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Plan = typeof plans.$inferSelect;
+
+// ─── SUBSCRIPTIONS ───────────────────────────────────────────────────────────
+export const SUBSCRIPTION_STATUSES = [
+  "trialing",
+  "active",
+  "past_due",
+  "suspended",
+  "canceled",
+  "expired",
+] as const;
+export type SubscriptionStatus = (typeof SUBSCRIPTION_STATUSES)[number];
+
+export const subscriptions = mysqlTable("subscriptions", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: int("tenantId").notNull().unique(),
+  planId: varchar("planId", { length: 36 }).notNull(),
+  status: mysqlEnum("status", SUBSCRIPTION_STATUSES).notNull().default("trialing"),
+  trialEndsAt: timestamp("trialEndsAt"),
+  currentPeriodStartsAt: timestamp("currentPeriodStartsAt"),
+  currentPeriodEndsAt: timestamp("currentPeriodEndsAt"),
+  canceledAt: timestamp("canceledAt"),
+  stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 255 }),
+  stripeCustomerId: varchar("stripeCustomerId", { length: 255 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Subscription = typeof subscriptions.$inferSelect;
+
+// ─── BILLING EVENTS ──────────────────────────────────────────────────────────
+export const billingEvents = mysqlTable("billingEvents", {
+  id: int("id").autoincrement().primaryKey(),
+  eventId: varchar("eventId", { length: 36 }).notNull().unique(),
+  eventType: varchar("eventType", { length: 100 }).notNull(),
+  tenantId: int("tenantId").notNull(),
+  payload: json("payload"),
+  idempotencyKey: varchar("idempotencyKey", { length: 255 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+// ─── USER PASSWORDS (auth próprio) ───────────────────────────────────────────
+export const userPasswords = mysqlTable("userPasswords", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  passwordHash: varchar("passwordHash", { length: 255 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});

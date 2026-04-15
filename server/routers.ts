@@ -9,6 +9,8 @@ import { ordensServicoRouter } from "./routers/ordensServico";
 import { estoqueRouter } from "./routers/estoque";
 import { financeiroRouter, leadsRouter } from "./routers/financeiro";
 import { billingRouter } from "./routers/billing";
+import { leadRouter } from "./routers/lead";
+import { subscriptionsRouter } from "./routers/subscriptions";
 import { runStripeReconciliation } from "./stripe-reconcile";
 
 export const appRouter = router({
@@ -31,6 +33,8 @@ export const appRouter = router({
   financeiro: financeiroRouter,
   leads: leadsRouter,
   billing: billingRouter,
+  lead: leadRouter,
+  subscriptions: subscriptionsRouter,
 });
 
 export type AppRouter = typeof appRouter;

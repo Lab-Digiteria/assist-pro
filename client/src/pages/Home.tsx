@@ -11,8 +11,9 @@ import { useLocation } from "wouter";
 import {
   Smartphone, Tablet, Laptop, Wrench, BarChart3, Package, DollarSign,
   Users, Shield, CheckCircle, ChevronDown, ChevronUp, Star, ArrowRight,
-  Clock, AlertTriangle, TrendingUp, Zap, Menu, X
+  Clock, AlertTriangle, TrendingUp, Zap, Menu, X, Eye, EyeOff, Loader2
 } from "lucide-react";
+import { Label } from "@/components/ui/label";
 
 const PRIMARY = "#1B4F8A";
 const ACCENT = "#C4733A";
@@ -40,17 +41,35 @@ export default function Home() {
   const [, navigate] = useLocation();
   const [mobileMenu, setMobileMenu] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const [leadForm, setLeadForm] = useState({ name: "", email: "", whatsapp: "" });
-  const [leadSent, setLeadSent] = useState(false);
+  const [showPw, setShowPw] = useState(false);
+  const [trialForm, setTrialForm] = useState({
+    name: "", email: "", password: "",
+    companyName: "", phone: "", document: "",
+  });
+  const [trialSuccess, setTrialSuccess] = useState(false);
 
-  const submitLead = trpc.leads.create.useMutation({
-    onSuccess: () => { setLeadSent(true); toast.success("Recebemos seu contato! Em breve entraremos em touch."); },
+  const registerTrial = trpc.lead.register.useMutation({
+    onSuccess: (data) => {
+      setTrialSuccess(true);
+      toast.success(`Bem-vindo! Seu trial de ${data.trialDays} dias começou agora.`);
+      setTimeout(() => { window.location.href = "/dashboard"; }, 1500);
+    },
     onError: (e) => toast.error(e.message),
   });
 
   const handleCTA = () => {
     if (isAuthenticated) navigate("/dashboard");
-    else window.location.href = getLoginUrl();
+    else document.getElementById("cadastro")?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const handleTrialSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const { name, email, password, companyName, phone, document } = trialForm;
+    if (!name || !email || !password || !companyName || !phone || !document) {
+      toast.error("Preencha todos os campos obrigatórios");
+      return;
+    }
+    registerTrial.mutate({ name, email, password, companyName, phone, document, source: "landing" });
   };
 
   return (
@@ -76,7 +95,7 @@ export default function Home() {
               </Button>
             ) : (
               <>
-                <Button variant="ghost" className="text-sm" onClick={() => window.location.href = getLoginUrl()}>Entrar</Button>
+                <Button variant="ghost" className="text-sm" onClick={() => navigate("/login")}>Entrar</Button>
                 <Button onClick={handleCTA} style={{ background: ACCENT }} className="text-white">
                   Começar grátis
                 </Button>
@@ -247,32 +266,67 @@ export default function Home() {
           <Zap className="w-12 h-12 mx-auto mb-4" style={{ color: YELLOW }} />
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Pronto para organizar sua assistência?</h2>
           <p className="text-blue-200 text-lg mb-8">Comece agora com 14 dias grátis. Sem cartão de crédito.</p>
-          {!leadSent ? (
-            <div className="bg-white/10 rounded-2xl p-6 max-w-lg mx-auto">
-              <p className="text-sm text-blue-200 mb-4">Deixe seu contato e entraremos em touch:</p>
-              <div className="space-y-3">
-                <Input placeholder="Seu nome" className="bg-white/20 border-white/30 text-white placeholder:text-blue-300"
-                  value={leadForm.name} onChange={(e) => setLeadForm({ ...leadForm, name: e.target.value })} />
-                <Input placeholder="E-mail" type="email" className="bg-white/20 border-white/30 text-white placeholder:text-blue-300"
-                  value={leadForm.email} onChange={(e) => setLeadForm({ ...leadForm, email: e.target.value })} />
-                <Input placeholder="WhatsApp" className="bg-white/20 border-white/30 text-white placeholder:text-blue-300"
-                  value={leadForm.whatsapp} onChange={(e) => setLeadForm({ ...leadForm, whatsapp: e.target.value })} />
-                <Button className="w-full py-5 font-semibold text-base rounded-xl" style={{ background: ACCENT }}
-                  onClick={() => submitLead.mutate(leadForm)} disabled={submitLead.isPending}>
-                  {submitLead.isPending ? "Enviando..." : "Quero começar grátis"}
-                </Button>
+          {!trialSuccess ? (
+            <form id="cadastro" onSubmit={handleTrialSubmit}
+              className="bg-white rounded-2xl p-6 max-w-lg mx-auto text-left shadow-2xl">
+              <h3 className="text-xl font-bold mb-1" style={{ color: PRIMARY }}>Criar conta grátis</h3>
+              <p className="text-sm text-gray-500 mb-5">14 dias de trial · Sem cartão de crédito</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="col-span-2 space-y-1">
+                  <Label className="text-gray-700 text-xs">Nome completo *</Label>
+                  <Input placeholder="João Silva" value={trialForm.name}
+                    onChange={(e) => setTrialForm({ ...trialForm, name: e.target.value })} required />
+                </div>
+                <div className="col-span-2 space-y-1">
+                  <Label className="text-gray-700 text-xs">Nome da empresa *</Label>
+                  <Input placeholder="Brito Assistência Técnica" value={trialForm.companyName}
+                    onChange={(e) => setTrialForm({ ...trialForm, companyName: e.target.value })} required />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-gray-700 text-xs">CPF ou CNPJ *</Label>
+                  <Input placeholder="000.000.000-00" value={trialForm.document}
+                    onChange={(e) => setTrialForm({ ...trialForm, document: e.target.value })} required />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-gray-700 text-xs">WhatsApp *</Label>
+                  <Input placeholder="(11) 99999-9999" value={trialForm.phone}
+                    onChange={(e) => setTrialForm({ ...trialForm, phone: e.target.value })} required />
+                </div>
+                <div className="col-span-2 space-y-1">
+                  <Label className="text-gray-700 text-xs">E-mail *</Label>
+                  <Input type="email" placeholder="joao@empresa.com" value={trialForm.email}
+                    onChange={(e) => setTrialForm({ ...trialForm, email: e.target.value })} required />
+                </div>
+                <div className="col-span-2 space-y-1">
+                  <Label className="text-gray-700 text-xs">Senha *</Label>
+                  <div className="relative">
+                    <Input type={showPw ? "text" : "password"} placeholder="Mínimo 6 caracteres"
+                      value={trialForm.password} className="pr-10"
+                      onChange={(e) => setTrialForm({ ...trialForm, password: e.target.value })} required />
+                    <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                      onClick={() => setShowPw(!showPw)}>
+                      {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
               </div>
-              <p className="text-xs text-blue-300 mt-3">Ou acesse diretamente:</p>
-              <Button variant="outline" className="mt-2 border-white/40 text-white bg-white/10 hover:bg-white/20" onClick={handleCTA}>
-                Criar conta agora
+              <Button type="submit" className="w-full mt-4 py-5 font-semibold text-base rounded-xl"
+                style={{ background: ACCENT }} disabled={registerTrial.isPending}>
+                {registerTrial.isPending
+                  ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Criando conta...</>
+                  : "Começar 14 dias grátis"}
               </Button>
-            </div>
+              <p className="text-xs text-gray-400 mt-3 text-center">
+                Já tem conta?{" "}
+                <button type="button" className="underline" style={{ color: PRIMARY }}
+                  onClick={() => navigate("/login")}>Entrar</button>
+              </p>
+            </form>
           ) : (
             <div className="bg-white/10 rounded-2xl p-8">
               <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-3" />
-              <p className="text-lg font-semibold">Recebemos seu contato!</p>
-              <p className="text-blue-200 text-sm mt-2">Nossa equipe entrará em contato em breve pelo WhatsApp.</p>
-              <Button className="mt-4" style={{ background: ACCENT }} onClick={handleCTA}>Acessar o sistema agora</Button>
+              <p className="text-lg font-semibold">Conta criada com sucesso!</p>
+              <p className="text-blue-200 text-sm mt-2">Redirecionando para o dashboard...</p>
             </div>
           )}
         </div>

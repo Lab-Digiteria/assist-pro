@@ -16,14 +16,20 @@ import Relatorios from "./pages/Relatorios";
 import Configuracoes from "./pages/Configuracoes";
 import AdminPanel from "./pages/AdminPanel";
 import Onboarding from "./pages/Onboarding";
+import Login from "./pages/Login";
+import Planos from "./pages/Planos";
 
 function Router() {
   return (
     <Switch>
       {/* Public */}
       <Route path="/" component={Home} />
+      {/* Auth */}
+      <Route path="/login" component={Login} />
       {/* Onboarding */}
       <Route path="/onboarding" component={Onboarding} />
+      {/* Planos */}
+      <Route path="/planos" component={Planos} />
       {/* App */}
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/clientes" component={Clientes} />

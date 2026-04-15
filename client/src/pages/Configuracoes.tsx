@@ -11,7 +11,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { SUBSCRIPTION_STATUS_LABELS, PLANS } from "../../../shared/utils";
 
-function StripeCheckoutButton({ planKey }: { planKey: "monthly" | "annual" | "lifetime" }) {
+function StripeCheckoutButton({ planKey }: { planKey: "mensal" | "anual" | "vitalicio" }) {
   const checkout = trpc.billing.createCheckout.useMutation({
     onSuccess: (data) => {
       if (data.url) {
@@ -24,7 +24,7 @@ function StripeCheckoutButton({ planKey }: { planKey: "monthly" | "annual" | "li
   return (
     <Button size="sm" className="w-full mt-2 text-xs" style={{ background: "#C4733A" }}
       disabled={checkout.isPending}
-      onClick={() => checkout.mutate({ plan: planKey, origin: window.location.origin })}>
+      onClick={() => checkout.mutate({ planSlug: planKey, origin: window.location.origin })}>
       {checkout.isPending ? "Aguarde..." : <><ExternalLink className="w-3 h-3 mr-1" />Assinar</>}
     </Button>
   );
