@@ -1,0 +1,89 @@
+# Assist-Pró — TODO
+
+## Estrutura SaaS Base
+- [x] Schema do banco de dados completo (tenants, users, equipamentos, OS, estoque, financeiro)
+- [x] Multi-tenancy: tabela tenants com isolamento por tenant_id
+- [x] Onboarding de novos tenants (cadastro com CPF/CNPJ e WhatsApp obrigatórios)
+- [x] Painel admin de tenants (listar, ativar, suspender, ver plano)
+- [x] Leads e campanhas de e-mail (captação, status, envio)
+- [x] Roles: admin (dono do SaaS), manager (gestor do tenant), technician (técnico), viewer
+
+## Billing com Stripe
+- [ ] Integração Stripe (checkout, portal, webhooks) — pendente configuração de chaves
+- [x] Plano Mensal: R$ 99/mês com trial 14 dias (configurado em shared/utils.ts)
+- [x] Plano Anual: R$ 799/ano com trial 14 dias (configurado em shared/utils.ts)
+- [x] Plano Vitalício: R$ 1.499 cobrança única (configurado em shared/utils.ts)
+- [x] Estados de assinatura: trial, active, past_due, suspended, canceled, expired
+- [ ] Job de reconciliação Stripe — pendente integração Stripe
+- [ ] Conversão automática de lead para assinatura ao converter — pendente Stripe
+
+## Módulo de Clientes
+- [x] Cadastro PF e PJ (nome/razão social, CPF/CNPJ, endereço, WhatsApp, e-mail)
+- [x] Validação real de CPF e CNPJ (shared/utils.ts)
+- [x] Busca e listagem de clientes por tenant
+
+## Módulo de Equipamentos
+- [x] Entidade Equipment com campos: categoria, numeroSerie, IMEI, capacidade, cor, marca, modelo, cliente vinculado
+- [x] IMEI obrigatório para smartphone e tablet (validação 15 dígitos)
+- [x] Busca e listagem de equipamentos por tenant
+
+## Módulo de Ordens de Serviço
+- [x] Numeração automática OS-YYYY-NNNN isolada por tenant
+- [x] Fluxo de status: recebido → em_diagnostico → aguardando_aprovacao → em_reparo → concluido → pronto_aguardando_retirada → encerrado
+- [x] Status especiais: cancelado, devolvido_sem_reparo
+- [x] Campos: prazoOrcamento, senhaDesbloqueio, descricaoProblema, valorTotal, valorPago
+- [x] Alerta visual quando prazoOrcamento vencido
+- [x] Itens de serviço e peças com recálculo de valor total
+- [x] Lançamentos financeiros (sinal, antecipação, pagamento final, estorno)
+- [x] Histórico de mudanças de status
+
+## Checklist de Entrada na OS
+- [x] Bloco Estado Físico (11 itens: tela, carcaça, parafusos, botões, conector, jack, slot SIM, lente câmera, tampa traseira, indícios de líquido, bateria)
+- [x] Bloco Sintomas (9 itens)
+- [x] Campos extras: senhaDesbloqueio, acessoriosEntregues
+- [x] Checklist salvo como JSON na OS
+
+## Módulo Financeiro
+- [x] Lançamentos financeiros na OS (sinal, antecipação, pagamento final, estorno)
+- [x] Formas de pagamento: dinheiro, pix, cartao_debito, cartao_credito, faturamento_direto
+
+## Módulo Caixa
+- [x] Espelho automático de todos os lançamentos da OS
+- [x] Lançamentos manuais
+- [x] Resumo de entradas, saídas e saldo
+
+## Comissões de Técnicos
+- [x] Percentual configurável por técnico e por categoria de equipamento
+- [x] Cálculo automático ao transitar OS para status concluido
+- [x] Configuração via tela de Configurações
+
+## Módulo de Estoque
+- [x] Movimentações: entrada, saída, ajuste, devolução
+- [x] Alerta de estoque mínimo
+- [x] Categorias: tela, bateria, conector, cabo, placa, chip, acessório, outro
+- [x] Código auto-gerado PÇ-NNNNNN
+- [x] Preço de custo visível apenas para admin/manager
+- [ ] Saída automática ao concluir OS — implementação futura
+
+## Dashboard
+- [x] Bloco alertas críticos: OS com prazo vencido, OS aguardando retirada, peças abaixo do mínimo
+- [x] Bloco OS por status (contagem)
+- [x] Bloco financeiro: faturamento hoje, faturamento do mês, breakdown por forma de pagamento
+- [x] Bloco performance: total OS abertas
+
+## Relatórios
+- [x] OS por status (gráfico de barras + exportação CSV)
+- [x] Faturamento por forma de pagamento (gráfico de pizza + exportação CSV)
+- [x] Listagem completa de OS com exportação CSV
+- [ ] PDF de relatórios — implementação futura
+
+## Landing Page
+- [x] Header fixo com logo, navegação e botões Entrar / Começar grátis
+- [x] Seção Hero com headline, subheadline e CTA
+- [x] Seção Problema (3 cards)
+- [x] Seção Funcionalidades (6 cards)
+- [x] Seção Preços (3 cards com badge "Mais popular" no Anual)
+- [x] Seção FAQ (5 perguntas com accordion)
+- [x] Seção CTA final com formulário de lead
+- [x] Footer com logo, Termos, Privacidade e copyright
+- [x] Paleta: azul #1B4F8A, canela #C4733A, cinza #6B7280, amarelo #E8C547, branco #FFFFFF

@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `caixaLancamentos` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`tenantId` int NOT NULL,\n\t`tipo` enum('entrada','saida') NOT NULL,\n\t`descricao` varchar(255) NOT NULL,\n\t`valor` decimal(10,2) NOT NULL,\n\t`formaPagamento` enum('dinheiro','pix','cartao_debito','cartao_credito','faturamento_direto'),\n\t`osId` int,\n\t`osLancamentoId` int,\n\t`userId` int,\n\t`manual` boolean DEFAULT false,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `caixaLancamentos_id` PRIMARY KEY(`id`)\n)",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4TxpBDC4gCiNRyo.5ed5fe7dd7c4 --database 8gQd8FyXUu5BkEGDFjJzNt --execute CREATE TABLE `caixaLancamentos` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`tenantId` int NOT NULL,\n\t`tipo` enum('entrada','saida') NOT NULL,\n\t`descricao` varchar(255) NOT NULL,\n\t`valor` decimal(10,2) NOT NULL,\n\t`formaPagamento` enum('dinheiro','pix','cartao_debito','cartao_credito','faturamento_direto'),\n\t`osId` int,\n\t`osLancamentoId` int,\n\t`userId` int,\n\t`manual` boolean DEFAULT false,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `caixaLancamentos_id` PRIMARY KEY(`id`)\n)",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 620
+}
