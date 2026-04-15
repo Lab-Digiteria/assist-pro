@@ -1,9 +1,10 @@
 import AppLayout from "@/components/AppLayout";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, Users } from "lucide-react";
+import { Building2, Users, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { SUBSCRIPTION_STATUS_LABELS } from "../../../shared/utils";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -22,6 +23,10 @@ export default function AdminPanel() {
 
   const { data: tenants = [], isLoading } = trpc.tenants.adminList.useQuery();
   const { data: leads = [] } = trpc.leads.list.useQuery();
+  const reconcile = trpc.tenants.stripeReconcile.useMutation({
+    onSuccess: (r) => toast.success(`Reconciliação: ${r.checked} verificados, ${r.corrected} corrigidos`),
+    onError: (e) => toast.error(e.message),
+  });
   const updateStatus = trpc.tenants.adminUpdateStatus.useMutation({
     onSuccess: () => toast.success("Status atualizado!"),
     onError: (e) => toast.error(e.message),
@@ -33,6 +38,11 @@ export default function AdminPanel() {
   return (
     <AppLayout title="Painel Admin">
       <div className="space-y-6">
+        <div className="flex justify-end">
+          <Button variant="outline" size="sm" onClick={() => reconcile.mutate()} disabled={reconcile.isPending}>
+            <RefreshCw className="w-3 h-3 mr-1" />{reconcile.isPending ? "Reconciliando..." : "Reconciliar Stripe"}
+          </Button>
+        </div>
         <div className="grid grid-cols-3 gap-3">
           <Card>
             <CardContent className="pt-4 pb-3 text-center">

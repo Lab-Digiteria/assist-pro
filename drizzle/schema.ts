@@ -346,3 +346,11 @@ export const comissoesTecnicos = mysqlTable("comissoesTecnicos", {
 });
 
 export type ComissaoTecnico = typeof comissoesTecnicos.$inferSelect;
+
+// ─── STRIPE EVENTS (idempotência de webhooks) ────────────────────────────────
+export const stripeEvents = mysqlTable("stripeEvents", {
+  id: int("id").autoincrement().primaryKey(),
+  eventId: varchar("eventId", { length: 100 }).notNull().unique(),
+  eventType: varchar("eventType", { length: 100 }).notNull(),
+  processedAt: timestamp("processedAt").defaultNow().notNull(),
+});

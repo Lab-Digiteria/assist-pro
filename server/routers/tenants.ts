@@ -13,6 +13,7 @@ import {
 } from "../db";
 import { protectedProcedure, router } from "../_core/trpc";
 import { validateCNPJ, validateCPF } from "../../shared/utils";
+import { runStripeReconciliation } from "../stripe-reconcile";
 
 export const tenantsRouter = router({
   // Get current user's tenant (owner or member)
@@ -106,4 +107,10 @@ export const tenantsRouter = router({
       await removeTenantMember(input.memberId);
       return { success: true };
     }),
+
+  // Admin: run Stripe reconciliation
+  stripeReconcile: protectedProcedure.mutation(async ({ ctx }) => {
+    if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+    return runStripeReconciliation();
+  }),
 });

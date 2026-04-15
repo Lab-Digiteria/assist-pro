@@ -6,10 +6,29 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Users, CreditCard, Building2 } from "lucide-react";
+import { Users, CreditCard, Building2, ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { SUBSCRIPTION_STATUS_LABELS, PLANS } from "../../../shared/utils";
+
+function StripeCheckoutButton({ planKey }: { planKey: "monthly" | "annual" | "lifetime" }) {
+  const checkout = trpc.billing.createCheckout.useMutation({
+    onSuccess: (data) => {
+      if (data.url) {
+        toast.info("Redirecionando para o checkout...");
+        window.open(data.url, "_blank");
+      }
+    },
+    onError: (e) => toast.error(e.message),
+  });
+  return (
+    <Button size="sm" className="w-full mt-2 text-xs" style={{ background: "#C4733A" }}
+      disabled={checkout.isPending}
+      onClick={() => checkout.mutate({ plan: planKey, origin: window.location.origin })}>
+      {checkout.isPending ? "Aguarde..." : <><ExternalLink className="w-3 h-3 mr-1" />Assinar</>}
+    </Button>
+  );
+}
 
 export default function Configuracoes() {
   const { data: tenant } = trpc.tenants.mine.useQuery();
@@ -74,10 +93,7 @@ export default function Configuracoes() {
                   <p className="font-semibold text-sm">{plan.name}</p>
                   <p className="text-primary font-bold mt-1 text-sm">{plan.priceLabel}</p>
                   {plan.trialDays > 0 && <p className="text-xs text-muted-foreground mt-1">{plan.trialDays} dias grátis</p>}
-                  <Button size="sm" className="w-full mt-2 text-xs" style={{ background: "#C4733A" }}
-                    onClick={() => toast.info("Integração Stripe disponível em breve!")}>
-                    Assinar
-                  </Button>
+                  <StripeCheckoutButton planKey={key as any} />
                 </div>
               ))}
             </div>

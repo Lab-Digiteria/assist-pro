@@ -492,6 +492,18 @@ export async function updateOrdemServicoStatus(
     updates.senhaDesbloqueio = null;
   }
 
+  // Auto stock deduction on concluido — only on first transition to 'concluido'
+  if (newStatus === "concluido" && os.status !== "concluido") {
+    const pecaItems = await db
+      .select()
+      .from(osItens)
+      .where(and(eq(osItens.osId, osId), eq(osItens.tenantId, tenantId), eq(osItens.tipo, "peca")));
+    for (const item of pecaItems) {
+      if (item.pecaId) {
+        await movimentarEstoque(tenantId, item.pecaId, "saida", Number(item.quantidade), userId, osId, `Saída automática OS #${osId}`);
+      }
+    }
+  }
   // Calculate commission on concluido
   if (newStatus === "concluido" && os.tecnicoId && os.equipamentoId) {
     const equip = await getEquipamentoById(tenantId, os.equipamentoId);

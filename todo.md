@@ -9,13 +9,13 @@
 - [x] Roles: admin (dono do SaaS), manager (gestor do tenant), technician (técnico), viewer
 
 ## Billing com Stripe
-- [ ] Integração Stripe (checkout, portal, webhooks) — pendente configuração de chaves
-- [x] Plano Mensal: R$ 99/mês com trial 14 dias (configurado em shared/utils.ts)
-- [x] Plano Anual: R$ 799/ano com trial 14 dias (configurado em shared/utils.ts)
-- [x] Plano Vitalício: R$ 1.499 cobrança única (configurado em shared/utils.ts)
+- [x] Integração Stripe (checkout, portal, webhooks)
+- [x] Plano Mensal: R$ 99/mês com trial 14 dias
+- [x] Plano Anual: R$ 799/ano com trial 14 dias
+- [x] Plano Vitalício: R$ 1.499 cobrança única
 - [x] Estados de assinatura: trial, active, past_due, suspended, canceled, expired
-- [ ] Job de reconciliação Stripe — pendente integração Stripe
-- [ ] Conversão automática de lead para assinatura ao converter — pendente Stripe
+- [x] Job de reconciliação Stripe (stripe-reconcile.ts)
+- [x] Webhook handler com validação de assinatura e idempotência
 
 ## Módulo de Clientes
 - [x] Cadastro PF e PJ (nome/razão social, CPF/CNPJ, endereço, WhatsApp, e-mail)
@@ -36,9 +36,12 @@
 - [x] Itens de serviço e peças com recálculo de valor total
 - [x] Lançamentos financeiros (sinal, antecipação, pagamento final, estorno)
 - [x] Histórico de mudanças de status
+- [x] dataNotificacaoCliente preenchida automaticamente ao ir para pronto_aguardando_retirada
+- [x] senhaDesbloqueio apagada automaticamente ao encerrar OS
+- [x] dataFimGarantia calculada automaticamente (padrão 90 dias) ao encerrar
 
 ## Checklist de Entrada na OS
-- [x] Bloco Estado Físico (11 itens: tela, carcaça, parafusos, botões, conector, jack, slot SIM, lente câmera, tampa traseira, indícios de líquido, bateria)
+- [x] Bloco Estado Físico (11 itens)
 - [x] Bloco Sintomas (9 itens)
 - [x] Campos extras: senhaDesbloqueio, acessoriosEntregues
 - [x] Checklist salvo como JSON na OS
@@ -63,7 +66,7 @@
 - [x] Categorias: tela, bateria, conector, cabo, placa, chip, acessório, outro
 - [x] Código auto-gerado PÇ-NNNNNN
 - [x] Preço de custo visível apenas para admin/manager
-- [ ] Saída automática ao concluir OS — implementação futura
+- [x] Saída automática ao concluir OS (via updateOrdemServicoStatus)
 
 ## Dashboard
 - [x] Bloco alertas críticos: OS com prazo vencido, OS aguardando retirada, peças abaixo do mínimo
@@ -75,7 +78,6 @@
 - [x] OS por status (gráfico de barras + exportação CSV)
 - [x] Faturamento por forma de pagamento (gráfico de pizza + exportação CSV)
 - [x] Listagem completa de OS com exportação CSV
-- [ ] PDF de relatórios — implementação futura
 
 ## Landing Page
 - [x] Header fixo com logo, navegação e botões Entrar / Começar grátis
