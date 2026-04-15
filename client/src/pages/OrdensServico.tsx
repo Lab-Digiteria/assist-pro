@@ -37,7 +37,7 @@ const CHECKLIST_LABELS: Record<string, string> = {
 
 export default function OrdensServico() {
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({
@@ -48,7 +48,7 @@ export default function OrdensServico() {
     acessoriosEntregues: [] as string[],
   });
   const utils = trpc.useUtils();
-  const { data: os = [], isLoading } = trpc.os.list.useQuery({ status: statusFilter || undefined, search });
+  const { data: os = [], isLoading } = trpc.os.list.useQuery({ status: statusFilter === "all" ? undefined : statusFilter, search });
   const { data: clientes = [] } = trpc.clientes.list.useQuery({});
   const { data: equips = [] } = trpc.equipamentos.list.useQuery({});
   const create = trpc.os.create.useMutation({
@@ -85,7 +85,7 @@ export default function OrdensServico() {
               <SelectValue placeholder="Todos os status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos</SelectItem>
+              <SelectItem value="all">Todos</SelectItem>
               {Object.entries(OS_STATUS_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
             </SelectContent>
           </Select>
