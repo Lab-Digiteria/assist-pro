@@ -19,11 +19,12 @@ const STATUS_FLOW = ["recebido","em_diagnostico","aguardando_aprovacao","em_repa
 export default function OrdemServicoDetalhe() {
   const { id } = useParams<{ id: string }>();
   const osId = Number(id);
+  const isValidId = !isNaN(osId) && osId > 0;
   const utils = trpc.useUtils();
-  const { data: os, isLoading } = trpc.os.get.useQuery({ id: osId });
-  const { data: itens = [] } = trpc.os.itens.useQuery({ osId });
-  const { data: lancamentos = [] } = trpc.os.lancamentos.useQuery({ osId });
-  const { data: history = [] } = trpc.os.history.useQuery({ osId });
+  const { data: os, isLoading } = trpc.os.get.useQuery({ id: osId }, { enabled: isValidId });
+  const { data: itens = [] } = trpc.os.itens.useQuery({ osId }, { enabled: isValidId });
+  const { data: lancamentos = [] } = trpc.os.lancamentos.useQuery({ osId }, { enabled: isValidId });
+  const { data: history = [] } = trpc.os.history.useQuery({ osId }, { enabled: isValidId });
   const [itemForm, setItemForm] = useState({ tipo: "servico" as "servico"|"peca", descricao: "", quantidade: 1, valorUnitario: 0 });
   const [lancForm, setLancForm] = useState({ tipo: "pagamento_final" as any, formaPagamento: "pix" as any, valor: 0, observacao: "" });
   const [statusObs, setStatusObs] = useState("");
