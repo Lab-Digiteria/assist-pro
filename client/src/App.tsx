@@ -21,6 +21,7 @@ import AreaCliente from "./pages/AreaCliente";
 import RevendedorLogin from "./pages/RevendedorLogin";
 import RevendedorDashboard from "./pages/RevendedorDashboard";
 import ModelosEquipamentos from "./pages/ModelosEquipamentos";
+import ListaCompras from "./pages/ListaCompras";
 
 // Control Plane — /super-admin (completamente isolado da área do tenant)
 // Acesso exclusivo via URL direta. Nunca aparece na navegação do tenant.
@@ -71,6 +72,7 @@ function Router() {
       <Route path="/relatorios" component={Relatorios} />
       <Route path="/configuracoes" component={Configuracoes} />
       <Route path="/configuracoes/modelos-equipamentos" component={ModelosEquipamentos} />
+      <Route path="/estoque/lista-compras" component={ListaCompras} />
 
       {/* ── Control Plane (/super-admin) — ISOLADO da área do tenant ── */}
       {/* Acesso via URL direta apenas. Guard verifica isPlatformAdmin=true. */}

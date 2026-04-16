@@ -595,3 +595,22 @@ export const pecaModeloCompativel = mysqlTable(
   }
 );
 export type PecaModeloCompativel = typeof pecaModeloCompativel.$inferSelect;
+
+// ─── LISTA DE COMPRAS ─────────────────────────────────────────────────────────
+export const listaCompras = mysqlTable("listaCompras", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull(),
+  pecaId: int("pecaId"),                          // FK opcional — peça já cadastrada
+  itemDescription: varchar("itemDescription", { length: 500 }).notNull(),
+  quantityNeeded: int("quantityNeeded").default(1).notNull(),
+  reason: mysqlEnum("reason", ["os_demand", "stock_replenishment", "other"])
+    .default("stock_replenishment").notNull(),
+  serviceOrderId: int("serviceOrderId"),          // FK opcional — OS que gerou a necessidade
+  priority: mysqlEnum("priority", ["low", "medium", "high"]).default("medium").notNull(),
+  status: mysqlEnum("status", ["pending", "ordered", "received"]).default("pending").notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ListaCompra = typeof listaCompras.$inferSelect;
+export type InsertListaCompra = typeof listaCompras.$inferInsert;

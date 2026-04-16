@@ -304,17 +304,17 @@
 - [x] Frontend: filtro por Modelo Compatível na listagem de estoque
 
 ### 3. Lista de Compras
-- [ ] Schema: tabela `listaCompras` (id, tenantId, pecaId?, itemDescription, quantityNeeded, reason, osId?, priority, status, notes, createdAt, updatedAt)
-- [ ] Migration gerada e aplicada
-- [ ] Backend: CRUD em `server/routers/listaCompras.ts` (list, create, update, markOrdered, markReceived)
-- [ ] Backend: `markReceived` com opção de entrada automática no estoque (movimentarEstoque)
-- [ ] Registrar router `listaCompras` em `server/routers.ts`
-- [ ] Frontend: página `Estoque/ListaCompras.tsx` com listagem filtrada por status/prioridade
-- [ ] Frontend: formulário de adição rápida com busca de peça existente ou descrição livre
-- [ ] Frontend: ações "Pedido Realizado" e "Recebido" com modal de entrada no estoque
-- [ ] Rota `/estoque/lista-compras` em `App.tsx`
-- [ ] Link "Lista de Compras" no submenu de Estoque no `AppLayout.tsx`
-- [ ] Testes em `server/estoque-evolucao.test.ts`
+- [x] Schema: tabela `listaCompras` (id, tenantId, pecaId?, itemDescription, quantityNeeded, reason, osId?, priority, status, notes, createdAt, updatedAt)
+- [x] Migration gerada e aplicada
+- [x] Backend: CRUD em `server/routers/listaCompras.ts` (list, create, update, markOrdered, markReceived)
+- [x] Backend: `markReceived` com opção de entrada automática no estoque (movimentarEstoque)
+- [x] Registrar router `listaCompras` em `server/routers.ts`
+- [x] Frontend: página `Estoque/ListaCompras.tsx` com listagem filtrada por status/prioridade
+- [x] Frontend: formulário de adição rápida com busca de peça existente ou descrição livre
+- [x] Frontend: ações "Pedido Realizado" e "Recebido" com modal de entrada no estoque
+- [x] Rota `/estoque/lista-compras` em `App.tsx`
+- [x] Link "Lista de Compras" no submenu de Estoque no `AppLayout.tsx`
+- [x] Testes em `server/listaCompras.test.ts` (5 testes passando)
 
 ## Bug — Perda de foco no formulário de Novo Cliente
 

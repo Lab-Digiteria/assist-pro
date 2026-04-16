@@ -16,6 +16,7 @@ import {
   osLancamentos,
   osPhotos,
   osStatusHistory,
+  listaCompras,
   pecaModeloCompativel,
   pecas,
   tenantMembers,
@@ -1211,4 +1212,80 @@ export async function getPecasWithModels(tenantId: number, compatibleModelId?: n
   }
 
   return result;
+}
+
+// ─── LISTA DE COMPRAS ─────────────────────────────────────────────────────────
+
+export async function getListaCompras(
+  tenantId: number,
+  filters?: { status?: string; priority?: string }
+) {
+  const db = await getDb();
+  if (!db) return [];
+  let q = db
+    .select()
+    .from(listaCompras)
+    .where(eq(listaCompras.tenantId, tenantId))
+    .$dynamic();
+
+  const conditions = [eq(listaCompras.tenantId, tenantId)];
+  if (filters?.status) conditions.push(eq(listaCompras.status, filters.status as any));
+  if (filters?.priority) conditions.push(eq(listaCompras.priority, filters.priority as any));
+
+  return db
+    .select()
+    .from(listaCompras)
+    .where(and(...conditions))
+    .orderBy(
+      sql`FIELD(${listaCompras.priority}, 'high', 'medium', 'low')`,
+      desc(listaCompras.createdAt)
+    );
+}
+
+export async function createListaCompra(
+  tenantId: number,
+  data: Omit<typeof listaCompras.$inferInsert, "id" | "tenantId" | "createdAt" | "updatedAt">
+) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  await db.insert(listaCompras).values({ ...data, tenantId });
+  const rows = await db
+    .select()
+    .from(listaCompras)
+    .where(eq(listaCompras.tenantId, tenantId))
+    .orderBy(desc(listaCompras.createdAt))
+    .limit(1);
+  return rows[0];
+}
+
+export async function updateListaCompra(
+  tenantId: number,
+  id: number,
+  data: Partial<typeof listaCompras.$inferInsert>
+) {
+  const db = await getDb();
+  if (!db) return;
+  await db
+    .update(listaCompras)
+    .set(data)
+    .where(and(eq(listaCompras.id, id), eq(listaCompras.tenantId, tenantId)));
+}
+
+export async function deleteListaCompra(tenantId: number, id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db
+    .delete(listaCompras)
+    .where(and(eq(listaCompras.id, id), eq(listaCompras.tenantId, tenantId)));
+}
+
+export async function getListaCompraById(tenantId: number, id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db
+    .select()
+    .from(listaCompras)
+    .where(and(eq(listaCompras.id, id), eq(listaCompras.tenantId, tenantId)))
+    .limit(1);
+  return rows[0] ?? null;
 }

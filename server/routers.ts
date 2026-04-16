@@ -15,6 +15,7 @@ import { runStripeReconciliation } from "./stripe-reconcile";
 import { adminRouter } from "./routers/admin";
 import { revendedoresRouter } from "./routers/revendedores";
 import { equipmentModelsRouter } from "./routers/equipmentModels";
+import { listaComprasRouter } from "./routers/listaCompras";
 
 export const appRouter = router({
   system: systemRouter,
@@ -52,6 +53,7 @@ export const appRouter = router({
   admin: adminRouter,
   revendedores: revendedoresRouter,
   equipmentModels: equipmentModelsRouter,
+  listaCompras: listaComprasRouter,
 });
 
 export type AppRouter = typeof appRouter;
