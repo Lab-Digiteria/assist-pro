@@ -465,12 +465,18 @@
 
 ## Screenshot Real no Hero da Landing Page
 
-- [ ] Capturar screenshot real do dashboard do Assist-Pró
-- [ ] Fazer upload para CDN
-- [ ] Substituir card mockup no Hero pela imagem real com borda e sombra
+- [x] Screenshot real do dashboard capturada com dados de demonstração (Puppeteer)
+- [x] Upload para CDN realizado
+- [x] Screenshot exibida no Hero abaixo dos botões CTA com borda e sombra (visível apenas em desktop)
 
 ## Correção — Nexar GraphQL campo inválido
 
 - [x] Removido campo `parentCategory` da query GraphQL (não existe no tipo SupCategory)
 - [x] Mantidos apenas `id` e `name` dentro do bloco `category`
 - [x] Teste do PN `15-11765-01` passando — confirma query sem `parentCategory` e retorno correto de mpn, manufacturer, category e referencePrice
+
+## Indicador de Carregamento — Busca Nexar
+
+- [x] Estoque: spinner na lupa + campo desabilitado (opacity-60) + texto "Consultando Nexar..." com pulse durante a busca
+- [x] Lista de Compras: spinner na lupa + campo desabilitado (opacity-60) + texto "Consultando Nexar..." com pulse durante a busca
+- [x] Busca de Componentes (/busca-peca): skeleton loader completo (card principal, specs, distribuidores) + spinner no botão + mensagem com PN durante a busca

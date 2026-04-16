@@ -91,34 +91,43 @@ function PartNumberField({
   }
 
   return (
-    <div className="flex gap-1">
-      <Input
-        placeholder="Ex: GH82-12345A"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            handleSearch();
-          }
-        }}
-        className="flex-1"
-      />
-      <Button
-        type="button"
-        variant="outline"
-        size="icon"
-        className="flex-shrink-0"
-        onClick={handleSearch}
-        disabled={searching || !value.trim()}
-        title="Buscar no Nexar"
-      >
-        {searching ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
-        ) : (
-          <Search className="w-4 h-4" />
-        )}
-      </Button>
+    <div className="space-y-1">
+      <div className="flex gap-1">
+        <Input
+          placeholder="Ex: GH82-12345A"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              handleSearch();
+            }
+          }}
+          disabled={searching}
+          className={`flex-1 transition-opacity ${searching ? "opacity-60" : ""}`}
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="flex-shrink-0"
+          onClick={handleSearch}
+          disabled={searching || !value.trim()}
+          title="Buscar no Nexar"
+        >
+          {searching ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Search className="w-4 h-4" />
+          )}
+        </Button>
+      </div>
+      {searching && (
+        <p className="text-xs text-muted-foreground flex items-center gap-1.5 animate-pulse">
+          <Loader2 className="w-3 h-3 animate-spin" />
+          Consultando Nexar...
+        </p>
+      )}
     </div>
   );
 }

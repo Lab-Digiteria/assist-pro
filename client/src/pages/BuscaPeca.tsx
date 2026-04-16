@@ -1,4 +1,5 @@
 import AppLayout from "@/components/AppLayout";
+import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -416,11 +417,56 @@ export default function BuscaPeca() {
           </Button>
         </div>
 
-        {/* Estado: carregando */}
+        {/* Estado: carregando — skeleton */}
         {isFetching && (
-          <div className="flex items-center justify-center py-16 gap-3 text-muted-foreground">
-            <Loader2 className="w-6 h-6 animate-spin" />
-            <span>Consultando base Nexar para <strong className="text-foreground font-mono">{searchedPn}</strong>...</span>
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Consultando base Nexar para <strong className="text-foreground font-mono">{searchedPn}</strong>...</span>
+            </div>
+            {/* Card principal skeleton */}
+            <Card>
+              <CardContent className="p-5">
+                <div className="flex gap-4">
+                  <Skeleton className="w-20 h-20 rounded-lg flex-shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-5 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                    <div className="flex gap-2 mt-2">
+                      <Skeleton className="h-6 w-20 rounded-full" />
+                      <Skeleton className="h-6 w-24 rounded-full" />
+                      <Skeleton className="h-6 w-16 rounded-full" />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            {/* Specs skeleton */}
+            <Card>
+              <CardContent className="p-5 space-y-2">
+                <Skeleton className="h-4 w-32 mb-3" />
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="flex justify-between">
+                    <Skeleton className="h-3 w-1/3" />
+                    <Skeleton className="h-3 w-1/4" />
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+            {/* Distribuidores skeleton */}
+            <Card>
+              <CardContent className="p-5 space-y-3">
+                <Skeleton className="h-4 w-40 mb-3" />
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center justify-between py-2 border-b last:border-0">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-4 w-16" />
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-8 w-16 rounded" />
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
           </div>
         )}
 
