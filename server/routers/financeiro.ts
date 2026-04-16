@@ -4,6 +4,8 @@ import {
   addCaixaLancamentoManual,
   getCaixaLancamentos,
   getDashboardData,
+  getFaturamentoMensal12Meses,
+  getRankingTecnicos,
   getTenantByMember,
   getTenantByOwner,
   getComissoesTecnico,
@@ -90,6 +92,17 @@ export const financeiroRouter = router({
       await upsertComissaoTecnico(tenantId, input.tecnicoId, input.categoria, input.percentual);
       return { success: true };
     }),
+
+  // Relatórios avançados
+  faturamentoMensal: protectedProcedure.query(async ({ ctx }) => {
+    const tenantId = await resolveTenantId(ctx.user.id);
+    return getFaturamentoMensal12Meses(tenantId);
+  }),
+
+  rankingTecnicos: protectedProcedure.query(async ({ ctx }) => {
+    const tenantId = await resolveTenantId(ctx.user.id);
+    return getRankingTecnicos(tenantId);
+  }),
 });
 
 // Leads router (admin only)

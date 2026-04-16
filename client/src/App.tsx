@@ -29,6 +29,7 @@ import ContasPagar from "./pages/ContasPagar";
 import FluxoCaixa from "./pages/FluxoCaixa";
 import DRE from "./pages/DRE";
 import PlanoContas from "./pages/PlanoContas";
+import ImportarExtrato from "./pages/ImportarExtrato";
 
 // Control Plane — /super-admin (completamente isolado da área do tenant)
 // Acesso exclusivo via URL direta. Nunca aparece na navegação do tenant.
@@ -89,6 +90,7 @@ function Router() {
       <Route path="/financeiro/fluxo-caixa" component={FluxoCaixa} />
       <Route path="/financeiro/dre" component={DRE} />
       <Route path="/financeiro/plano-contas" component={PlanoContas} />
+      <Route path="/financeiro/importar-extrato" component={ImportarExtrato} />
 
       {/* ── Control Plane (/super-admin) — ISOLADO da área do tenant ── */}
       {/* Acesso via URL direta apenas. Guard verifica isPlatformAdmin=true. */}

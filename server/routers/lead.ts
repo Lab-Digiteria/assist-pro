@@ -17,6 +17,7 @@ import crypto from "crypto";
 import { and, eq } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { checkRateLimit, recordFailedAttempt, clearAttempts } from "../_core/rateLimiter";
 import {
   leads,
   plans,
@@ -301,34 +302,44 @@ export const leadRouter = router({
     .mutation(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
-
+      // Rate limiting: por IP + por e-mail
+      const ip = (ctx.req.headers["x-forwarded-for"] as string ?? ctx.req.socket?.remoteAddress ?? "unknown").split(",")[0].trim();
+      const rateLimitKey = `login:${ip}:${input.email.toLowerCase()}`;
+      const rl = checkRateLimit(rateLimitKey);
+      if (!rl.allowed) {
+        const seconds = Math.ceil((rl.retryAfterMs ?? 300000) / 1000);
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: `Muitas tentativas. Aguarde ${seconds} segundos antes de tentar novamente.`,
+        });
+      }
       // Buscar usuário
       const [user] = await db
         .select()
         .from(users)
         .where(eq(users.email, input.email.toLowerCase()))
         .limit(1);
-
       if (!user) {
+        recordFailedAttempt(rateLimitKey);
         throw new TRPCError({ code: "UNAUTHORIZED", message: "E-mail ou senha incorretos" });
       }
-
       // Verificar senha
       const [pwRow] = await db
         .select()
         .from(userPasswords)
         .where(eq(userPasswords.userId, user.id))
         .limit(1);
-
       if (!pwRow) {
         // Usuário criado via Manus OAuth — redirecionar para login OAuth
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Esta conta usa login social. Use o botão 'Entrar com Manus'." });
       }
-
       const valid = await bcrypt.compare(input.password, pwRow.passwordHash);
       if (!valid) {
+        recordFailedAttempt(rateLimitKey);
         throw new TRPCError({ code: "UNAUTHORIZED", message: "E-mail ou senha incorretos" });
       }
+      // Login bem-sucedido — limpar tentativas
+      clearAttempts(rateLimitKey);
 
       // Buscar tenant do usuário
       const [membership] = await db

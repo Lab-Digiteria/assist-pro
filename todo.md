@@ -278,6 +278,7 @@
 - [ ] Relatórios avançados: gráfico de faturamento por mês (últimos 12 meses)
 - [ ] Relatórios avançados: ranking de técnicos por OS concluídas e faturamento
 - [ ] Notificação ao cliente por e-mail quando OS muda para "Pronto para retirada"
+- [ ] Import OFX/CSV: upload, parse, tela de revisão com categorização e detecção de duplicatas
 
 ## Módulo de Estoque — Evolução Estrutural
 
@@ -349,7 +350,16 @@
 - [x] Rota `/financeiro/dre` → DRE com comparativo e exportar CSV
 - [x] Rota `/financeiro/plano-contas` → CRUD do plano de contas com seed automático
 - [x] Link "Financeiro" no menu lateral (AppLayout) com submenu colapsável
-- [ ] Import OFX/CSV: upload, parse, tela de revisão com categorização e detecção de duplicatas (backlog)
+- [x] Import OFX/CSV: upload, parse, tela de revisão com categorização e detecção de duplicatas
 
 ### Testes
 - [x] 42 testes passando (6 arquivos)
+
+## Melhorias de Alta Prioridade — Concluídas
+
+- [x] Segurança: hash bcrypt da senha de desbloqueio da OS (antes em texto plano)
+- [x] Rate limiting no login: máx. 5 tentativas/min por IP com bloqueio de 15 min (server/_core/rateLimiter.ts)
+- [x] Relatórios avançados: gráfico de faturamento por mês (últimos 12 meses) em Relatórios
+- [x] Relatórios avançados: ranking de técnicos por OS concluídas e faturamento gerado
+- [x] Notificação ao cliente por e-mail quando OS muda para "Pronto para retirada" (template buildOsProntaEmail)
+- [x] Import OFX/CSV: rota /financeiro/importar-extrato com parser client-side, revisão e categorização

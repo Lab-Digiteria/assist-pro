@@ -26,6 +26,7 @@ import {
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 import { generateOsNumber, generatePartCode, generateSlug } from "../shared/utils";
+import { buildOsProntaEmail, sendEmail } from "./email";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -482,9 +483,36 @@ export async function updateOrdemServicoStatus(
 
   const updates: Partial<typeof ordensServico.$inferInsert> = { status: newStatus };
 
-  // Auto-fill dataNotificacaoCliente
+  // Auto-fill dataNotificacaoCliente + disparar e-mail ao cliente
   if (newStatus === "pronto_aguardando_retirada" && !os.dataNotificacaoCliente) {
     updates.dataNotificacaoCliente = new Date();
+    // Disparar e-mail de notificação ao cliente (não bloqueia o fluxo em caso de falha)
+    try {
+      const [cliente] = os.clienteId
+        ? await db.select().from(clientes).where(and(eq(clientes.id, os.clienteId), eq(clientes.tenantId, tenantId))).limit(1)
+        : [];
+      const [tenant] = await db.select().from(tenants).where(eq(tenants.id, tenantId)).limit(1);
+      if (cliente?.email) {
+        const equipRows = os.equipamentoId
+          ? await db.select().from(equipamentos).where(and(eq(equipamentos.id, os.equipamentoId), eq(equipamentos.tenantId, tenantId))).limit(1)
+          : [];
+        const equipDescricao = equipRows[0] ? `${equipRows[0].marca} ${equipRows[0].modelo}` : "Equipamento";
+        const origin = (ENV as any).viteOauthPortalUrl?.replace(/\/login.*/, "") ?? "";
+        const clientTokenUrl = os.clientToken ? `${origin}/os/acompanhar/${os.clientToken}` : undefined;
+        const { subject, html } = buildOsProntaEmail({
+          clienteNome: cliente.nome,
+          osNumero: os.numero ?? `#${osId}`,
+          equipamentoDescricao: equipDescricao,
+          tenantNome: tenant?.name ?? "Assistência Técnica",
+          tenantWhatsapp: (tenant as any)?.whatsapp ?? undefined,
+          clientTokenUrl,
+        });
+        await sendEmail({ to: cliente.email, subject, html });
+        console.log(`[OS] E-mail de notificação enviado para ${cliente.email} — OS #${osId}`);
+      }
+    } catch (emailErr) {
+      console.error("[OS] Falha ao enviar e-mail de notificação:", emailErr);
+    }
   }
 
   // Auto-fill encerramento fields
@@ -1288,4 +1316,70 @@ export async function getListaCompraById(tenantId: number, id: number) {
     .where(and(eq(listaCompras.id, id), eq(listaCompras.tenantId, tenantId)))
     .limit(1);
   return rows[0] ?? null;
+}
+
+// ─── RELATÓRIOS AVANÇADOS ─────────────────────────────────────────────────────
+
+/**
+ * Faturamento mensal dos últimos 12 meses (entradas no caixa)
+ */
+export async function getFaturamentoMensal12Meses(tenantId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const now = new Date();
+  const meses: { label: string; mes: number; ano: number; valor: number }[] = [];
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    meses.push({ label: d.toLocaleDateString("pt-BR", { month: "short", year: "2-digit" }), mes: d.getMonth() + 1, ano: d.getFullYear(), valor: 0 });
+  }
+  const startDate = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+  const lancamentos = await db
+    .select()
+    .from(caixaLancamentos)
+    .where(and(eq(caixaLancamentos.tenantId, tenantId), eq(caixaLancamentos.tipo, "entrada"), gte(caixaLancamentos.createdAt, startDate)));
+  for (const l of lancamentos) {
+    const d = new Date(l.createdAt!);
+    const mes = d.getMonth() + 1;
+    const ano = d.getFullYear();
+    const entry = meses.find((m) => m.mes === mes && m.ano === ano);
+    if (entry) entry.valor += parseFloat(String(l.valor));
+  }
+  return meses.map(({ label, valor }) => ({ label, valor: Math.round(valor * 100) / 100 }));
+}
+
+/**
+ * Ranking de técnicos: OS concluídas + faturamento gerado
+ */
+export async function getRankingTecnicos(tenantId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  // Buscar membros técnicos do tenant
+  const membros = await db
+    .select({ userId: tenantMembers.userId, role: tenantMembers.role, userName: users.name })
+    .from(tenantMembers)
+    .leftJoin(users, eq(tenantMembers.userId, users.id))
+    .where(eq(tenantMembers.tenantId, tenantId));
+  // Buscar OS encerradas/concluídas com técnico e valor
+  const osRows = await db
+    .select({
+      tecnicoId: ordensServico.tecnicoId,
+      status: ordensServico.status,
+      valorTotal: ordensServico.valorTotal,
+    })
+    .from(ordensServico)
+    .where(and(eq(ordensServico.tenantId, tenantId), sql`${ordensServico.status} IN ('concluido','encerrado')`));
+  // Agregar por técnico
+  const map = new Map<number, { nome: string; osConcluidas: number; faturamento: number }>();
+  for (const os of osRows) {
+    if (!os.tecnicoId) continue;
+    const membro = membros.find((m) => m.userId === os.tecnicoId);
+    const nome = membro?.userName ?? `Técnico #${os.tecnicoId}`;
+    const entry = map.get(os.tecnicoId) ?? { nome, osConcluidas: 0, faturamento: 0 };
+    entry.osConcluidas += 1;
+    entry.faturamento += parseFloat(String(os.valorTotal ?? "0"));
+    map.set(os.tecnicoId, entry);
+  }
+  return Array.from(map.values())
+    .sort((a, b) => b.osConcluidas - a.osConcluidas)
+    .map((e) => ({ ...e, faturamento: Math.round(e.faturamento * 100) / 100 }));
 }

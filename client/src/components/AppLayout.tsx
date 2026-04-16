@@ -26,6 +26,7 @@ import {
   ArrowDownCircle,
   ArrowUpCircle,
   LineChart,
+  Upload,
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
@@ -50,6 +51,7 @@ const financeiroItems = [
   { href: "/financeiro/fluxo-caixa", label: "Fluxo de Caixa", icon: LineChart },
   { href: "/financeiro/dre", label: "DRE", icon: BarChart3 },
   { href: "/financeiro/plano-contas", label: "Plano de Contas", icon: BookOpen },
+  { href: "/financeiro/importar-extrato", label: "Importar Extrato", icon: Upload },
 ];
 
 const bottomNavItems = [

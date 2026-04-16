@@ -255,3 +255,68 @@ export function buildPaymentConfirmationEmail(opts: {
     `),
   };
 }
+
+/**
+ * Template: OS pronta para retirada
+ * Disparado automaticamente quando a OS muda para status "pronto_aguardando_retirada"
+ */
+export function buildOsProntaEmail(opts: {
+  clienteNome: string;
+  osNumero: string;
+  equipamentoDescricao: string;
+  tenantNome: string;
+  tenantWhatsapp?: string;
+  clientTokenUrl?: string;
+}): { subject: string; html: string } {
+  return {
+    subject: `✅ Seu equipamento está pronto para retirada — OS ${opts.osNumero}`,
+    html: baseLayout(`
+      <h2 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#1e293b;">
+        Equipamento pronto! 🎉
+      </h2>
+      <p style="margin:0 0 24px;color:#64748b;font-size:15px;line-height:1.6;">
+        Olá, <strong>${opts.clienteNome}</strong>! Temos uma ótima notícia.
+      </p>
+      <table width="100%" cellpadding="0" cellspacing="0"
+             style="background:#f8fafc;border-radius:10px;padding:20px;margin-bottom:24px;">
+        <tr>
+          <td>
+            <p style="margin:0 0 6px;font-size:13px;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">
+              Ordem de Serviço
+            </p>
+            <p style="margin:0 0 16px;font-size:20px;font-weight:700;color:#1B4F8A;">${opts.osNumero}</p>
+            <p style="margin:0 0 6px;font-size:13px;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">
+              Equipamento
+            </p>
+            <p style="margin:0 0 16px;font-size:16px;font-weight:600;color:#1e293b;">${opts.equipamentoDescricao}</p>
+            <p style="margin:0 0 6px;font-size:13px;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">
+              Assistência Técnica
+            </p>
+            <p style="margin:0;font-size:15px;color:#1e293b;">${opts.tenantNome}</p>
+          </td>
+        </tr>
+      </table>
+      <p style="margin:0 0 24px;color:#475569;font-size:15px;line-height:1.6;">
+        Seu equipamento foi reparado com sucesso e está aguardando retirada em nossa loja.
+        ${opts.tenantWhatsapp ? `Entre em contato pelo WhatsApp <strong>${opts.tenantWhatsapp}</strong> para combinar horário.` : ""}
+      </p>
+      ${opts.clientTokenUrl ? `
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+        <tr>
+          <td align="center">
+            <a href="${opts.clientTokenUrl}"
+               style="display:inline-block;background:#C4733A;color:#ffffff;text-decoration:none;
+                      font-size:15px;font-weight:600;padding:14px 32px;border-radius:8px;
+                      letter-spacing:0.2px;">
+              Ver detalhes da OS →
+            </a>
+          </td>
+        </tr>
+      </table>
+      ` : ""}
+      <p style="margin:0;color:#94a3b8;font-size:13px;line-height:1.6;">
+        Caso já tenha retirado o equipamento, desconsidere este e-mail.
+      </p>
+    `),
+  };
+}

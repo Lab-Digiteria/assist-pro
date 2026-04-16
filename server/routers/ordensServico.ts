@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { randomUUID } from "crypto";
 import { z } from "zod";
+import bcrypt from "bcryptjs";
 import {
   addOsFieldAudit,
   addOsItem,
@@ -89,6 +90,10 @@ export const ordensServicoRouter = router({
       // Generate client token on creation
       const clientToken = randomUUID();
       const clientTokenExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+      // Hash da senha de desbloqueio antes de salvar
+      const senhaHash = input.senhaDesbloqueio
+        ? await bcrypt.hash(input.senhaDesbloqueio, 10)
+        : undefined;
       return createOrdemServico(tenantId, {
         clienteId: input.clienteId,
         equipamentoId: input.equipamentoId,
@@ -97,7 +102,7 @@ export const ordensServicoRouter = router({
         descricaoProblema: input.descricaoProblema,
         checklistEstadoFisico: (input.checklistEstadoFisico ?? null) as any,
         checklistSintomas: (input.checklistSintomas ?? null) as any,
-        senhaDesbloqueio: input.senhaDesbloqueio,
+        senhaDesbloqueio: senhaHash,
         acessoriosEntregues: (input.acessoriosEntregues ?? null) as any,
         laudoTecnico: input.laudoTecnico,
         numeroLacre: input.numeroLacre,
@@ -193,7 +198,12 @@ export const ordensServicoRouter = router({
       if (data.tecnicoId !== undefined) track("tecnicoId", data.tecnicoId);
       if (data.descricaoProblema !== undefined) track("descricaoProblema", data.descricaoProblema);
       if (data.observacoesInternas !== undefined) updates.observacoesInternas = data.observacoesInternas;
-      if (data.senhaDesbloqueio !== undefined) updates.senhaDesbloqueio = data.senhaDesbloqueio;
+      // Hash da senha de desbloqueio antes de salvar
+      if (data.senhaDesbloqueio !== undefined) {
+        updates.senhaDesbloqueio = data.senhaDesbloqueio
+          ? await bcrypt.hash(data.senhaDesbloqueio, 10)
+          : null;
+      }
       if (data.checklistEstadoFisico !== undefined) updates.checklistEstadoFisico = data.checklistEstadoFisico;
       if (data.checklistSintomas !== undefined) updates.checklistSintomas = data.checklistSintomas;
       if (data.acessoriosEntregues !== undefined) updates.acessoriosEntregues = data.acessoriosEntregues;
