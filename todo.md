@@ -195,54 +195,54 @@
 
 ## Bug Crítico — SelectItem value vazio
 
-- [ ] Corrigir todos os `<SelectItem value="">` nas telas OrdensServico.tsx e OrdemServicoDetalhe.tsx
+- [x] Corrigir todos os `<SelectItem value="">` nas telas OrdensServico.tsx e OrdemServicoDetalhe.tsx
 
 ## Segurança Crítica — Painel Admin exposto a tenants
 
-- [ ] Remover link "Painel Admin" do menu de navegação de tenants (AppLayout/DashboardLayout)
-- [ ] Verificar e reforçar AdminGuard para redirecionar tenants para /dashboard
-- [ ] Verificar todos os endpoints tRPC de admin (adminProcedure) e confirmar proteção
+- [x] Remover link "Painel Admin" do menu de navegação de tenants (AppLayout/DashboardLayout)
+- [x] Verificar e reforçar AdminGuard para redirecionar tenants para /dashboard
+- [x] Verificar todos os endpoints tRPC de admin (adminProcedure) e confirmar proteção
 
 ## Bug Crítico — SelectItem value vazio em OS
 
-- [ ] Corrigir Select com value="0" (clienteId/equipamentoId) em OrdensServico.tsx
-- [ ] Corrigir Select com value="" (nextStatus) em OrdemServicoDetalhe.tsx
+- [x] Corrigir Select com value="0" (clienteId/equipamentoId) em OrdensServico.tsx
+- [x] Corrigir Select com value="" (nextStatus) em OrdemServicoDetalhe.tsx
 
 ## Integração Resend — E-mail Transacional
 
-- [ ] Configurar secret RESEND_API_KEY
-- [ ] Instalar dependência `resend`
-- [ ] Criar helper `server/email.ts` com função `sendEmail` e templates HTML
-- [ ] Template: e-mail de boas-vindas ao cadastrar trial
-- [ ] Template: alerta 3 dias antes do trial expirar
-- [ ] Template: confirmação de pagamento após upgrade
-- [ ] Disparar boas-vindas no endpoint `lead.register`
-- [ ] Disparar alerta de trial no job cron diário
-- [ ] Disparar confirmação de pagamento no webhook `checkout.session.completed`
+- [x] Configurar secret RESEND_API_KEY
+- [x] Instalar dependência `resend`
+- [x] Criar helper `server/email.ts` com função `sendEmail` e templates HTML
+- [x] Template: e-mail de boas-vindas ao cadastrar trial
+- [x] Template: alerta 3 dias antes do trial expirar
+- [x] Template: confirmação de pagamento após upgrade
+- [x] Disparar boas-vindas no endpoint `lead.register`
+- [x] Disparar alerta de trial no job cron diário
+- [x] Disparar confirmação de pagamento no webhook `checkout.session.completed`
 
 ## Segurança Crítica — Isolamento Total do Painel Admin
 
-- [ ] Remover link "Painel Admin" do sidebar do tenant (AppLayout/DashboardLayout)
-- [ ] Criar SuperAdminGuard: bloqueia acesso a /super-admin para qualquer usuário sem isPlatformAdmin
-- [ ] Criar SuperAdminLayout: layout isolado com identidade visual distinta, sem conexão com o layout do tenant
-- [ ] Migrar todas as rotas /admin/* para /super-admin/* no App.tsx
-- [ ] Atualizar todos os links internos do Control Plane para /super-admin
-- [ ] Garantir que tenant com role=admin não acessa /super-admin (apenas isPlatformAdmin=true)
-- [ ] Verificar que nenhuma rota do tenant linka para /super-admin
+- [x] Remover link "Painel Admin" do sidebar do tenant (AppLayout/DashboardLayout)
+- [x] Criar SuperAdminGuard: bloqueia acesso a /super-admin para qualquer usuário sem isPlatformAdmin
+- [x] Criar SuperAdminLayout: layout isolado com identidade visual distinta, sem conexão com o layout do tenant
+- [x] Migrar todas as rotas /admin/* para /super-admin/* no App.tsx
+- [x] Atualizar todos os links internos do Control Plane para /super-admin
+- [x] Garantir que tenant com role=admin não acessa /super-admin (apenas isPlatformAdmin=true)
+- [x] Verificar que nenhuma rota do tenant linka para /super-admin
 
 ## Área de Revendas
 
-- [ ] Schema: tabela `revendedores` (id, nome, email, whatsapp, cidade, estado, atuacao, mensagem, status enum draft/ativo/inativo, createdAt)
-- [ ] Migration gerada e aplicada
-- [ ] Backend: publicProcedure `revendedores.register` (cadastro público sem auth)
-- [ ] Backend: adminProcedure `revendedores.list` (listar todos com filtro de status)
-- [ ] Backend: adminProcedure `revendedores.updateStatus` (ativar/inativar revendedor)
-- [ ] Backend: notifyOwner ao receber novo cadastro de revendedor
-- [ ] Backend: e-mail de confirmação ao revendedor após cadastro
-- [ ] Landing page: seção "Seja um Revendedor" com proposta de valor (3 benefícios) e formulário
-- [ ] Landing page: âncora `#revendedores` para navegação direta
-- [ ] Super Admin: página `/super-admin/revendedores` com tabela de leads e ações de status
-- [ ] Super Admin: link "Revendedores" no menu do CoreLayout
+- [x] Schema: tabela `revendedores` (id, nome, email, whatsapp, cidade, estado, atuacao, mensagem, status enum draft/ativo/inativo, createdAt)
+- [x] Migration gerada e aplicada
+- [x] Backend: publicProcedure `revendedores.register` (cadastro público sem auth)
+- [x] Backend: adminProcedure `revendedores.list` (listar todos com filtro de status)
+- [x] Backend: adminProcedure `revendedores.updateStatus` (ativar/inativar revendedor)
+- [x] Backend: notifyOwner ao receber novo cadastro de revendedor
+- [x] Backend: e-mail de confirmação ao revendedor após cadastro
+- [x] Landing page: seção "Seja um Revendedor" com proposta de valor (3 benefícios) e formulário
+- [x] Landing page: âncora `#revendedores` para navegação direta
+- [x] Super Admin: página `/super-admin/revendedores` com tabela de leads e ações de status
+- [x] Super Admin: link "Revendedores" no menu do CoreLayout
 
 ## Dashboard do Revendedor
 
@@ -270,3 +270,51 @@
 - [x] Super Admin: coluna referralCode na página AdminRevendedores
 - [x] Super Admin: botão "Definir senha" para ativar acesso do revendedor
 - [x] Super Admin: página de comissões com aprovação de pagamento
+
+## Melhorias Pendentes — Alta Prioridade
+
+- [ ] Segurança: hash da senha de desbloqueio da OS (atualmente em texto plano no banco)
+- [ ] Rate limiting no login (proteção brute force — máx. 5 tentativas/min por IP)
+- [ ] Relatórios avançados: gráfico de faturamento por mês (últimos 12 meses)
+- [ ] Relatórios avançados: ranking de técnicos por OS concluídas e faturamento
+- [ ] Notificação ao cliente por e-mail quando OS muda para "Pronto para retirada"
+
+## Módulo de Estoque — Evolução Estrutural
+
+### 1. Modelos de Equipamentos
+- [ ] Schema: tabela `equipmentModels` (id, tenantId, brand, modelName, category, createdAt)
+- [ ] Migration gerada e aplicada
+- [ ] Backend: CRUD completo em `server/routers/equipmentModels.ts` (list, create, update, delete)
+- [ ] Registrar router `equipmentModels` em `server/routers.ts`
+- [ ] Frontend: página `Configuracoes/ModelosEquipamentos.tsx` com listagem, criação, edição e exclusão
+- [ ] Rota `/configuracoes/modelos-equipamentos` em `App.tsx`
+- [ ] Link em Configurações no sidebar do `AppLayout.tsx`
+
+### 2. Part Number, Fabricante e Compatibilidade
+- [ ] Schema: adicionar campos `partNumber`, `manufacturer`, `application` na tabela `pecas`
+- [ ] Schema: tabela de junção `pecaModeloCompativel` (id, pecaId, equipmentModelId)
+- [ ] Migration gerada e aplicada
+- [ ] Backend: atualizar `estoque.create` e `estoque.update` para aceitar novos campos e `compatibleModelIds`
+- [ ] Backend: endpoint `estoque.listModels` para buscar modelos do tenant (usado no multi-select)
+- [ ] Backend: ao salvar peça, sincronizar tabela `pecaModeloCompativel`
+- [ ] Frontend: adicionar campos Part Number, Fabricante, Aplicação no formulário de peças
+- [ ] Frontend: multi-select de Modelos Compatíveis no formulário de peças
+- [ ] Frontend: exibir `partNumber` como coluna na listagem de estoque
+- [ ] Frontend: filtro por Modelo Compatível na listagem de estoque
+
+### 3. Lista de Compras
+- [ ] Schema: tabela `listaCompras` (id, tenantId, pecaId?, itemDescription, quantityNeeded, reason, osId?, priority, status, notes, createdAt, updatedAt)
+- [ ] Migration gerada e aplicada
+- [ ] Backend: CRUD em `server/routers/listaCompras.ts` (list, create, update, markOrdered, markReceived)
+- [ ] Backend: `markReceived` com opção de entrada automática no estoque (movimentarEstoque)
+- [ ] Registrar router `listaCompras` em `server/routers.ts`
+- [ ] Frontend: página `Estoque/ListaCompras.tsx` com listagem filtrada por status/prioridade
+- [ ] Frontend: formulário de adição rápida com busca de peça existente ou descrição livre
+- [ ] Frontend: ações "Pedido Realizado" e "Recebido" com modal de entrada no estoque
+- [ ] Rota `/estoque/lista-compras` em `App.tsx`
+- [ ] Link "Lista de Compras" no submenu de Estoque no `AppLayout.tsx`
+- [ ] Testes em `server/estoque-evolucao.test.ts`
+
+## Bug — Perda de foco no formulário de Novo Cliente
+
+- [x] Corrigir perda de foco (cursor some a cada letra) no modal de cadastro de clientes — causa: componente de formulário/tab definido dentro do render do pai, causando remontagem a cada keystroke

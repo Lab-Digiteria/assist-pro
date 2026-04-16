@@ -67,6 +67,8 @@ const BLANK_FORM = {
   aceitouTermos: false,
 };
 
+type FormValues = typeof BLANK_FORM;
+
 const CLASSIFICACAO_COLORS: Record<string, string> = {
   padrao: "bg-gray-100 text-gray-700",
   vip: "bg-yellow-100 text-yellow-800",
@@ -80,112 +82,21 @@ const CLASSIFICACAO_ICONS: Record<string, React.ReactNode> = {
   inadimplente: <AlertTriangle className="w-3 h-3" />,
 };
 
-export default function Clientes() {
-  const [search, setSearch] = useState("");
-  const [open, setOpen] = useState(false);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [form, setForm] = useState(BLANK_FORM);
-  const [editForm, setEditForm] = useState<typeof BLANK_FORM | null>(null);
-
-  const utils = trpc.useUtils();
-  const { data: clientes = [], isLoading } = trpc.clientes.list.useQuery({ search });
-  const { data: selectedCliente } = trpc.clientes.get.useQuery(
-    { id: selectedId! },
-    { enabled: !!selectedId }
-  );
-  const { data: equipamentos = [] } = trpc.clientes.getEquipamentos.useQuery(
-    { clienteId: selectedId! },
-    { enabled: !!selectedId }
-  );
-
-  const create = trpc.clientes.create.useMutation({
-    onSuccess: () => {
-      toast.success("Cliente cadastrado!");
-      setOpen(false);
-      utils.clientes.list.invalidate();
-      setForm(BLANK_FORM);
-    },
-    onError: (e) => toast.error(e.message),
-  });
-
-  const update = trpc.clientes.update.useMutation({
-    onSuccess: () => {
-      toast.success("Cliente atualizado!");
-      utils.clientes.list.invalidate();
-      utils.clientes.get.invalidate({ id: selectedId! });
-      setEditForm(null);
-    },
-    onError: (e) => toast.error(e.message),
-  });
-
-  function handleCreate() {
-    const payload = {
-      ...form,
-      origemCliente: form.origemCliente || undefined,
-      preferenciaContato: form.preferenciaContato || undefined,
-      horarioPreferidoContato: form.horarioPreferidoContato || undefined,
-      observacoesInternas: form.observacoesInternas || undefined,
-      email: form.email || undefined,
-      cpfCnpj: form.cpfCnpj || undefined,
-    };
-    create.mutate(payload);
-  }
-
-  function handleUpdate() {
-    if (!editForm || !selectedId) return;
-    const payload = {
-      id: selectedId,
-      ...editForm,
-      origemCliente: editForm.origemCliente || undefined,
-      preferenciaContato: editForm.preferenciaContato || undefined,
-      email: editForm.email || undefined,
-      cpfCnpj: editForm.cpfCnpj || undefined,
-    };
-    update.mutate(payload);
-  }
-
-  function openDetail(id: number) {
-    setSelectedId(id);
-  }
-
-  function startEdit() {
-    if (!selectedCliente) return;
-    setEditForm({
-      tipo: selectedCliente.tipo,
-      nome: selectedCliente.nome,
-      cpfCnpj: selectedCliente.cpfCnpj ?? "",
-      inscricaoEstadual: selectedCliente.inscricaoEstadual ?? "",
-      whatsapp: selectedCliente.whatsapp ?? "",
-      email: selectedCliente.email ?? "",
-      cep: selectedCliente.cep ?? "",
-      logradouro: selectedCliente.logradouro ?? "",
-      numero: selectedCliente.numero ?? "",
-      complemento: selectedCliente.complemento ?? "",
-      bairro: selectedCliente.bairro ?? "",
-      cidade: selectedCliente.cidade ?? "",
-      estado: selectedCliente.estado ?? "",
-      origemCliente: (selectedCliente as any).origemCliente ?? "",
-      preferenciaContato: (selectedCliente as any).preferenciaContato ?? "",
-      horarioPreferidoContato: (selectedCliente as any).horarioPreferidoContato ?? "",
-      classificacao: (selectedCliente as any).classificacao ?? "padrao",
-      observacoesInternas: (selectedCliente as any).observacoesInternas ?? "",
-      aceitouTermos: (selectedCliente as any).aceitouTermos ?? false,
-    });
-  }
-
-  const ClienteForm = ({
-    values,
-    onChange,
-    onSubmit,
-    isPending,
-    submitLabel,
-  }: {
-    values: typeof BLANK_FORM;
-    onChange: (v: typeof BLANK_FORM) => void;
-    onSubmit: () => void;
-    isPending: boolean;
-    submitLabel: string;
-  }) => (
+// ─── ClienteForm definido FORA do componente pai para evitar remontagem ───────
+function ClienteForm({
+  values,
+  onChange,
+  onSubmit,
+  isPending,
+  submitLabel,
+}: {
+  values: FormValues;
+  onChange: (v: FormValues) => void;
+  onSubmit: () => void;
+  isPending: boolean;
+  submitLabel: string;
+}) {
+  return (
     <Tabs defaultValue="basico">
       <TabsList className="w-full mb-4">
         <TabsTrigger value="basico" className="flex-1">Dados Básicos</TabsTrigger>
@@ -210,7 +121,11 @@ export default function Clientes() {
         </div>
         <div>
           <Label>{values.tipo === "pj" ? "CNPJ" : "CPF"}</Label>
-          <Input value={values.cpfCnpj} onChange={(e) => onChange({ ...values, cpfCnpj: e.target.value })} placeholder={values.tipo === "pj" ? "00.000.000/0001-00" : "000.000.000-00"} />
+          <Input
+            value={values.cpfCnpj}
+            onChange={(e) => onChange({ ...values, cpfCnpj: e.target.value })}
+            placeholder={values.tipo === "pj" ? "00.000.000/0001-00" : "000.000.000-00"}
+          />
         </div>
         {values.tipo === "pj" && (
           <div>
@@ -341,6 +256,101 @@ export default function Clientes() {
       </Button>
     </Tabs>
   );
+}
+
+// ─── Componente principal ─────────────────────────────────────────────────────
+export default function Clientes() {
+  const [search, setSearch] = useState("");
+  const [open, setOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [form, setForm] = useState(BLANK_FORM);
+  const [editForm, setEditForm] = useState<FormValues | null>(null);
+
+  const utils = trpc.useUtils();
+  const { data: clientes = [], isLoading } = trpc.clientes.list.useQuery({ search });
+  const { data: selectedCliente } = trpc.clientes.get.useQuery(
+    { id: selectedId! },
+    { enabled: !!selectedId }
+  );
+  const { data: equipamentos = [] } = trpc.clientes.getEquipamentos.useQuery(
+    { clienteId: selectedId! },
+    { enabled: !!selectedId }
+  );
+
+  const create = trpc.clientes.create.useMutation({
+    onSuccess: () => {
+      toast.success("Cliente cadastrado!");
+      setOpen(false);
+      utils.clientes.list.invalidate();
+      setForm(BLANK_FORM);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const update = trpc.clientes.update.useMutation({
+    onSuccess: () => {
+      toast.success("Cliente atualizado!");
+      utils.clientes.list.invalidate();
+      utils.clientes.get.invalidate({ id: selectedId! });
+      setEditForm(null);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  function handleCreate() {
+    const payload = {
+      ...form,
+      origemCliente: form.origemCliente || undefined,
+      preferenciaContato: form.preferenciaContato || undefined,
+      horarioPreferidoContato: form.horarioPreferidoContato || undefined,
+      observacoesInternas: form.observacoesInternas || undefined,
+      email: form.email || undefined,
+      cpfCnpj: form.cpfCnpj || undefined,
+    };
+    create.mutate(payload);
+  }
+
+  function handleUpdate() {
+    if (!editForm || !selectedId) return;
+    const payload = {
+      id: selectedId,
+      ...editForm,
+      origemCliente: editForm.origemCliente || undefined,
+      preferenciaContato: editForm.preferenciaContato || undefined,
+      email: editForm.email || undefined,
+      cpfCnpj: editForm.cpfCnpj || undefined,
+    };
+    update.mutate(payload);
+  }
+
+  function openDetail(id: number) {
+    setSelectedId(id);
+  }
+
+  function startEdit() {
+    if (!selectedCliente) return;
+    setEditForm({
+      tipo: selectedCliente.tipo,
+      nome: selectedCliente.nome,
+      cpfCnpj: selectedCliente.cpfCnpj ?? "",
+      inscricaoEstadual: selectedCliente.inscricaoEstadual ?? "",
+      whatsapp: selectedCliente.whatsapp ?? "",
+      email: selectedCliente.email ?? "",
+      cep: selectedCliente.cep ?? "",
+      logradouro: selectedCliente.logradouro ?? "",
+      numero: selectedCliente.numero ?? "",
+      complemento: selectedCliente.complemento ?? "",
+      bairro: selectedCliente.bairro ?? "",
+      cidade: selectedCliente.cidade ?? "",
+      estado: selectedCliente.estado ?? "",
+      origemCliente: (selectedCliente as any).origemCliente ?? "",
+      preferenciaContato: (selectedCliente as any).preferenciaContato ?? "",
+      horarioPreferidoContato: (selectedCliente as any).horarioPreferidoContato ?? "",
+      classificacao: (selectedCliente as any).classificacao ?? "padrao",
+      observacoesInternas: (selectedCliente as any).observacoesInternas ?? "",
+      aceitouTermos: (selectedCliente as any).aceitouTermos ?? false,
+    });
+  }
 
   return (
     <AppLayout title="Clientes">
