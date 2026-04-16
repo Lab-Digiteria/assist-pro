@@ -8,31 +8,47 @@ interface NexarToken {
   expires_at: number; // timestamp em ms
 }
 
-interface NexarPartResult {
+// ─── Tipos de retorno ─────────────────────────────────────────────────────────
+
+export interface NexarSellerOffer {
+  seller: string;
+  url: string | null;
+  inStock: boolean;
+  moq: number | null; // Minimum Order Quantity
+  prices: Array<{ quantity: number; price: number; currency: string }>;
+}
+
+export interface NexarPartDetail {
   found: true;
   mpn: string;
   description: string;
   manufacturer: string;
+  manufacturerUrl: string | null;
+  category: string | null;
+  subcategory: string | null;
+  imageUrl: string | null;
+  datasheetUrl: string | null;
   specs: Array<{ name: string; value: string }>;
-  /** Menor preço unitário encontrado entre distribuidores (USD), ou null se indisponível */
+  sellers: NexarSellerOffer[];
+  /** Menor preço unitário entre distribuidores (qty=1) */
   referencePrice: number | null;
-  /** Moeda do preço de referência */
   referencePriceCurrency: string | null;
+  /** Total de distribuidores com estoque */
+  sellersWithStock: number;
 }
 
-interface NexarPartNotFound {
+export interface NexarPartNotFound {
   found: false;
 }
 
-export type NexarLookupResult = NexarPartResult | NexarPartNotFound;
+export type NexarLookupResult = NexarPartDetail | NexarPartNotFound;
 
-// Cache de token em memória
+// ─── Cache de token em memória ────────────────────────────────────────────────
 let cachedToken: NexarToken | null = null;
 
-async function getNexarToken(): Promise<string> {
+export async function getNexarToken(): Promise<string> {
   const now = Date.now();
 
-  // Retorna token cacheado se ainda válido (com margem de 60s)
   if (cachedToken && cachedToken.expires_at > now + 60_000) {
     return cachedToken.access_token;
   }
@@ -74,7 +90,8 @@ async function getNexarToken(): Promise<string> {
   return cachedToken.access_token;
 }
 
-const NEXAR_QUERY = `
+// ─── Query GraphQL completa ───────────────────────────────────────────────────
+const NEXAR_FULL_QUERY = `
   query SearchPart($q: String!) {
     supSearchMpn(q: $q, limit: 1) {
       results {
@@ -83,6 +100,19 @@ const NEXAR_QUERY = `
           shortDescription
           manufacturer {
             name
+            homepageUrl
+          }
+          category {
+            name
+            parentCategory {
+              name
+            }
+          }
+          bestImage {
+            url
+          }
+          bestDatasheet {
+            url
           }
           specs {
             attribute {
@@ -91,11 +121,18 @@ const NEXAR_QUERY = `
             displayValue
           }
           sellers(includeBrokers: false) {
+            company {
+              name
+              homepageUrl
+            }
             offers {
+              clickUrl
+              inventoryLevel
+              moq
               prices {
+                quantity
                 price
                 currency
-                quantity
               }
             }
           }
@@ -105,30 +142,57 @@ const NEXAR_QUERY = `
   }
 `;
 
-/** Extrai o menor preço unitário (para qty=1) entre todos os distribuidores */
+// ─── Helpers internos ─────────────────────────────────────────────────────────
+
 function extractLowestPrice(
-  sellers: Array<{
-    offers: Array<{
-      prices: Array<{ price: number; currency: string; quantity: number }>;
-    }>;
-  }>
+  sellers: NexarSellerOffer[]
 ): { price: number; currency: string } | null {
   let lowest: { price: number; currency: string } | null = null;
-
   for (const seller of sellers) {
-    for (const offer of seller.offers) {
-      // Pega o preço para menor quantidade (geralmente qty=1)
-      const sorted = [...offer.prices].sort((a, b) => a.quantity - b.quantity);
-      if (sorted.length === 0) continue;
-      const candidate = sorted[0];
-      if (candidate.price > 0 && (!lowest || candidate.price < lowest.price)) {
-        lowest = { price: candidate.price, currency: candidate.currency };
-      }
+    const sorted = [...seller.prices].sort((a, b) => a.quantity - b.quantity);
+    if (sorted.length === 0) continue;
+    const candidate = sorted[0];
+    if (candidate.price > 0 && (!lowest || candidate.price < lowest.price)) {
+      lowest = { price: candidate.price, currency: candidate.currency };
     }
   }
-
   return lowest;
 }
+
+function parseSellers(rawSellers: any[]): NexarSellerOffer[] {
+  const result: NexarSellerOffer[] = [];
+  for (const s of rawSellers || []) {
+    for (const offer of s.offers || []) {
+      const prices = (offer.prices || [])
+        .filter((p: any) => p.price > 0)
+        .map((p: any) => ({
+          quantity: p.quantity,
+          price: p.price,
+          currency: p.currency || "USD",
+        }))
+        .sort((a: any, b: any) => a.quantity - b.quantity);
+
+      if (prices.length === 0) continue;
+
+      result.push({
+        seller: s.company?.name || "Distribuidor",
+        url: offer.clickUrl || s.company?.homepageUrl || null,
+        inStock: (offer.inventoryLevel ?? 0) > 0,
+        moq: offer.moq ?? null,
+        prices,
+      });
+    }
+  }
+  // Ordena: em estoque primeiro, depois por menor preço unitário
+  return result.sort((a, b) => {
+    if (a.inStock !== b.inStock) return a.inStock ? -1 : 1;
+    const pa = a.prices[0]?.price ?? Infinity;
+    const pb = b.prices[0]?.price ?? Infinity;
+    return pa - pb;
+  });
+}
+
+// ─── Função principal de consulta ─────────────────────────────────────────────
 
 export async function lookupPartNumber(partNumber: string): Promise<NexarLookupResult> {
   const token = await getNexarToken();
@@ -140,7 +204,7 @@ export async function lookupPartNumber(partNumber: string): Promise<NexarLookupR
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      query: NEXAR_QUERY,
+      query: NEXAR_FULL_QUERY,
       variables: { q: partNumber },
     }),
   });
@@ -153,19 +217,7 @@ export async function lookupPartNumber(partNumber: string): Promise<NexarLookupR
   const data = await response.json() as {
     data?: {
       supSearchMpn?: {
-        results?: Array<{
-          part?: {
-            mpn: string;
-            shortDescription: string;
-            manufacturer?: { name: string };
-            specs?: Array<{ attribute?: { name: string }; displayValue: string }>;
-            sellers?: Array<{
-              offers: Array<{
-                prices: Array<{ price: number; currency: string; quantity: number }>;
-              }>;
-            }>;
-          };
-        }>;
+        results?: Array<{ part?: any }>;
       };
     };
     errors?: Array<{ message: string }>;
@@ -183,22 +235,27 @@ export async function lookupPartNumber(partNumber: string): Promise<NexarLookupR
   const part = results[0].part;
 
   const specs = (part.specs || [])
-    .filter((s) => s.attribute?.name && s.displayValue)
-    .slice(0, 10)
-    .map((s) => ({
-      name: s.attribute!.name,
-      value: s.displayValue,
-    }));
+    .filter((s: any) => s.attribute?.name && s.displayValue)
+    .slice(0, 20)
+    .map((s: any) => ({ name: s.attribute.name, value: s.displayValue }));
 
-  const lowestPrice = extractLowestPrice(part.sellers || []);
+  const sellers = parseSellers(part.sellers || []);
+  const lowestPrice = extractLowestPrice(sellers);
 
   return {
     found: true,
     mpn: part.mpn,
     description: part.shortDescription || "",
     manufacturer: part.manufacturer?.name || "",
+    manufacturerUrl: part.manufacturer?.homepageUrl || null,
+    category: part.category?.parentCategory?.name || part.category?.name || null,
+    subcategory: part.category?.parentCategory ? part.category?.name : null,
+    imageUrl: part.bestImage?.url || null,
+    datasheetUrl: part.bestDatasheet?.url || null,
     specs,
+    sellers,
     referencePrice: lowestPrice?.price ?? null,
     referencePriceCurrency: lowestPrice?.currency ?? null,
+    sellersWithStock: sellers.filter((s) => s.inStock).length,
   };
 }

@@ -394,3 +394,14 @@
 - [x] Backend: incluir preço mínimo de distribuidor no retorno do `lookupPartNumber` (campo `referencePrice`)
 - [x] Frontend: ao buscar PN, exibe sugestão de preço de custo com badge "via Nexar" e botões Usar/Ignorar
 - [x] Testes: 2 novos testes cobrindo referencePrice (com e sem preços disponíveis) — 47 testes passando
+
+## Pesquisa de Part Number no Dashboard
+
+- [x] Backend: query GraphQL expandida com imagens, datasheets, categorias, sellers/offers/prices, inventoryLevel, MOQ, links
+- [x] Backend: lookupPartNumber atualizado retorna todos os campos (reutilizado pelo endpoint existente)
+- [x] Frontend: página BuscaPeca.tsx com campo de busca e exemplos clicáveis
+- [x] Frontend: exibe specs em tabela expansível, preços por distribuidor com estoque/MOQ, imagem, badge datasheet
+- [x] Frontend: botão "Adicionar ao Estoque" pré-preenche formulário via sessionStorage
+- [x] Frontend: rota /busca-peca registrada no App.tsx
+- [x] Frontend: link "Busca Nexar" no sidebar (abaixo de Lista de Compras)
+- [x] Testes: 47 testes passando, TypeScript 0 erros

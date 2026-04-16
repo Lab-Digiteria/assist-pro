@@ -22,6 +22,7 @@ import RevendedorLogin from "./pages/RevendedorLogin";
 import RevendedorDashboard from "./pages/RevendedorDashboard";
 import ModelosEquipamentos from "./pages/ModelosEquipamentos";
 import ListaCompras from "./pages/ListaCompras";
+import BuscaPeca from "./pages/BuscaPeca";
 import Financeiro from "./pages/Financeiro";
 import ContasBancarias from "./pages/ContasBancarias";
 import ContasReceber from "./pages/ContasReceber";
@@ -92,6 +93,7 @@ function Router() {
       <Route path="/configuracoes" component={Configuracoes} />
       <Route path="/configuracoes/modelos-equipamentos" component={ModelosEquipamentos} />
       <Route path="/estoque/lista-compras" component={ListaCompras} />
+      <Route path="/busca-peca" component={BuscaPeca} />
 
       {/* ── Financeiro ──────────────────────────────────────── */}
       <Route path="/financeiro" component={Financeiro} />
