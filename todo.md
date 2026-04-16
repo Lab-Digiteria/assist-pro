@@ -412,3 +412,35 @@
 - [x] Todos os hooks movidos para antes de qualquer `return` condicional
 - [x] Redirects de autenticação e onboarding convertidos para `useEffect` (evita chamadas durante render)
 - [x] `financeiroOpen` inicializado como `false` e sincronizado via `useEffect` com a rota ativa
+
+## CORREÇÃO CRÍTICA — Fluxo de OS (4 Problemas)
+
+### Problema 1 — Fluxo de Criação de OS sem troca de tela
+- [x] Campo Cliente: busca por nome/CPF/telefone com botão "+ Novo cliente" que abre modal inline (nome, telefone, e-mail)
+- [x] Ao salvar modal de novo cliente, cliente já fica selecionado automaticamente na OS
+- [x] Campo Equipamento: carrega equipamentos do cliente selecionado; botão "+ Novo equipamento" abre modal inline (tipo, marca, modelo, série, cor)
+- [x] Ao salvar modal de novo equipamento, equipamento já fica vinculado à OS
+
+### Problema 2 — Reorganização completa da tela de OS
+- [x] Cabeçalho: número OS, data abertura, status com badge, prazo de entrega, botões Imprimir/Avançar Status
+- [x] Bloco 1: cards lado a lado — dados do cliente (nome, tel, email, link ficha) e equipamento (tipo, marca, modelo, série, cor, lacre)
+- [x] Bloco 2: diagnóstico — problema relatado, laudo técnico, checklist estado físico, senha desbloqueio (mascarada), acessórios
+- [x] Bloco 3: tabela de itens (serviço/peça, qtd, valor unitário, subtotal, remover) + totais separados (serviços/peças/geral)
+- [x] Bloco 4: pagamentos — histórico, botão "+ Registrar" (modal: tipo, forma, valor, obs), saldo em aberto em vermelho
+- [x] Pagamentos parciais e antecipados desde a abertura da OS (sem aprovação prévia)
+- [x] Bloco 5: área do cliente — link portal com botões Copiar/Visualizar/Regenerar, enviar orçamento por e-mail
+- [x] Bloco 6: abas — assinatura digital (canvas touchscreen) + fotos + histórico de status + auditoria
+
+### Problema 3 — Impressão da OS
+- [x] Modal de impressão com duas opções: A4 (laser) e Térmica 58mm (32 colunas)
+- [x] Layout A4: dados completos, tabela de serviços/peças, valores, pagamentos, assinatura — window.print com @media print
+- [x] Layout Térmica: texto simples monospace, máx 32 chars/linha, dados essenciais, sem imagens
+- [x] Ambas as opções acessíveis pelo botão "Imprimir" no cabeçalho da OS
+
+### Problema 4 — Sincronização automática de peças com estoque
+- [x] Schema: campo quantidadeReservada adicionado na tabela pecas
+- [x] Ao adicionar peça na OS: reservar estoque (bloqueia quantidade sem debitar)
+- [x] Ao avançar status para "em_reparo": converter reserva em saída efetiva (débito real)
+- [x] Ao cancelar OS ou remover peça: liberar reserva devolvendo quantidade ao estoque disponível
+- [x] Modal de adicionar item busca peças do estoque com autocomplete; alerta amarelo se peça não cadastrada
+- [x] Todo movimento por OS aparece no histórico do item com referência ao número da OS

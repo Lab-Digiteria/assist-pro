@@ -637,7 +637,7 @@ export async function getOsItens(tenantId: number, osId: number) {
 export async function addOsItem(
   tenantId: number,
   osId: number,
-  data: { tipo: "servico" | "peca"; descricao: string; pecaId?: number; quantidade: number; valorUnitario: number }
+  data: { tipo: "servico" | "peca"; descricao: string; pecaId?: number; quantidade: number; valorUnitario: number; estoqueReservado?: boolean }
 ) {
   const db = await getDb();
   if (!db) throw new Error("DB unavailable");
@@ -648,6 +648,7 @@ export async function addOsItem(
     tipo: data.tipo,
     descricao: data.descricao,
     pecaId: data.pecaId,
+    estoqueReservado: data.estoqueReservado ?? false,
     quantidade: data.quantidade,
     valorUnitario: String(data.valorUnitario),
     valorTotal: String(valorTotal),
@@ -1417,4 +1418,71 @@ export async function getRankingTecnicos(tenantId: number) {
   return Array.from(map.values())
     .sort((a, b) => b.osConcluidas - a.osConcluidas)
     .map((e) => ({ ...e, faturamento: Math.round(e.faturamento * 100) / 100 }));
+}
+
+// ─── RESERVA DE ESTOQUE (OS) ─────────────────────────────────────────────────
+export async function reservarEstoquePeca(
+  tenantId: number, pecaId: number, quantidade: number,
+  osId: number, osNumero: string, userId: number
+) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  const [peca] = await db.select().from(pecas).where(and(eq(pecas.id, pecaId), eq(pecas.tenantId, tenantId))).limit(1);
+  if (!peca) throw new Error("Peça não encontrada");
+  const disponivel = peca.quantidadeAtual - peca.quantidadeReservada;
+  if (disponivel < quantidade) throw new Error(`Estoque insuficiente. Disponível: ${disponivel}, solicitado: ${quantidade}`);
+  await db.update(pecas).set({ quantidadeReservada: peca.quantidadeReservada + quantidade }).where(eq(pecas.id, pecaId));
+  await db.insert(estoqueMovimentacoes).values({ tenantId, pecaId, tipo: "ajuste", quantidade, quantidadeAnterior: peca.quantidadeAtual, quantidadeNova: peca.quantidadeAtual, osId, observacao: `Reservado para OS ${osNumero}`, userId });
+}
+
+export async function liberarReservaEstoque(
+  tenantId: number, pecaId: number, quantidade: number,
+  osId: number, osNumero: string, userId: number
+) {
+  const db = await getDb();
+  if (!db) return;
+  const [peca] = await db.select().from(pecas).where(and(eq(pecas.id, pecaId), eq(pecas.tenantId, tenantId))).limit(1);
+  if (!peca) return;
+  const novaReserva = Math.max(0, peca.quantidadeReservada - quantidade);
+  await db.update(pecas).set({ quantidadeReservada: novaReserva }).where(eq(pecas.id, pecaId));
+  await db.insert(estoqueMovimentacoes).values({ tenantId, pecaId, tipo: "devolucao", quantidade, quantidadeAnterior: peca.quantidadeAtual, quantidadeNova: peca.quantidadeAtual, osId, observacao: `Reserva liberada — OS ${osNumero}`, userId });
+}
+
+export async function confirmarSaidaEstoque(
+  tenantId: number, pecaId: number, quantidade: number,
+  osId: number, osNumero: string, userId: number
+) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  const [peca] = await db.select().from(pecas).where(and(eq(pecas.id, pecaId), eq(pecas.tenantId, tenantId))).limit(1);
+  if (!peca) throw new Error("Peça não encontrada");
+  const novaQtd = peca.quantidadeAtual - quantidade;
+  if (novaQtd < 0) throw new Error("Estoque insuficiente para confirmar saída");
+  const novaReserva = Math.max(0, peca.quantidadeReservada - quantidade);
+  await db.update(pecas).set({ quantidadeAtual: novaQtd, quantidadeReservada: novaReserva }).where(eq(pecas.id, pecaId));
+  await db.insert(estoqueMovimentacoes).values({ tenantId, pecaId, tipo: "saida", quantidade, quantidadeAnterior: peca.quantidadeAtual, quantidadeNova: novaQtd, osId, observacao: `Saída confirmada — OS ${osNumero}`, userId });
+}
+
+export async function liberarTodasReservasOs(tenantId: number, osId: number, osNumero: string, userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  const itens = await db.select().from(osItens).where(and(eq(osItens.osId, osId), eq(osItens.tenantId, tenantId)));
+  for (const item of itens) {
+    if (item.tipo === "peca" && item.pecaId && item.estoqueReservado) {
+      await liberarReservaEstoque(tenantId, item.pecaId, item.quantidade, osId, osNumero, userId);
+      await db.update(osItens).set({ estoqueReservado: false }).where(eq(osItens.id, item.id));
+    }
+  }
+}
+
+export async function confirmarTodasSaidasOs(tenantId: number, osId: number, osNumero: string, userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  const itens = await db.select().from(osItens).where(and(eq(osItens.osId, osId), eq(osItens.tenantId, tenantId)));
+  for (const item of itens) {
+    if (item.tipo === "peca" && item.pecaId && item.estoqueReservado) {
+      await confirmarSaidaEstoque(tenantId, item.pecaId, item.quantidade, osId, osNumero, userId);
+      await db.update(osItens).set({ estoqueReservado: false }).where(eq(osItens.id, item.id));
+    }
+  }
 }

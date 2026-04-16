@@ -24,6 +24,10 @@ import {
   updateOrdemServico,
   updateOrdemServicoStatus,
   updateOsClientToken,
+  reservarEstoquePeca,
+  liberarReservaEstoque,
+  liberarTodasReservasOs,
+  confirmarTodasSaidasOs,
 } from "../db";
 import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { storagePut } from "../storage";
@@ -146,6 +150,16 @@ export const ordensServicoRouter = router({
           temGarantia: input.temGarantia,
           garantiaDias: input.garantiaDias ?? 90,
         });
+      }
+      // Sincronizar estoque ao avançar para em_reparo (reserva → saída efetiva)
+      if (input.status === "em_reparo") {
+        const os = await getOrdemServicoById(tenantId, input.id);
+        if (os) await confirmarTodasSaidasOs(tenantId, input.id, os.numero, ctx.user.id);
+      }
+      // Liberar todas as reservas ao cancelar OS
+      if (input.status === "cancelado" || input.status === "devolvido_sem_reparo") {
+        const os = await getOrdemServicoById(tenantId, input.id);
+        if (os) await liberarTodasReservasOs(tenantId, input.id, os.numero, ctx.user.id);
       }
       await updateOrdemServicoStatus(tenantId, input.id, input.status, ctx.user.id, input.observacao);
       // Auto-mark client as inadimplente when OS is closed with outstanding balance
@@ -411,7 +425,13 @@ export const ordensServicoRouter = router({
     .mutation(async ({ ctx, input }) => {
       const tenantId = await resolveTenantId(ctx.user.id);
       const { osId, ...data } = input;
-      await addOsItem(tenantId, osId, data);
+      // Reservar estoque se for peça cadastrada
+      if (data.tipo === "peca" && data.pecaId) {
+        const os = await getOrdemServicoById(tenantId, osId);
+        if (!os) throw new TRPCError({ code: "NOT_FOUND" });
+        await reservarEstoquePeca(tenantId, data.pecaId, data.quantidade, osId, os.numero, ctx.user.id);
+      }
+      await addOsItem(tenantId, osId, { ...data, estoqueReservado: data.tipo === "peca" && !!data.pecaId });
       return { success: true };
     }),
 
@@ -419,6 +439,16 @@ export const ordensServicoRouter = router({
     .input(z.object({ itemId: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const tenantId = await resolveTenantId(ctx.user.id);
+      // Liberar reserva se o item era peça com estoque reservado
+      const db = await getDb();
+      if (db) {
+        const { osItens: osItensTable } = await import("../../drizzle/schema");
+        const [item] = await db.select().from(osItensTable).where(and(eq(osItensTable.id, input.itemId), eq(osItensTable.tenantId, tenantId))).limit(1);
+        if (item?.tipo === "peca" && item.pecaId && item.estoqueReservado) {
+          const os = await getOrdemServicoById(tenantId, item.osId);
+          if (os) await liberarReservaEstoque(tenantId, item.pecaId, item.quantidade, item.osId, os.numero, ctx.user.id);
+        }
+      }
       await removeOsItem(tenantId, input.itemId);
       return { success: true };
     }),
