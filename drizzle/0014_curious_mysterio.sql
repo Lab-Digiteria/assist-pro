@@ -1,0 +1,1 @@
+ALTER TABLE `pecas` ADD `sku` varchar(50);

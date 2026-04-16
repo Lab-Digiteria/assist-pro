@@ -373,10 +373,10 @@ export const pecas = mysqlTable("pecas", {
   partNumber: varchar("partNumber", { length: 100 }),
   manufacturer: varchar("manufacturer", { length: 150 }),
   application: text("application"),
+  sku: varchar("sku", { length: 50 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
-
 export type Peca = typeof pecas.$inferSelect;
 
 // ─── MOVIMENTAÇÕES DE ESTOQUE ────────────────────────────────────────────────

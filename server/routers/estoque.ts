@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import {
   createPeca,
+  getDb,
   getEquipmentModels,
   getPecasWithModels,
   getTenantByMember,
@@ -10,6 +11,8 @@ import {
   syncPecaCompatibleModels,
   updatePeca,
 } from "../db";
+import { pecas } from "../../drizzle/schema";
+import { and, eq, or, like, sql } from "drizzle-orm";
 import { lookupPartNumber } from "../nexar";
 import { protectedProcedure, router } from "../_core/trpc";
 
@@ -21,8 +24,35 @@ async function resolveTenantAndRole(userId: number) {
   throw new TRPCError({ code: "FORBIDDEN" });
 }
 
-
 const CATEGORIAS = ["tela", "bateria", "conector", "cabo", "placa", "chip", "acessorio", "outro"] as const;
+
+/** Gera um código SKU no formato SKU-XXXXXX (alfanumérico maiúsculo) */
+function generateSkuCode(): string {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let code = "SKU-";
+  for (let i = 0; i < 6; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return code;
+}
+
+/** Verifica se um SKU já existe para o tenant (excluindo uma peça específica) */
+async function skuExistsForTenant(tenantId: number, sku: string, excludeId?: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  const rows = await db
+    .select({ id: pecas.id })
+    .from(pecas)
+    .where(
+      and(
+        eq(pecas.tenantId, tenantId),
+        eq(pecas.sku, sku),
+        excludeId ? sql`${pecas.id} != ${excludeId}` : sql`1=1`
+      )
+    )
+    .limit(1);
+  return rows.length > 0;
+}
 
 export const estoqueRouter = router({
   /** Busca informações de uma peça pelo Part Number via API do Nexar */
@@ -39,10 +69,53 @@ export const estoqueRouter = router({
       }
     }),
 
+  /** Gera um código SKU único para o tenant */
+  generateSku: protectedProcedure.mutation(async ({ ctx }) => {
+    const { tenantId } = await resolveTenantAndRole(ctx.user.id);
+    let sku = generateSkuCode();
+    let attempts = 0;
+    while ((await skuExistsForTenant(tenantId, sku)) && attempts < 10) {
+      sku = generateSkuCode();
+      attempts++;
+    }
+    return { sku };
+  }),
+
   list: protectedProcedure
-    .input(z.object({ compatibleModelId: z.number().optional() }).optional())
+    .input(
+      z.object({
+        compatibleModelId: z.number().optional(),
+        search: z.string().optional(),
+      }).optional()
+    )
     .query(async ({ ctx, input }) => {
       const { tenantId } = await resolveTenantAndRole(ctx.user.id);
+      const search = input?.search?.trim();
+
+      if (search) {
+        const db = await getDb();
+        if (!db) return [];
+        const rows = await db
+          .select()
+          .from(pecas)
+          .where(
+            and(
+              eq(pecas.tenantId, tenantId),
+              or(
+                like(pecas.nome, `%${search}%`),
+                like(pecas.partNumber, `%${search}%`),
+                like(pecas.sku, `%${search}%`),
+                like(pecas.codigo, `%${search}%`)
+              )
+            )
+          )
+          // Prioriza match exato de SKU ou PN no topo
+          .orderBy(
+            sql`CASE WHEN ${pecas.sku} = ${search} THEN 0 WHEN ${pecas.partNumber} = ${search} THEN 1 ELSE 2 END`
+          );
+        return rows.map((p) => ({ ...p, compatibleModelIds: [] }));
+      }
+
       return getPecasWithModels(tenantId, input?.compatibleModelId);
     }),
 
@@ -64,14 +137,28 @@ export const estoqueRouter = router({
         partNumber: z.string().max(100).optional(),
         manufacturer: z.string().max(150).optional(),
         application: z.string().optional(),
+        sku: z.string().max(50).optional(),
         compatibleModelIds: z.array(z.number()).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const { tenantId } = await resolveTenantAndRole(ctx.user.id);
-      const { compatibleModelIds, precoCusto, precoVenda, ...rest } = input;
+      const { compatibleModelIds, precoCusto, precoVenda, sku, ...rest } = input;
+
+      // Validar unicidade do SKU por tenant
+      if (sku && sku.trim()) {
+        const exists = await skuExistsForTenant(tenantId, sku.trim());
+        if (exists) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: `O SKU "${sku}" já está em uso por outra peça.`,
+          });
+        }
+      }
+
       const peca = await createPeca(tenantId, {
         ...rest,
+        sku: sku?.trim() || undefined,
         precoCusto: precoCusto !== undefined ? String(precoCusto) : undefined,
         precoVenda: String(precoVenda),
       });
@@ -93,13 +180,27 @@ export const estoqueRouter = router({
         partNumber: z.string().max(100).nullable().optional(),
         manufacturer: z.string().max(150).nullable().optional(),
         application: z.string().nullable().optional(),
+        sku: z.string().max(50).nullable().optional(),
         compatibleModelIds: z.array(z.number()).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const { tenantId, role } = await resolveTenantAndRole(ctx.user.id);
-      const { id, precoCusto, precoVenda, compatibleModelIds, ...rest } = input;
+      const { id, precoCusto, precoVenda, compatibleModelIds, sku, ...rest } = input;
+
+      // Validar unicidade do SKU por tenant (excluindo a própria peça)
+      if (sku && sku.trim()) {
+        const exists = await skuExistsForTenant(tenantId, sku.trim(), id);
+        if (exists) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: `O SKU "${sku}" já está em uso por outra peça.`,
+          });
+        }
+      }
+
       const data: Record<string, unknown> = { ...rest };
+      if (sku !== undefined) data.sku = sku?.trim() || null;
       if (precoVenda !== undefined) data.precoVenda = String(precoVenda);
       if (precoCusto !== undefined && (role === "manager" || ctx.user.role === "admin")) {
         data.precoCusto = String(precoCusto);

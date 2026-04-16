@@ -480,3 +480,16 @@
 - [x] Estoque: spinner na lupa + campo desabilitado (opacity-60) + texto "Consultando Nexar..." com pulse durante a busca
 - [x] Lista de Compras: spinner na lupa + campo desabilitado (opacity-60) + texto "Consultando Nexar..." com pulse durante a busca
 - [x] Busca de Componentes (/busca-peca): skeleton loader completo (card principal, specs, distribuidores) + spinner no botão + mensagem com PN durante a busca
+
+## Campo SKU no Módulo de Estoque
+
+- [x] Schema: campo `sku` (varchar 50) adicionado na tabela `pecas`
+- [x] Migration 0014 gerada e aplicada
+- [x] Backend: endpoint `estoque.generateSku` gera código SKU-XXXXXX único por tenant (até 10 tentativas)
+- [x] Backend: validação de unicidade do SKU por tenant no `create` e `update` (erro CONFLICT se duplicado)
+- [x] Backend: endpoint `estoque.list` aceita `search` filtrando por nome, PN, SKU e código (match exato no topo)
+- [x] Frontend: campo SKU com botão Gerar (RefreshCw) no formulário de cadastro/edição
+- [x] Frontend: SKU exibido na listagem com ícone Barcode e destaque verde para match exato
+- [x] Frontend: campo de busca único aceita SKU, nome, PN; Enter dispara busca imediata (suporte a leitor)
+- [x] Frontend: hint de compatibilidade com leitor de código de barras
+- [x] 48 testes passando (TypeScript 0 erros)
