@@ -18,6 +18,8 @@ import Onboarding from "./pages/Onboarding";
 import Login from "./pages/Login";
 import Planos from "./pages/Planos";
 import AreaCliente from "./pages/AreaCliente";
+import RevendedorLogin from "./pages/RevendedorLogin";
+import RevendedorDashboard from "./pages/RevendedorDashboard";
 
 // Control Plane — /super-admin (completamente isolado da área do tenant)
 // Acesso exclusivo via URL direta. Nunca aparece na navegação do tenant.
@@ -36,6 +38,7 @@ import AdminEmailCampaigns from "./pages/admin/AdminEmailCampaigns";
 import AdminResale from "./pages/admin/AdminResale";
 import AdminPlaybook from "./pages/admin/AdminPlaybook";
 import AdminRevendedores from "./pages/admin/AdminRevendedores";
+import AdminComissoes from "./pages/admin/AdminComissoes";
 
 function Router() {
   return (
@@ -47,6 +50,10 @@ function Router() {
 
       {/* ── Área do Cliente (público, sem auth) ──────────── */}
       <Route path="/cliente/os/:token" component={AreaCliente} />
+
+      {/* ── Portal do Revendedor (público, JWT próprio) ──── */}
+      <Route path="/revendedor/login" component={RevendedorLogin} />
+      <Route path="/revendedor/dashboard" component={RevendedorDashboard} />
 
       {/* ── Onboarding ──────────────────────────────────────── */}
       <Route path="/onboarding" component={Onboarding} />
@@ -79,6 +86,7 @@ function Router() {
       <Route path="/super-admin/campaigns">{() => <SuperAdminGuard><AdminEmailCampaigns /></SuperAdminGuard>}</Route>
       <Route path="/super-admin/resale">{() => <SuperAdminGuard><AdminResale /></SuperAdminGuard>}</Route>
       <Route path="/super-admin/revendedores">{() => <SuperAdminGuard><AdminRevendedores /></SuperAdminGuard>}</Route>
+      <Route path="/super-admin/comissoes">{() => <SuperAdminGuard><AdminComissoes /></SuperAdminGuard>}</Route>
       <Route path="/super-admin/playbook">{() => <SuperAdminGuard><AdminPlaybook /></SuperAdminGuard>}</Route>
 
       {/* ── 404 ─────────────────────────────────────────────── */}

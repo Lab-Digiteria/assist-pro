@@ -66,6 +66,13 @@ export default function Home() {
   const { isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
   const [mobileMenu, setMobileMenu] = useState(false);
+  // Capturar código de referral da URL (?ref=CODIGO) e persistir no localStorage
+  const [referralCode] = useState<string | undefined>(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get("ref")?.toUpperCase();
+    if (ref) { localStorage.setItem("ap_ref", ref); return ref; }
+    return localStorage.getItem("ap_ref") ?? undefined;
+  });
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [showPw, setShowPw] = useState(false);
   const [trialForm, setTrialForm] = useState({ name: "", email: "", password: "", companyName: "", phone: "", document: "" });
@@ -112,7 +119,7 @@ export default function Home() {
       toast.error("Preencha todos os campos obrigatórios");
       return;
     }
-    registerTrial.mutate({ name, email, password, companyName, phone, document, source: "landing" });
+    registerTrial.mutate({ name, email, password, companyName, phone, document, source: "landing", referralCode });
   };
 
   return (

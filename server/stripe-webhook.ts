@@ -2,8 +2,8 @@ import type { Express, Request, Response } from "express";
 import express from "express";
 import Stripe from "stripe";
 import { getDb } from "./db";
-import { tenants, stripeEvents } from "../drizzle/schema";
-import { eq } from "drizzle-orm";
+import { tenants, stripeEvents, referralConversions, revendedorCommissions } from "../drizzle/schema";
+import { and, eq } from "drizzle-orm";
 import { sendEmail, buildPaymentConfirmationEmail } from "./email";
 
 function getStripe(): Stripe | null {
@@ -94,6 +94,65 @@ export function registerStripeWebhook(app: Express) {
                 String(session.subscription),
                 plan ?? null
               );
+            }
+            // Confirmar conversão de referral (se houver)
+            try {
+              const dbRef = await getDb();
+              if (dbRef) {
+                // Buscar conversão pendente deste tenant
+                const [conv] = await dbRef.select().from(referralConversions)
+                  .where(and(
+                    eq(referralConversions.tenantId, tenantId),
+                    eq(referralConversions.status, "pending")
+                  )).limit(1);
+                if (conv) {
+                  const planLabel = plan === "lifetime" ? "Vitálicio" : plan === "annual" ? "Anual" : "Mensal";
+                  const amount = session.amount_total ? session.amount_total / 100 : 0;
+                  const commissionRate = Number(conv.commissionRate ?? 20);
+                  const commissionValue = (amount * commissionRate) / 100;
+                  // Atualizar conversão para confirmada
+                  await dbRef.update(referralConversions)
+                    .set({
+                      status: "confirmed",
+                      planName: planLabel,
+                      planValue: String(amount.toFixed(2)),
+                      commissionValue: String(commissionValue.toFixed(2)),
+                      stripePaymentIntentId: session.payment_intent ? String(session.payment_intent) : undefined,
+                      confirmedAt: new Date(),
+                    })
+                    .where(eq(referralConversions.id, conv.id));
+                  // Criar ou atualizar comissão mensal do revendedor
+                  const now = new Date();
+                  const mes = now.getMonth() + 1;
+                  const ano = now.getFullYear();
+                  const [existingComm] = await dbRef.select().from(revendedorCommissions)
+                    .where(and(
+                      eq(revendedorCommissions.revendedorId, conv.revendedorId),
+                      eq(revendedorCommissions.periodoMes, mes),
+                      eq(revendedorCommissions.periodoAno, ano)
+                    )).limit(1);
+                  if (existingComm) {
+                    await dbRef.update(revendedorCommissions)
+                      .set({
+                        totalConversions: existingComm.totalConversions + 1,
+                        totalValue: String((Number(existingComm.totalValue) + commissionValue).toFixed(2)),
+                      })
+                      .where(eq(revendedorCommissions.id, existingComm.id));
+                  } else {
+                    await dbRef.insert(revendedorCommissions).values({
+                      revendedorId: conv.revendedorId,
+                      periodoMes: mes,
+                      periodoAno: ano,
+                      totalConversions: 1,
+                      totalValue: String(commissionValue.toFixed(2)),
+                      status: "pending",
+                    });
+                  }
+                  console.log(`[Stripe Webhook] Referral confirmado: revendedor ${conv.revendedorId}, comissão R$${commissionValue.toFixed(2)}`);
+                }
+              }
+            } catch (refErr) {
+              console.error("[Stripe Webhook] Erro ao confirmar referral:", refErr);
             }
             // Send payment confirmation email
             try {

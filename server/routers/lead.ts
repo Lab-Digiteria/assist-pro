@@ -79,6 +79,7 @@ export const leadRouter = router({
         phone: z.string().min(10, "WhatsApp inválido"),
         document: z.string().min(11, "CPF/CNPJ inválido"),
         source: z.string().optional(),
+        referralCode: z.string().optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -193,7 +194,29 @@ export const leadRouter = router({
         // Não bloqueia o cadastro se falhar o registro do lead
       }
 
-      // 9. Notificar owner
+      // 9. Registrar conversão do revendedor (se veio por referral)
+      if (input.referralCode) {
+        try {
+          const { revendedores, referralConversions } = await import("../../drizzle/schema");
+          const [rev] = await db
+            .select({ id: revendedores.id, commissionRate: revendedores.commissionRate })
+            .from(revendedores)
+            .where(eq(revendedores.referralCode, input.referralCode.toUpperCase()))
+            .limit(1);
+          if (rev) {
+            await db.insert(referralConversions).values({
+              revendedorId: rev.id,
+              tenantId: newTenant.id,
+              status: "pending",
+              commissionRate: rev.commissionRate ?? "20.00",
+            });
+          }
+        } catch {
+          // Não bloqueia o cadastro se falhar o registro da conversão
+        }
+      }
+
+      // 10. Notificar owner
       try {
         const { notifyOwner } = await import("../_core/notification");
         await notifyOwner({

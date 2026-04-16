@@ -515,8 +515,46 @@ export const revendedores = mysqlTable("revendedores", {
   ]).notNull(),
   mensagem: text("mensagem"),
   status: mysqlEnum("status", ["pendente", "ativo", "inativo"]).default("pendente").notNull(),
+  referralCode: varchar("referralCode", { length: 12 }).unique(),
+  referralPassword: varchar("referralPassword", { length: 255 }),
+  commissionRate: decimal("commissionRate", { precision: 5, scale: 2 }).default("20.00").notNull(),
+  totalClicks: int("totalClicks").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 export type Revendedor = typeof revendedores.$inferSelect;
 export type InsertRevendedor = typeof revendedores.$inferInsert;
+
+// ─── REFERRAL CONVERSIONS ──────────────────────────────────────────────────────────────────
+export const referralConversions = mysqlTable("referralConversions", {
+  id: int("id").autoincrement().primaryKey(),
+  revendedorId: int("revendedorId").notNull(),
+  tenantId: int("tenantId").notNull(),
+  status: mysqlEnum("status", ["pending", "confirmed", "cancelled"]).default("pending").notNull(),
+  planName: varchar("planName", { length: 100 }),
+  planValue: decimal("planValue", { precision: 10, scale: 2 }),
+  commissionRate: decimal("commissionRate", { precision: 5, scale: 2 }).default("20.00").notNull(),
+  commissionValue: decimal("commissionValue", { precision: 10, scale: 2 }),
+  stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 255 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  confirmedAt: timestamp("confirmedAt"),
+});
+export type ReferralConversion = typeof referralConversions.$inferSelect;
+export type InsertReferralConversion = typeof referralConversions.$inferInsert;
+
+// ─── REVENDEDOR COMMISSIONS ─────────────────────────────────────────────────────────────────
+export const revendedorCommissions = mysqlTable("revendedorCommissions", {
+  id: int("id").autoincrement().primaryKey(),
+  revendedorId: int("revendedorId").notNull(),
+  periodoMes: int("periodoMes").notNull(),
+  periodoAno: int("periodoAno").notNull(),
+  totalConversions: int("totalConversions").default(0).notNull(),
+  totalValue: decimal("totalValue", { precision: 10, scale: 2 }).default("0.00").notNull(),
+  status: mysqlEnum("status", ["pending", "paid"]).default("pending").notNull(),
+  paidAt: timestamp("paidAt"),
+  observacoes: text("observacoes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type RevendedorCommission = typeof revendedorCommissions.$inferSelect;
+export type InsertRevendedorCommission = typeof revendedorCommissions.$inferInsert;

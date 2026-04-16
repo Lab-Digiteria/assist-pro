@@ -21,6 +21,7 @@ import {
   Send,
   Shield,
   Wrench,
+  DollarSign,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -40,6 +41,7 @@ const navItems = [
   { href: "/super-admin/leads", label: "Leads", icon: UserPlus },
   { href: "/super-admin/communications", label: "Comunicação", icon: Mail },
   { href: "/super-admin/revendedores", label: "Revendedores", icon: Handshake },
+  { href: "/super-admin/comissoes", label: "Comissões", icon: DollarSign },
   { href: "/super-admin/trials", label: "Monitoramento Trials", icon: Eye },
   { href: "/super-admin/campaigns", label: "Campanhas Email", icon: Send },
   { href: "/super-admin/playbook", label: "Roteiro do Sistema", icon: ClipboardList },

@@ -50,6 +50,13 @@
       "when": 1776345617377,
       "tag": "0006_productive_warhawk",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1776349270808,
+      "tag": "0007_stiff_jackal",
+      "breakpoints": true
     }
   ]
 }

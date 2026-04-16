@@ -243,3 +243,30 @@
 - [ ] Landing page: âncora `#revendedores` para navegação direta
 - [ ] Super Admin: página `/super-admin/revendedores` com tabela de leads e ações de status
 - [ ] Super Admin: link "Revendedores" no menu do CoreLayout
+
+## Dashboard do Revendedor
+
+- [x] Schema: adicionar campo `referralCode` (varchar 12, único) e `referralPassword` (varchar, hash) na tabela `revendedores`
+- [x] Schema: criar tabela `referralConversions` (id, revendedorId, tenantId, status, planName, planValue, commissionRate, commissionValue, createdAt)
+- [x] Schema: criar tabela `revendedorCommissions` (id, revendedorId, periodoMes, periodoAno, totalConversions, totalValue, status, paidAt, observacoes)
+- [x] Migration gerada e aplicada
+- [x] Backend: gerar referralCode único ao ativar revendedor
+- [x] Backend: endpoint público revendedor.login (email + senha)
+- [x] Backend: endpoint revendedor.me (dados do revendedor autenticado)
+- [x] Backend: endpoint revendedor.dashboard (KPIs: cliques, conversões, comissão pendente, comissão total)
+- [x] Backend: endpoint revendedor.conversions (lista de conversões com status)
+- [x] Backend: endpoint revendedor.commissions (lista de comissões por mês)
+- [x] Backend: endpoint admin.setRevendedorPassword (Super Admin define senha inicial)
+- [x] Backend: endpoint admin.approveCommission (Super Admin marca comissão como paga)
+- [x] Backend: capturar parâmetro `?ref=` no registro de trial e salvar referralCode no tenant
+- [x] Backend: ao confirmar pagamento Stripe, criar referralConversion e revendedorCommission
+- [x] Frontend: rota pública /revendedor/login
+- [x] Frontend: rota protegida /revendedor/dashboard com RevendedorGuard
+- [x] Frontend: dashboard com KPIs (cliques, conversões, comissão pendente, comissão total)
+- [x] Frontend: card com link de indicação único + botão copiar + QR code
+- [x] Frontend: tabela de conversões com status (Pendente/Confirmado/Cancelado)
+- [x] Frontend: tabela de comissões por mês com status (Pendente/Pago)
+- [x] Frontend: landing page captura `?ref=` e salva em localStorage
+- [x] Super Admin: coluna referralCode na página AdminRevendedores
+- [x] Super Admin: botão "Definir senha" para ativar acesso do revendedor
+- [x] Super Admin: página de comissões com aprovação de pagamento
