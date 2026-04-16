@@ -29,7 +29,7 @@ import {
   Upload,
   Search,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "./ui/button";
@@ -70,10 +70,39 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
   const { user, loading, isAuthenticated } = useAuth();
   const [location] = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  // Todos os hooks ANTES de qualquer return condicional (regra dos hooks do React)
+  const [financeiroOpen, setFinanceiroOpen] = useState(false);
   const logout = trpc.auth.logout.useMutation({
     onSuccess: () => (window.location.href = "/"),
   });
   const { data: tenant } = trpc.tenants.mine.useQuery(undefined, { enabled: isAuthenticated });
+
+  const isFinanceiroActive = location.startsWith("/financeiro");
+
+  // Sincroniza financeiroOpen com a rota ativa (sem violar regra dos hooks)
+  useEffect(() => {
+    if (isFinanceiroActive) setFinanceiroOpen(true);
+  }, [isFinanceiroActive]);
+
+  // Redirects via useEffect para não violar a regra dos hooks
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      window.location.href = getLoginUrl();
+    }
+  }, [loading, isAuthenticated]);
+
+  useEffect(() => {
+    if (!loading && tenant === null) {
+      window.location.href = "/onboarding";
+    }
+  }, [loading, tenant]);
+
+  const initials = user?.name
+    ?.split(" ")
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase() ?? "U";
 
   if (loading) {
     return (
@@ -84,25 +113,13 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
   }
 
   if (!isAuthenticated) {
-    window.location.href = getLoginUrl();
     return null;
   }
 
-  // Redirect to onboarding if no tenant
-  if (tenant === null && !loading) {
-    window.location.href = "/onboarding";
+  // Enquanto aguarda tenant carregar (undefined = ainda carregando, null = não tem)
+  if (tenant === null) {
     return null;
   }
-
-  const initials = user?.name
-    ?.split(" ")
-    .map((n) => n[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase() ?? "U";
-
-  const isFinanceiroActive = location.startsWith("/financeiro");
-  const [financeiroOpen, setFinanceiroOpen] = useState(isFinanceiroActive);
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">

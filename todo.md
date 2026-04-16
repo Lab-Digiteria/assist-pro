@@ -405,3 +405,10 @@
 - [x] Frontend: rota /busca-peca registrada no App.tsx
 - [x] Frontend: link "Busca Nexar" no sidebar (abaixo de Lista de Compras)
 - [x] Testes: 47 testes passando, TypeScript 0 erros
+
+## Correção de Bug — React Error #310 no Dashboard
+
+- [x] Corrigido: `useState(financeiroOpen)` estava sendo chamado após returns condicionais no AppLayout, violando a regra dos hooks do React
+- [x] Todos os hooks movidos para antes de qualquer `return` condicional
+- [x] Redirects de autenticação e onboarding convertidos para `useEffect` (evita chamadas durante render)
+- [x] `financeiroOpen` inicializado como `false` e sincronizado via `useEffect` com a rota ativa
