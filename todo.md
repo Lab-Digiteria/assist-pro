@@ -150,3 +150,45 @@
 - [x] Seção "Como funciona em 3 passos" (cadastro → acesso → uso)
 - [x] Seção depoimentos com 3 clientes fictícios realistas
 - [x] Manter conteúdo (textos, planos, FAQ) — mudar apenas visual
+
+## Funcionalidade 1 — Cadastro de Clientes Inteligente
+
+- [x] Schema: adicionar origemCliente (enum), preferenciaContato (enum), horarioPreferidoContato (varchar), classificacao (enum), observacoesInternas (text), aceitouTermos (boolean), aceitouTermosAt (timestamp) à tabela clientes
+- [x] Backend: atualizar clientes.create e clientes.update para aceitar novos campos
+- [x] Backend: lógica automática de classificação inadimplente (cliente com OS encerrada com saldo devedor)
+- [x] Frontend: formulário de cliente com novos campos (origem, preferência contato, horário, classificação, observações internas, aceite de termos)
+- [x] Frontend: badge de classificação (VIP, Recorrente, Inadimplente) na listagem e detalhe do cliente
+- [x] Frontend: histórico de equipamentos atendidos na tela de detalhe do cliente
+
+## Funcionalidade 2 — OS com Camada de Segurança
+
+- [x] Schema: adicionar laudoTecnico (text), numeroLacre (varchar), semSolucaoPossivel (boolean), justificativaSemSolucao (text), assinaturaClienteUrl (varchar), statusOrcamento (enum), motivoReprovacao (text), descontoValor (decimal), prazoEstimadoConclusao (timestamp), validadeOrcamento (timestamp) à tabela ordensServico
+- [x] Schema: criar tabela osPhotos (id, osId, tenantId, url, tipo enum entrada/saida, uploadedBy, createdAt)
+- [x] Schema: criar tabela osFieldAudit (id, osId, tenantId, campo, valorAnterior, valorNovo, userId, createdAt)
+- [x] Backend: endpoint upload de fotos da OS (storagePut + insert em osPhotos)
+- [x] Backend: auditoria automática de campos ao atualizar OS (registrar em osFieldAudit)
+- [x] Backend: endpoint para buscar fotos da OS
+- [x] Frontend: bloco de upload de fotos na tela de OS (câmera/arquivo, preview, delete)
+- [x] Frontend: campo de laudo técnico separado do descricaoProblema na OS
+- [x] Frontend: campo de número de lacre na OS
+- [x] Frontend: flag "Sem solução possível" com campo de justificativa obrigatória
+- [x] Frontend: componente de assinatura digital (canvas) na OS com botão "Limpar" e "Salvar"
+- [x] Frontend: timeline de auditoria de campos na OS (quem alterou o quê e quando)
+
+## Funcionalidade 5 — Área do Cliente por Link com Token
+
+- [x] Schema: adicionar clientToken (varchar 36), clientTokenExpiresAt (timestamp), clientObservacoes (text) à tabela ordensServico
+- [x] Backend: gerar clientToken UUID v4 ao criar OS (auto)
+- [x] Backend: publicProcedure os.getByClientToken — retorna dados seguros da OS (sem observacoesInternas, valorCusto, senhaDesbloqueio)
+- [x] Backend: publicProcedure os.clientApproveQuote — aprova orçamento via token
+- [x] Backend: publicProcedure os.clientRejectQuote — reprova orçamento via token (motivo obrigatório)
+- [x] Backend: publicProcedure os.clientAddObservation — cliente insere informação adicional via token
+- [x] Backend: notifyOwner ao receber aprovação ou reprovação do cliente
+- [x] Frontend: rota pública /cliente/os/:token sem autenticação
+- [x] Frontend: página área do cliente com linha do tempo visual de status
+- [x] Frontend: exibir fotos de entrada na área do cliente
+- [x] Frontend: exibir laudo técnico na área do cliente
+- [x] Frontend: exibir orçamento detalhado (sem valor de custo) com botões Aprovar/Reprovar
+- [x] Frontend: campo de observações adicionais do cliente (ex: "a senha é 1234")
+- [x] Frontend: botão "Copiar link do cliente" na tela da OS (para o gestor enviar manualmente)
+- [x] Frontend: exibir clientToken como QR code na tela da OS (opcional, para impressão)

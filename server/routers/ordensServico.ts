@@ -1,21 +1,32 @@
 import { TRPCError } from "@trpc/server";
+import { randomUUID } from "crypto";
 import { z } from "zod";
 import {
+  addOsFieldAudit,
   addOsItem,
   addOsLancamento,
+  addOsPhoto,
   createOrdemServico,
+  deleteOsPhoto,
   getOrdemServicoById,
   getOrdensServico,
+  getOsByClientToken,
+  getOsFieldAudit,
   getOsItens,
   getOsLancamentos,
+  getOsPhotos,
   getOsStatusHistory,
   getTenantByMember,
   getTenantByOwner,
   removeOsItem,
+  updateCliente,
   updateOrdemServico,
   updateOrdemServicoStatus,
+  updateOsClientToken,
 } from "../db";
-import { protectedProcedure, router } from "../_core/trpc";
+import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
+import { storagePut } from "../storage";
+import { notifyOwner } from "../_core/notification";
 
 async function resolveTenantId(userId: number): Promise<number> {
   const owned = await getTenantByOwner(userId);
@@ -25,14 +36,24 @@ async function resolveTenantId(userId: number): Promise<number> {
   throw new TRPCError({ code: "FORBIDDEN", message: "Você não pertence a nenhuma empresa" });
 }
 
+// Campos auditáveis da OS (label legível)
+const AUDITABLE_FIELDS: Record<string, string> = {
+  laudoTecnico: "Laudo técnico",
+  descricaoProblema: "Descrição do problema",
+  observacoesInternas: "Observações internas",
+  tecnicoId: "Técnico responsável",
+  prazoOrcamento: "Prazo do orçamento",
+  numeroLacre: "Número do lacre",
+  semSolucaoPossivel: "Sem solução possível",
+  justificativaSemSolucao: "Justificativa sem solução",
+  descontoValor: "Desconto",
+  prazoEstimadoConclusao: "Prazo estimado de conclusão",
+  validadeOrcamento: "Validade do orçamento",
+};
+
 export const ordensServicoRouter = router({
   list: protectedProcedure
-    .input(
-      z.object({
-        status: z.string().optional(),
-        search: z.string().optional(),
-      })
-    )
+    .input(z.object({ status: z.string().optional(), search: z.string().optional() }))
     .query(async ({ ctx, input }) => {
       const tenantId = await resolveTenantId(ctx.user.id);
       return getOrdensServico(tenantId, input);
@@ -53,16 +74,21 @@ export const ordensServicoRouter = router({
         clienteId: z.number(),
         equipamentoId: z.number(),
         tecnicoId: z.number().optional(),
-        prazoOrcamento: z.string().optional(), // ISO date string
+        prazoOrcamento: z.string().optional(),
         descricaoProblema: z.string().optional(),
         checklistEstadoFisico: z.record(z.string(), z.any()).optional(),
         checklistSintomas: z.record(z.string(), z.any()).optional(),
         senhaDesbloqueio: z.string().optional(),
         acessoriosEntregues: z.array(z.string()).optional(),
+        laudoTecnico: z.string().optional(),
+        numeroLacre: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const tenantId = await resolveTenantId(ctx.user.id);
+      // Generate client token on creation
+      const clientToken = randomUUID();
+      const clientTokenExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
       return createOrdemServico(tenantId, {
         clienteId: input.clienteId,
         equipamentoId: input.equipamentoId,
@@ -73,6 +99,10 @@ export const ordensServicoRouter = router({
         checklistSintomas: (input.checklistSintomas ?? null) as any,
         senhaDesbloqueio: input.senhaDesbloqueio,
         acessoriosEntregues: (input.acessoriosEntregues ?? null) as any,
+        laudoTecnico: input.laudoTecnico,
+        numeroLacre: input.numeroLacre,
+        clientToken,
+        clientTokenExpiresAt,
       });
     }),
 
@@ -101,7 +131,6 @@ export const ordensServicoRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const tenantId = await resolveTenantId(ctx.user.id);
-
       if (input.tipoEncerramento || input.temGarantia !== undefined) {
         await updateOrdemServico(tenantId, input.id, {
           tipoEncerramento: input.tipoEncerramento,
@@ -109,14 +138,14 @@ export const ordensServicoRouter = router({
           garantiaDias: input.garantiaDias ?? 90,
         });
       }
-
-      await updateOrdemServicoStatus(
-        tenantId,
-        input.id,
-        input.status,
-        ctx.user.id,
-        input.observacao
-      );
+      await updateOrdemServicoStatus(tenantId, input.id, input.status, ctx.user.id, input.observacao);
+      // Auto-mark client as inadimplente when OS is closed with outstanding balance
+      if (input.tipoEncerramento === "com_saldo_devedor") {
+        const os = await getOrdemServicoById(tenantId, input.id);
+        if (os?.clienteId) {
+          await updateCliente(tenantId, os.clienteId, { classificacao: "inadimplente" });
+        }
+      }
       return { success: true };
     }),
 
@@ -132,21 +161,215 @@ export const ordensServicoRouter = router({
         checklistSintomas: z.record(z.string(), z.any()).optional(),
         senhaDesbloqueio: z.string().optional(),
         acessoriosEntregues: z.array(z.string()).optional(),
+        // Novos campos de segurança
+        laudoTecnico: z.string().optional(),
+        numeroLacre: z.string().optional(),
+        semSolucaoPossivel: z.boolean().optional(),
+        justificativaSemSolucao: z.string().optional(),
+        descontoValor: z.number().optional(),
+        prazoEstimadoConclusao: z.string().optional(),
+        validadeOrcamento: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const tenantId = await resolveTenantId(ctx.user.id);
       const { id, ...data } = input;
+      const current = await getOrdemServicoById(tenantId, id);
+      if (!current) throw new TRPCError({ code: "NOT_FOUND" });
+
       const updates: Record<string, unknown> = {};
-      if (data.tecnicoId !== undefined) updates.tecnicoId = data.tecnicoId;
-      if (data.descricaoProblema !== undefined) updates.descricaoProblema = data.descricaoProblema;
+      const auditEntries: Array<{ campo: string; valorAnterior?: string | null; valorNovo?: string | null }> = [];
+
+      const track = (field: string, newVal: unknown) => {
+        const oldVal = (current as any)[field];
+        const oldStr = oldVal != null ? String(oldVal) : null;
+        const newStr = newVal != null ? String(newVal) : null;
+        if (oldStr !== newStr) {
+          auditEntries.push({ campo: AUDITABLE_FIELDS[field] ?? field, valorAnterior: oldStr, valorNovo: newStr });
+          updates[field] = newVal;
+        }
+      };
+
+      if (data.tecnicoId !== undefined) track("tecnicoId", data.tecnicoId);
+      if (data.descricaoProblema !== undefined) track("descricaoProblema", data.descricaoProblema);
       if (data.observacoesInternas !== undefined) updates.observacoesInternas = data.observacoesInternas;
       if (data.senhaDesbloqueio !== undefined) updates.senhaDesbloqueio = data.senhaDesbloqueio;
       if (data.checklistEstadoFisico !== undefined) updates.checklistEstadoFisico = data.checklistEstadoFisico;
       if (data.checklistSintomas !== undefined) updates.checklistSintomas = data.checklistSintomas;
       if (data.acessoriosEntregues !== undefined) updates.acessoriosEntregues = data.acessoriosEntregues;
-      if (data.prazoOrcamento) updates.prazoOrcamento = new Date(data.prazoOrcamento);
-      await updateOrdemServico(tenantId, id, updates as any);
+      if (data.prazoOrcamento) track("prazoOrcamento", new Date(data.prazoOrcamento));
+      if (data.laudoTecnico !== undefined) track("laudoTecnico", data.laudoTecnico);
+      if (data.numeroLacre !== undefined) track("numeroLacre", data.numeroLacre);
+      if (data.semSolucaoPossivel !== undefined) track("semSolucaoPossivel", data.semSolucaoPossivel);
+      if (data.justificativaSemSolucao !== undefined) track("justificativaSemSolucao", data.justificativaSemSolucao);
+      if (data.descontoValor !== undefined) track("descontoValor", data.descontoValor);
+      if (data.prazoEstimadoConclusao) track("prazoEstimadoConclusao", new Date(data.prazoEstimadoConclusao));
+      if (data.validadeOrcamento) track("validadeOrcamento", new Date(data.validadeOrcamento));
+
+      if (Object.keys(updates).length > 0) {
+        await updateOrdemServico(tenantId, id, updates as any);
+      }
+      if (auditEntries.length > 0) {
+        await addOsFieldAudit(tenantId, id, auditEntries.map((e) => ({
+          ...e,
+          userId: ctx.user.id,
+          userName: ctx.user.name ?? undefined,
+        })));
+      }
+      return { success: true };
+    }),
+
+  // Fotos
+  photos: protectedProcedure
+    .input(z.object({ osId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const tenantId = await resolveTenantId(ctx.user.id);
+      return getOsPhotos(tenantId, input.osId);
+    }),
+
+  uploadPhoto: protectedProcedure
+    .input(
+      z.object({
+        osId: z.number(),
+        tipo: z.enum(["entrada", "saida", "laudo"]),
+        base64: z.string(), // base64 encoded image
+        mimeType: z.string().default("image/jpeg"),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const tenantId = await resolveTenantId(ctx.user.id);
+      const buffer = Buffer.from(input.base64, "base64");
+      if (buffer.length > 10 * 1024 * 1024) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Imagem muito grande (máx 10MB)" });
+      }
+      const ext = input.mimeType.split("/")[1] ?? "jpg";
+      const fileKey = `tenants/${tenantId}/os/${input.osId}/photos/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const { url } = await storagePut(fileKey, buffer, input.mimeType);
+      await addOsPhoto(tenantId, input.osId, {
+        url,
+        fileKey,
+        tipo: input.tipo,
+        uploadedBy: ctx.user.id,
+      });
+      return { url, fileKey };
+    }),
+
+  deletePhoto: protectedProcedure
+    .input(z.object({ photoId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const tenantId = await resolveTenantId(ctx.user.id);
+      await deleteOsPhoto(tenantId, input.photoId);
+      return { success: true };
+    }),
+
+  // Assinatura digital
+  saveSignature: protectedProcedure
+    .input(
+      z.object({
+        osId: z.number(),
+        base64: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const tenantId = await resolveTenantId(ctx.user.id);
+      const buffer = Buffer.from(input.base64, "base64");
+      const fileKey = `tenants/${tenantId}/os/${input.osId}/signature-${Date.now()}.png`;
+      const { url } = await storagePut(fileKey, buffer, "image/png");
+      await updateOrdemServico(tenantId, input.osId, { assinaturaClienteUrl: url });
+      return { url };
+    }),
+
+  // Auditoria de campos
+  fieldAudit: protectedProcedure
+    .input(z.object({ osId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const tenantId = await resolveTenantId(ctx.user.id);
+      return getOsFieldAudit(tenantId, input.osId);
+    }),
+
+  // Regenerar token do cliente
+  regenerateClientToken: protectedProcedure
+    .input(z.object({ osId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const tenantId = await resolveTenantId(ctx.user.id);
+      const os = await getOrdemServicoById(tenantId, input.osId);
+      if (!os) throw new TRPCError({ code: "NOT_FOUND" });
+      const token = randomUUID();
+      const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      await updateOsClientToken(input.osId, token, expiresAt);
+      return { token };
+    }),
+
+  // ── ÁREA DO CLIENTE (rotas públicas por token) ──────────────────────────────
+  getByClientToken: publicProcedure
+    .input(z.object({ token: z.string() }))
+    .query(async ({ input }) => {
+      const os = await getOsByClientToken(input.token);
+      if (!os) throw new TRPCError({ code: "NOT_FOUND", message: "OS não encontrada ou link expirado" });
+      // Return only client-safe fields (never expose internal notes, cost, password)
+      return {
+        id: os.id,
+        numero: os.numero,
+        status: os.status,
+        statusOrcamento: os.statusOrcamento,
+        descricaoProblema: os.descricaoProblema,
+        laudoTecnico: os.laudoTecnico,
+        valorTotal: os.valorTotal,
+        descontoValor: os.descontoValor,
+        prazoEstimadoConclusao: os.prazoEstimadoConclusao,
+        validadeOrcamento: os.validadeOrcamento,
+        motivoReprovacao: os.motivoReprovacao,
+        clientObservacoes: os.clientObservacoes,
+        dataNotificacaoCliente: os.dataNotificacaoCliente,
+        createdAt: os.createdAt,
+        updatedAt: os.updatedAt,
+        tenantId: os.tenantId,
+        clienteId: os.clienteId,
+        equipamentoId: os.equipamentoId,
+      };
+    }),
+
+  clientApproveQuote: publicProcedure
+    .input(z.object({ token: z.string() }))
+    .mutation(async ({ input }) => {
+      const os = await getOsByClientToken(input.token);
+      if (!os) throw new TRPCError({ code: "NOT_FOUND", message: "OS não encontrada ou link expirado" });
+      if (os.statusOrcamento !== "pendente") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Orçamento já foi respondido" });
+      }
+      await updateOrdemServico(os.tenantId, os.id, { statusOrcamento: "aprovado" });
+      await notifyOwner({
+        title: `✅ Orçamento aprovado — OS ${os.numero}`,
+        content: `O cliente aprovou o orçamento da OS ${os.numero}.`,
+      }).catch(() => {});
+      return { success: true };
+    }),
+
+  clientRejectQuote: publicProcedure
+    .input(z.object({ token: z.string(), motivo: z.string().min(5).max(500) }))
+    .mutation(async ({ input }) => {
+      const os = await getOsByClientToken(input.token);
+      if (!os) throw new TRPCError({ code: "NOT_FOUND", message: "OS não encontrada ou link expirado" });
+      if (os.statusOrcamento !== "pendente") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Orçamento já foi respondido" });
+      }
+      await updateOrdemServico(os.tenantId, os.id, {
+        statusOrcamento: "reprovado",
+        motivoReprovacao: input.motivo,
+      });
+      await notifyOwner({
+        title: `❌ Orçamento reprovado — OS ${os.numero}`,
+        content: `O cliente reprovou o orçamento da OS ${os.numero}. Motivo: ${input.motivo}`,
+      }).catch(() => {});
+      return { success: true };
+    }),
+
+  clientAddObservation: publicProcedure
+    .input(z.object({ token: z.string(), observacao: z.string().min(1).max(1000) }))
+    .mutation(async ({ input }) => {
+      const os = await getOsByClientToken(input.token);
+      if (!os) throw new TRPCError({ code: "NOT_FOUND", message: "OS não encontrada ou link expirado" });
+      await updateOrdemServico(os.tenantId, os.id, { clientObservacoes: input.observacao });
       return { success: true };
     }),
 
@@ -164,9 +387,11 @@ export const ordensServicoRouter = router({
         osId: z.number(),
         tipo: z.enum(["servico", "peca"]),
         descricao: z.string().min(1),
+        descricaoTecnica: z.string().optional(),
         pecaId: z.number().optional(),
         quantidade: z.number().min(1),
         valorUnitario: z.number().min(0),
+        valorCusto: z.number().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {

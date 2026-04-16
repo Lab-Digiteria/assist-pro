@@ -10,8 +10,10 @@ import {
   InsertUser,
   leads,
   ordensServico,
+  osFieldAudit,
   osItens,
   osLancamentos,
+  osPhotos,
   osStatusHistory,
   pecas,
   tenantMembers,
@@ -997,4 +999,93 @@ export async function getUserById(id: number) {
   if (!db) return undefined;
   const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
   return result.length > 0 ? result[0] : undefined;
+}
+
+
+// ─── EQUIPAMENTOS POR CLIENTE ────────────────────────────────────────────────
+export async function getEquipamentosByCliente(tenantId: number, clienteId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(equipamentos)
+    .where(and(eq(equipamentos.tenantId, tenantId), eq(equipamentos.clienteId, clienteId)))
+    .orderBy(desc(equipamentos.createdAt));
+}
+
+// ─── FOTOS DA OS ─────────────────────────────────────────────────────────────
+export async function getOsPhotos(tenantId: number, osId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(osPhotos)
+    .where(and(eq(osPhotos.tenantId, tenantId), eq(osPhotos.osId, osId)))
+    .orderBy(osPhotos.createdAt);
+}
+
+export async function addOsPhoto(
+  tenantId: number,
+  osId: number,
+  data: { url: string; fileKey: string; tipo: "entrada" | "saida" | "laudo"; uploadedBy?: number }
+) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  await db.insert(osPhotos).values({ ...data, tenantId, osId });
+}
+
+export async function deleteOsPhoto(tenantId: number, photoId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db
+    .delete(osPhotos)
+    .where(and(eq(osPhotos.id, photoId), eq(osPhotos.tenantId, tenantId)));
+}
+
+// ─── AUDITORIA DE CAMPOS DA OS ───────────────────────────────────────────────
+export async function addOsFieldAudit(
+  tenantId: number,
+  osId: number,
+  entries: Array<{ campo: string; valorAnterior?: string | null; valorNovo?: string | null; userId?: number; userName?: string }>
+) {
+  const db = await getDb();
+  if (!db) return;
+  if (entries.length === 0) return;
+  await db.insert(osFieldAudit).values(
+    entries.map((e) => ({ ...e, tenantId, osId }))
+  );
+}
+
+export async function getOsFieldAudit(tenantId: number, osId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(osFieldAudit)
+    .where(and(eq(osFieldAudit.tenantId, tenantId), eq(osFieldAudit.osId, osId)))
+    .orderBy(desc(osFieldAudit.createdAt));
+}
+
+// ─── ÁREA DO CLIENTE (token público) ─────────────────────────────────────────
+export async function getOsByClientToken(token: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db
+    .select()
+    .from(ordensServico)
+    .where(eq(ordensServico.clientToken, token))
+    .limit(1);
+  const os = result[0];
+  if (!os) return null;
+  if (os.clientTokenExpiresAt && os.clientTokenExpiresAt < new Date()) return null;
+  return os;
+}
+
+export async function updateOsClientToken(osId: number, token: string, expiresAt: Date) {
+  const db = await getDb();
+  if (!db) return;
+  await db
+    .update(ordensServico)
+    .set({ clientToken: token, clientTokenExpiresAt: expiresAt })
+    .where(eq(ordensServico.id, osId));
 }

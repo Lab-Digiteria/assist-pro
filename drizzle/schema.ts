@@ -129,6 +129,22 @@ export const clientes = mysqlTable("clientes", {
   bairro: varchar("bairro", { length: 100 }),
   cidade: varchar("cidade", { length: 100 }),
   estado: varchar("estado", { length: 2 }),
+  // ── Campos inteligentes (Funcionalidade 1) ──
+  origemCliente: mysqlEnum("origemCliente", [
+    "indicacao",
+    "google",
+    "redes_sociais",
+    "passante",
+    "outro",
+  ]),
+  preferenciaContato: mysqlEnum("preferenciaContato", ["whatsapp", "email", "ligacao"]),
+  horarioPreferidoContato: varchar("horarioPreferidoContato", { length: 50 }),
+  classificacao: mysqlEnum("classificacao", ["padrao", "vip", "recorrente", "inadimplente"])
+    .default("padrao")
+    .notNull(),
+  observacoesInternas: text("observacoesInternas"),
+  aceitouTermos: boolean("aceitouTermos").default(false).notNull(),
+  aceitouTermosAt: timestamp("aceitouTermosAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -206,11 +222,57 @@ export const ordensServico = mysqlTable("ordensServico", {
   // Observações
   descricaoProblema: text("descricaoProblema"),
   observacoesInternas: text("observacoesInternas"),
+  // ── Camada de segurança (Funcionalidade 2) ──
+  laudoTecnico: text("laudoTecnico"),
+  numeroLacre: varchar("numeroLacre", { length: 50 }),
+  semSolucaoPossivel: boolean("semSolucaoPossivel").default(false),
+  justificativaSemSolucao: text("justificativaSemSolucao"),
+  assinaturaClienteUrl: varchar("assinaturaClienteUrl", { length: 500 }),
+  // ── Orçamento (Funcionalidade 2 + 5) ──
+  statusOrcamento: mysqlEnum("statusOrcamento", ["pendente", "aprovado", "reprovado"])
+    .default("pendente"),
+  motivoReprovacao: text("motivoReprovacao"),
+  descontoValor: decimal("descontoValor", { precision: 10, scale: 2 }).default("0"),
+  prazoEstimadoConclusao: timestamp("prazoEstimadoConclusao"),
+  validadeOrcamento: timestamp("validadeOrcamento"),
+  // ── Área do cliente (Funcionalidade 5) ──
+  clientToken: varchar("clientToken", { length: 36 }),
+  clientTokenExpiresAt: timestamp("clientTokenExpiresAt"),
+  clientObservacoes: text("clientObservacoes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
 export type OrdemServico = typeof ordensServico.$inferSelect;
+
+// ─── FOTOS DA OS (Funcionalidade 2) ──────────────────────────────────────────
+export const osPhotos = mysqlTable("osPhotos", {
+  id: int("id").autoincrement().primaryKey(),
+  osId: int("osId").notNull(),
+  tenantId: int("tenantId").notNull(),
+  url: varchar("url", { length: 500 }).notNull(),
+  fileKey: varchar("fileKey", { length: 500 }).notNull(),
+  tipo: mysqlEnum("tipo", ["entrada", "saida", "laudo"]).default("entrada").notNull(),
+  uploadedBy: int("uploadedBy"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type OsPhoto = typeof osPhotos.$inferSelect;
+
+// ─── AUDITORIA DE CAMPOS DA OS (Funcionalidade 2) ────────────────────────────
+export const osFieldAudit = mysqlTable("osFieldAudit", {
+  id: int("id").autoincrement().primaryKey(),
+  osId: int("osId").notNull(),
+  tenantId: int("tenantId").notNull(),
+  campo: varchar("campo", { length: 100 }).notNull(),
+  valorAnterior: text("valorAnterior"),
+  valorNovo: text("valorNovo"),
+  userId: int("userId"),
+  userName: varchar("userName", { length: 255 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type OsFieldAuditEntry = typeof osFieldAudit.$inferSelect;
 
 // ─── HISTÓRICO DE STATUS DA OS ───────────────────────────────────────────────
 export const osStatusHistory = mysqlTable("osStatusHistory", {
@@ -231,9 +293,11 @@ export const osItens = mysqlTable("osItens", {
   tenantId: int("tenantId").notNull(),
   tipo: mysqlEnum("tipo", ["servico", "peca"]).notNull(),
   descricao: varchar("descricao", { length: 255 }).notNull(),
+  descricaoTecnica: text("descricaoTecnica"),
   pecaId: int("pecaId"),
   quantidade: int("quantidade").default(1).notNull(),
   valorUnitario: decimal("valorUnitario", { precision: 10, scale: 2 }).notNull(),
+  valorCusto: decimal("valorCusto", { precision: 10, scale: 2 }),
   valorTotal: decimal("valorTotal", { precision: 10, scale: 2 }).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });

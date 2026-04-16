@@ -17,6 +17,7 @@ import Configuracoes from "./pages/Configuracoes";
 import Onboarding from "./pages/Onboarding";
 import Login from "./pages/Login";
 import Planos from "./pages/Planos";
+import AreaCliente from "./pages/AreaCliente";
 
 // Control Plane — /admin (completamente separado da área do tenant)
 import { AdminGuard } from "./components/AdminGuard";
@@ -41,6 +42,9 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/login" component={Login} />
       <Route path="/planos" component={Planos} />
+
+      {/* ── Área do Cliente (público, sem auth) ──────────── */}
+      <Route path="/cliente/os/:token" component={AreaCliente} />
 
       {/* ── Onboarding ──────────────────────────────────────── */}
       <Route path="/onboarding" component={Onboarding} />
