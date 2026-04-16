@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, AlertTriangle, Package, X, Filter, Search, Loader2 } from "lucide-react";
+import { Plus, AlertTriangle, Package, X, Filter, Search, Loader2, Tag } from "lucide-react";
 import { useState, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -111,7 +111,7 @@ function PartNumberField({
 }: {
   value: string;
   onChange: (v: string) => void;
-  onNexarResult: (result: { description: string; manufacturer: string; specs: Array<{ name: string; value: string }> }) => void;
+  onNexarResult: (result: { description: string; manufacturer: string; specs: Array<{ name: string; value: string }>; referencePrice: number | null; referencePriceCurrency: string | null }) => void;
 }) {
   const [searching, setSearching] = useState(false);
   const utils = trpc.useUtils();
@@ -127,6 +127,8 @@ function PartNumberField({
           description: result.description,
           manufacturer: result.manufacturer,
           specs: result.specs,
+          referencePrice: result.referencePrice,
+          referencePriceCurrency: result.referencePriceCurrency,
         });
         toast.success("Dados preenchidos automaticamente via Nexar");
       } else {
@@ -190,16 +192,22 @@ function PecaForm({
   isPending: boolean;
   submitLabel: string;
 }) {
-  function handleNexarResult(result: { description: string; manufacturer: string; specs: Array<{ name: string; value: string }> }) {
+  const [nexarPriceSuggestion, setNexarPriceSuggestion] = useState<{ price: number; currency: string } | null>(null);
+
+  function handleNexarResult(result: { description: string; manufacturer: string; specs: Array<{ name: string; value: string }>; referencePrice: number | null; referencePriceCurrency: string | null }) {
     const specsText = result.specs.length > 0
       ? result.specs.map((s) => `${s.name}: ${s.value}`).join(" | ")
       : "";
-    setForm({
+    const updated = {
       ...form,
       nome: form.nome || result.description,
       manufacturer: result.manufacturer || form.manufacturer,
       application: specsText || form.application,
-    });
+    };
+    if (result.referencePrice && result.referencePrice > 0) {
+      setNexarPriceSuggestion({ price: result.referencePrice, currency: result.referencePriceCurrency || "USD" });
+    }
+    setForm(updated);
   }
 
   return (
@@ -259,7 +267,35 @@ function PecaForm({
           <div>
             <Label>Preço de Custo (R$)</Label>
             <Input type="number" step="0.01" value={form.precoCusto}
-              onChange={(e) => setForm({ ...form, precoCusto: parseFloat(e.target.value) || 0 })} />
+              onChange={(e) => {
+                setForm({ ...form, precoCusto: parseFloat(e.target.value) || 0 });
+                setNexarPriceSuggestion(null);
+              }} />
+            {nexarPriceSuggestion && (
+              <div className="mt-1.5 flex items-center gap-2 p-2 rounded-md border border-blue-200 bg-blue-50">
+                <Tag className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />
+                <span className="text-xs text-blue-700 flex-1">
+                  Nexar: <strong>{nexarPriceSuggestion.price.toFixed(4)} {nexarPriceSuggestion.currency}</strong>
+                </span>
+                <button
+                  type="button"
+                  className="text-xs font-medium text-blue-700 hover:text-blue-900 underline"
+                  onClick={() => {
+                    setForm({ ...form, precoCusto: parseFloat(nexarPriceSuggestion.price.toFixed(2)) });
+                    setNexarPriceSuggestion(null);
+                  }}
+                >
+                  Usar
+                </button>
+                <button
+                  type="button"
+                  className="text-xs text-blue-400 hover:text-blue-600"
+                  onClick={() => setNexarPriceSuggestion(null)}
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            )}
           </div>
         )}
         <div>

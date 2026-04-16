@@ -388,3 +388,9 @@
 - [x] Frontend: spinner no ícone da lupa durante a busca
 - [x] Frontend: campo Part Number com lupa na Lista de Compras também (preenche descrição automaticamente)
 - [x] Testes: 4 testes de integração do helper nexar.ts (46 testes passando no total)
+
+## Preço de Referência Nexar no Estoque
+
+- [x] Backend: incluir preço mínimo de distribuidor no retorno do `lookupPartNumber` (campo `referencePrice`)
+- [x] Frontend: ao buscar PN, exibe sugestão de preço de custo com badge "via Nexar" e botões Usar/Ignorar
+- [x] Testes: 2 novos testes cobrindo referencePrice (com e sem preços disponíveis) — 47 testes passando

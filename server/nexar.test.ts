@@ -39,7 +39,7 @@ describe("Nexar API Integration", () => {
     expect(result.found).toBe(false);
   });
 
-  it("deve retornar dados da peça quando o part number existe", async () => {
+  it("deve retornar dados da peça com preço de referência quando disponível", async () => {
     // Mock do token
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -49,7 +49,7 @@ describe("Nexar API Integration", () => {
       }),
     } as any);
 
-    // Mock da consulta GraphQL com resultado
+    // Mock da consulta GraphQL com resultado e preços de distribuidores
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
@@ -71,6 +71,27 @@ describe("Nexar API Integration", () => {
                       displayValue: "8-SOIC",
                     },
                   ],
+                  sellers: [
+                    {
+                      offers: [
+                        {
+                          prices: [
+                            { price: 0.42, currency: "USD", quantity: 1 },
+                            { price: 0.38, currency: "USD", quantity: 10 },
+                          ],
+                        },
+                      ],
+                    },
+                    {
+                      offers: [
+                        {
+                          prices: [
+                            { price: 0.55, currency: "USD", quantity: 1 },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
                 },
               },
             ],
@@ -88,6 +109,51 @@ describe("Nexar API Integration", () => {
       expect(result.manufacturer).toBe("Texas Instruments");
       expect(result.description).toContain("Op Amp");
       expect(result.specs.length).toBeGreaterThan(0);
+      // Deve retornar o menor preço entre os distribuidores (0.42, não 0.55)
+      expect(result.referencePrice).toBe(0.42);
+      expect(result.referencePriceCurrency).toBe("USD");
+    }
+  });
+
+  it("deve retornar referencePrice=null quando não há preços disponíveis", async () => {
+    // Mock do token
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        access_token: "mock-token-789",
+        expires_in: 3600,
+      }),
+    } as any);
+
+    // Mock sem sellers/preços
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        data: {
+          supSearchMpn: {
+            results: [
+              {
+                part: {
+                  mpn: "CHIP-XYZ",
+                  shortDescription: "Chip sem preço",
+                  manufacturer: { name: "Generic" },
+                  specs: [],
+                  sellers: [],
+                },
+              },
+            ],
+          },
+        },
+      }),
+    } as any);
+
+    const { lookupPartNumber } = await import("./nexar");
+    const result = await lookupPartNumber("CHIP-XYZ");
+
+    expect(result.found).toBe(true);
+    if (result.found) {
+      expect(result.referencePrice).toBeNull();
+      expect(result.referencePriceCurrency).toBeNull();
     }
   });
 

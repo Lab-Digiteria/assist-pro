@@ -14,6 +14,10 @@ interface NexarPartResult {
   description: string;
   manufacturer: string;
   specs: Array<{ name: string; value: string }>;
+  /** Menor preço unitário encontrado entre distribuidores (USD), ou null se indisponível */
+  referencePrice: number | null;
+  /** Moeda do preço de referência */
+  referencePriceCurrency: string | null;
 }
 
 interface NexarPartNotFound {
@@ -86,11 +90,45 @@ const NEXAR_QUERY = `
             }
             displayValue
           }
+          sellers(includeBrokers: false) {
+            offers {
+              prices {
+                price
+                currency
+                quantity
+              }
+            }
+          }
         }
       }
     }
   }
 `;
+
+/** Extrai o menor preço unitário (para qty=1) entre todos os distribuidores */
+function extractLowestPrice(
+  sellers: Array<{
+    offers: Array<{
+      prices: Array<{ price: number; currency: string; quantity: number }>;
+    }>;
+  }>
+): { price: number; currency: string } | null {
+  let lowest: { price: number; currency: string } | null = null;
+
+  for (const seller of sellers) {
+    for (const offer of seller.offers) {
+      // Pega o preço para menor quantidade (geralmente qty=1)
+      const sorted = [...offer.prices].sort((a, b) => a.quantity - b.quantity);
+      if (sorted.length === 0) continue;
+      const candidate = sorted[0];
+      if (candidate.price > 0 && (!lowest || candidate.price < lowest.price)) {
+        lowest = { price: candidate.price, currency: candidate.currency };
+      }
+    }
+  }
+
+  return lowest;
+}
 
 export async function lookupPartNumber(partNumber: string): Promise<NexarLookupResult> {
   const token = await getNexarToken();
@@ -121,6 +159,11 @@ export async function lookupPartNumber(partNumber: string): Promise<NexarLookupR
             shortDescription: string;
             manufacturer?: { name: string };
             specs?: Array<{ attribute?: { name: string }; displayValue: string }>;
+            sellers?: Array<{
+              offers: Array<{
+                prices: Array<{ price: number; currency: string; quantity: number }>;
+              }>;
+            }>;
           };
         }>;
       };
@@ -147,11 +190,15 @@ export async function lookupPartNumber(partNumber: string): Promise<NexarLookupR
       value: s.displayValue,
     }));
 
+  const lowestPrice = extractLowestPrice(part.sellers || []);
+
   return {
     found: true,
     mpn: part.mpn,
     description: part.shortDescription || "",
     manufacturer: part.manufacturer?.name || "",
     specs,
+    referencePrice: lowestPrice?.price ?? null,
+    referencePriceCurrency: lowestPrice?.currency ?? null,
   };
 }
