@@ -375,3 +375,16 @@
 - [x] Frontend: página pública `/orcamento/confirmacao` com estados aprovado/rejeitado/erro
 - [x] Frontend: botão "Enviar orçamento por e-mail" na tela da OS (visível quando status = pendente)
 - [x] Testes: 42 testes passando (6 arquivos)
+
+## Integração Nexar API — Busca por Part Number
+
+- [x] Secrets NEXAR_CLIENT_ID e NEXAR_CLIENT_SECRET configurados
+- [x] Backend: helper `server/nexar.ts` com autenticação OAuth2 (client_credentials) e cache de token
+- [x] Backend: endpoint tRPC `stock.lookupPartNumber` que consulta GraphQL do Nexar e retorna description, manufacturer, specs
+- [x] Frontend: campo Part Number com ícone de lupa no formulário de peças (estoque)
+- [x] Frontend: ao clicar na lupa ou pressionar Enter, dispara consulta ao Nexar
+- [x] Frontend: preenchimento automático de Descrição, Fabricante e Aplicação com toast de sucesso
+- [x] Frontend: fallback com toast "não encontrado" quando PN não existe na base
+- [x] Frontend: spinner no ícone da lupa durante a busca
+- [x] Frontend: campo Part Number com lupa na Lista de Compras também (preenche descrição automaticamente)
+- [x] Testes: 4 testes de integração do helper nexar.ts (46 testes passando no total)

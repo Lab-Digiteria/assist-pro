@@ -602,6 +602,7 @@ export const listaCompras = mysqlTable("listaCompras", {
   tenantId: int("tenantId").notNull(),
   pecaId: int("pecaId"),                          // FK opcional — peça já cadastrada
   itemDescription: varchar("itemDescription", { length: 500 }).notNull(),
+  partNumber: varchar("partNumber", { length: 100 }),  // Part Number para busca Nexar
   quantityNeeded: int("quantityNeeded").default(1).notNull(),
   reason: mysqlEnum("reason", ["os_demand", "stock_replenishment", "other"])
     .default("stock_replenishment").notNull(),

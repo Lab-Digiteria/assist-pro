@@ -1,0 +1,1 @@
+ALTER TABLE `listaCompras` ADD `partNumber` varchar(100);

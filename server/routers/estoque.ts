@@ -10,6 +10,7 @@ import {
   syncPecaCompatibleModels,
   updatePeca,
 } from "../db";
+import { lookupPartNumber } from "../nexar";
 import { protectedProcedure, router } from "../_core/trpc";
 
 async function resolveTenantAndRole(userId: number) {
@@ -20,9 +21,24 @@ async function resolveTenantAndRole(userId: number) {
   throw new TRPCError({ code: "FORBIDDEN" });
 }
 
+
 const CATEGORIAS = ["tela", "bateria", "conector", "cabo", "placa", "chip", "acessorio", "outro"] as const;
 
 export const estoqueRouter = router({
+  /** Busca informações de uma peça pelo Part Number via API do Nexar */
+  lookupPartNumber: protectedProcedure
+    .input(z.object({ partNumber: z.string().min(1) }))
+    .query(async ({ input }) => {
+      try {
+        return await lookupPartNumber(input.partNumber);
+      } catch (err: any) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: err?.message || "Erro ao consultar Nexar",
+        });
+      }
+    }),
+
   list: protectedProcedure
     .input(z.object({ compatibleModelId: z.number().optional() }).optional())
     .query(async ({ ctx, input }) => {

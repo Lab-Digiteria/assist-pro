@@ -41,6 +41,7 @@ export const listaComprasRouter = router({
     .input(
       z.object({
         itemDescription: z.string().min(1).max(500),
+        partNumber: z.string().max(100).optional(),
         quantityNeeded: z.number().min(1).default(1),
         reason: z.enum(REASONS).default("stock_replenishment"),
         priority: z.enum(PRIORITIES).default("medium"),

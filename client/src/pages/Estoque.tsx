@@ -8,8 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, AlertTriangle, Package, X, Filter } from "lucide-react";
-import { useState, useMemo } from "react";
+import { Plus, AlertTriangle, Package, X, Filter, Search, Loader2 } from "lucide-react";
+import { useState, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/_core/hooks/useAuth";
 
@@ -103,6 +103,75 @@ function ModelMultiSelect({
   );
 }
 
+// ─── Campo Part Number com busca Nexar ───────────────────────────────────────
+function PartNumberField({
+  value,
+  onChange,
+  onNexarResult,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  onNexarResult: (result: { description: string; manufacturer: string; specs: Array<{ name: string; value: string }> }) => void;
+}) {
+  const [searching, setSearching] = useState(false);
+  const utils = trpc.useUtils();
+
+  async function handleSearch() {
+    const pn = value.trim();
+    if (!pn) return;
+    setSearching(true);
+    try {
+      const result = await utils.estoque.lookupPartNumber.fetch({ partNumber: pn });
+      if (result.found) {
+        onNexarResult({
+          description: result.description,
+          manufacturer: result.manufacturer,
+          specs: result.specs,
+        });
+        toast.success("Dados preenchidos automaticamente via Nexar");
+      } else {
+        toast.info("Part number não encontrado na base — preencha manualmente");
+      }
+    } catch {
+      toast.error("Erro ao consultar Nexar. Preencha manualmente.");
+    } finally {
+      setSearching(false);
+    }
+  }
+
+  return (
+    <div className="flex gap-1">
+      <Input
+        placeholder="Ex: GH82-12345A"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            handleSearch();
+          }
+        }}
+        className="flex-1"
+      />
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        className="flex-shrink-0"
+        onClick={handleSearch}
+        disabled={searching || !value.trim()}
+        title="Buscar no Nexar"
+      >
+        {searching ? (
+          <Loader2 className="w-4 h-4 animate-spin" />
+        ) : (
+          <Search className="w-4 h-4" />
+        )}
+      </Button>
+    </div>
+  );
+}
+
 // ─── Formulário de peça (definido fora para evitar re-mount) ─────────────────
 function PecaForm({
   form,
@@ -121,6 +190,18 @@ function PecaForm({
   isPending: boolean;
   submitLabel: string;
 }) {
+  function handleNexarResult(result: { description: string; manufacturer: string; specs: Array<{ name: string; value: string }> }) {
+    const specsText = result.specs.length > 0
+      ? result.specs.map((s) => `${s.name}: ${s.value}`).join(" | ")
+      : "";
+    setForm({
+      ...form,
+      nome: form.nome || result.description,
+      manufacturer: result.manufacturer || form.manufacturer,
+      application: specsText || form.application,
+    });
+  }
+
   return (
     <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
       <div>
@@ -137,24 +218,27 @@ function PecaForm({
         </Select>
       </div>
 
-      {/* Part Number e Fabricante */}
-      <div className="grid grid-cols-2 gap-2">
-        <div>
-          <Label>Part Number</Label>
-          <Input
-            placeholder="Ex: GH82-12345A"
-            value={form.partNumber}
-            onChange={(e) => setForm({ ...form, partNumber: e.target.value })}
-          />
-        </div>
-        <div>
-          <Label>Fabricante</Label>
-          <Input
-            placeholder="Ex: Samsung Parts, OEM"
-            value={form.manufacturer}
-            onChange={(e) => setForm({ ...form, manufacturer: e.target.value })}
-          />
-        </div>
+      {/* Part Number com busca Nexar */}
+      <div>
+        <Label>Part Number</Label>
+        <PartNumberField
+          value={form.partNumber}
+          onChange={(v) => setForm({ ...form, partNumber: v })}
+          onNexarResult={handleNexarResult}
+        />
+        <p className="text-xs text-muted-foreground mt-1">
+          Pressione Enter ou clique na lupa para buscar dados automaticamente via Nexar
+        </p>
+      </div>
+
+      {/* Fabricante */}
+      <div>
+        <Label>Fabricante</Label>
+        <Input
+          placeholder="Ex: Samsung Parts, OEM, Texas Instruments"
+          value={form.manufacturer}
+          onChange={(e) => setForm({ ...form, manufacturer: e.target.value })}
+        />
       </div>
 
       {/* Aplicação */}
@@ -297,7 +381,8 @@ export default function Estoque() {
           <div className="rounded-xl border-2 border-orange-200 bg-orange-50 p-3 flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-orange-600" />
             <span className="text-sm text-orange-700 font-medium">
-              {abaixoMinimo.length} peça(s) abaixo do estoque mínimo
+              {abaixoMinimo.length} peça{abaixoMinimo.length > 1 ? "s" : ""} abaixo do estoque mínimo:{" "}
+              {abaixoMinimo.map((p) => p.nome).join(", ")}
             </span>
           </div>
         )}

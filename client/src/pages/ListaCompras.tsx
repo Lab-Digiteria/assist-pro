@@ -23,6 +23,8 @@ import {
   Clock,
   Trash2,
   Filter,
+  Search,
+  Loader2,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -48,12 +50,78 @@ const STATUS_CONFIG: Record<string, { label: string; icon: React.ReactNode; colo
 
 const BLANK_FORM = {
   itemDescription: "",
+  partNumber: "",
   quantityNeeded: 1,
   reason: "stock_replenishment" as const,
   priority: "medium" as const,
   pecaId: undefined as number | undefined,
   notes: "",
 };
+
+// ─── Campo Part Number com busca Nexar ───────────────────────────────────────
+function PartNumberField({
+  value,
+  onChange,
+  onNexarResult,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  onNexarResult: (description: string) => void;
+}) {
+  const [searching, setSearching] = useState(false);
+  const utils = trpc.useUtils();
+
+  async function handleSearch() {
+    const pn = value.trim();
+    if (!pn) return;
+    setSearching(true);
+    try {
+      const result = await utils.estoque.lookupPartNumber.fetch({ partNumber: pn });
+      if (result.found) {
+        onNexarResult(result.description);
+        toast.success("Dados preenchidos automaticamente via Nexar");
+      } else {
+        toast.info("Part number não encontrado na base — preencha manualmente");
+      }
+    } catch {
+      toast.error("Erro ao consultar Nexar. Preencha manualmente.");
+    } finally {
+      setSearching(false);
+    }
+  }
+
+  return (
+    <div className="flex gap-1">
+      <Input
+        placeholder="Ex: GH82-12345A"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            handleSearch();
+          }
+        }}
+        className="flex-1"
+      />
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        className="flex-shrink-0"
+        onClick={handleSearch}
+        disabled={searching || !value.trim()}
+        title="Buscar no Nexar"
+      >
+        {searching ? (
+          <Loader2 className="w-4 h-4 animate-spin" />
+        ) : (
+          <Search className="w-4 h-4" />
+        )}
+      </Button>
+    </div>
+  );
+}
 
 // ─── Formulário de novo item (fora do componente pai para evitar re-mount) ────
 function NovoItemForm({
@@ -71,6 +139,23 @@ function NovoItemForm({
 }) {
   return (
     <div className="space-y-3">
+      {/* Part Number com busca Nexar */}
+      <div>
+        <Label>Part Number</Label>
+        <PartNumberField
+          value={form.partNumber}
+          onChange={(v) => setForm({ ...form, partNumber: v })}
+          onNexarResult={(description) => {
+            if (!form.itemDescription) {
+              setForm({ ...form, itemDescription: description });
+            }
+          }}
+        />
+        <p className="text-xs text-muted-foreground mt-1">
+          Pressione Enter ou clique na lupa para preencher a descrição automaticamente
+        </p>
+      </div>
+
       <div>
         <Label>Descrição do Item *</Label>
         <Input
@@ -376,6 +461,7 @@ export default function ListaCompras() {
                 onSubmit={() =>
                   create.mutate({
                     ...form,
+                    partNumber: form.partNumber || undefined,
                     notes: form.notes || undefined,
                   })
                 }
@@ -416,6 +502,9 @@ export default function ListaCompras() {
 
                         <div className="flex gap-4 mt-1 text-sm text-muted-foreground flex-wrap">
                           <span>Qtd: <strong className="text-foreground">{item.quantityNeeded}</strong></span>
+                          {(item as any).partNumber && (
+                            <span>PN: <span className="font-mono font-medium text-foreground">{(item as any).partNumber}</span></span>
+                          )}
                           <span>{REASON_LABELS[item.reason]}</span>
                           {pecaVinculada && (
                             <span className="text-primary font-medium">
