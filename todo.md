@@ -444,3 +444,21 @@
 - [x] Ao cancelar OS ou remover peça: liberar reserva devolvendo quantidade ao estoque disponível
 - [x] Modal de adicionar item busca peças do estoque com autocomplete; alerta amarelo se peça não cadastrada
 - [x] Todo movimento por OS aparece no histórico do item com referência ao número da OS
+
+## Repaginação Completa da Landing Page
+
+- [x] [1] Header fixo: logo, menu central, botões Entrar/Testar grátis, blur ao scroll
+- [x] [2] Hero: headline grande, subtítulo, 2 botões, badge flutuante, formulário de cadastro à direita
+- [x] [3] Barra de credibilidade: texto + ícones de categorias de equipamentos
+- [x] [4] Funcionalidades: grid 3×2 com cards dark, hover azul, ícones e descrições
+- [x] [5] Seção Nexar: 2 colunas — texto com benefícios + demo animada CSS (digitar PN → spinner → card resultado → toast)
+- [x] [6] Seção Financeiro: 2 colunas — mockup DRE + texto com grid 2×2 de recursos
+- [x] [7] Preços: 3 cards, card central destacado "Mais escolhido", nota de trial
+- [x] [8] Depoimentos: 3 cards com estrelas e dados fictícios realistas
+- [x] [9] CTA Final: gradiente azul→canela, título grande, botão central
+- [x] [10] Footer: logo, links, contato, copyright
+- [x] Animações de entrada ao scroll (Intersection Observer)
+- [x] Meta tags SEO: title, description, Open Graph, lang pt-BR, canonical
+- [x] 100% responsivo mobile-first
+- [x] Header com blur ao rolar
+- [x] Scroll suave entre seções (âncoras)
