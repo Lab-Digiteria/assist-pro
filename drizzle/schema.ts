@@ -368,6 +368,9 @@ export const pecas = mysqlTable("pecas", {
   precoVenda: decimal("precoVenda", { precision: 10, scale: 2 }).notNull(),
   quantidadeAtual: int("quantidadeAtual").default(0).notNull(),
   quantidadeMinima: int("quantidadeMinima").default(1).notNull(),
+  partNumber: varchar("partNumber", { length: 100 }),
+  manufacturer: varchar("manufacturer", { length: 150 }),
+  application: text("application"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -581,3 +584,14 @@ export const equipmentModels = mysqlTable("equipmentModels", {
 });
 export type EquipmentModel = typeof equipmentModels.$inferSelect;
 export type InsertEquipmentModel = typeof equipmentModels.$inferInsert;
+
+// ─── PEÇA × MODELO COMPATÍVEL (N:N) ─────────────────────────────────────────
+export const pecaModeloCompativel = mysqlTable(
+  "pecaModeloCompativel",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    pecaId: int("pecaId").notNull(),
+    equipmentModelId: int("equipmentModelId").notNull(),
+  }
+);
+export type PecaModeloCompativel = typeof pecaModeloCompativel.$inferSelect;

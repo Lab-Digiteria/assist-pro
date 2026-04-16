@@ -292,16 +292,16 @@
 - [x] Testes em `server/equipmentModels.test.ts`
 
 ### 2. Part Number, Fabricante e Compatibilidade
-- [ ] Schema: adicionar campos `partNumber`, `manufacturer`, `application` na tabela `pecas`
-- [ ] Schema: tabela de junção `pecaModeloCompativel` (id, pecaId, equipmentModelId)
-- [ ] Migration gerada e aplicada
-- [ ] Backend: atualizar `estoque.create` e `estoque.update` para aceitar novos campos e `compatibleModelIds`
-- [ ] Backend: endpoint `estoque.listModels` para buscar modelos do tenant (usado no multi-select)
-- [ ] Backend: ao salvar peça, sincronizar tabela `pecaModeloCompativel`
-- [ ] Frontend: adicionar campos Part Number, Fabricante, Aplicação no formulário de peças
-- [ ] Frontend: multi-select de Modelos Compatíveis no formulário de peças
-- [ ] Frontend: exibir `partNumber` como coluna na listagem de estoque
-- [ ] Frontend: filtro por Modelo Compatível na listagem de estoque
+- [x] Schema: adicionar campos `partNumber`, `manufacturer`, `application` na tabela `pecas`
+- [x] Schema: tabela de junção `pecaModeloCompativel` (id, pecaId, equipmentModelId)
+- [x] Migration gerada e aplicada
+- [x] Backend: atualizar `estoque.create` e `estoque.update` para aceitar novos campos e `compatibleModelIds`
+- [x] Backend: endpoint `estoque.listModels` para buscar modelos do tenant (usado no multi-select)
+- [x] Backend: ao salvar peça, sincronizar tabela `pecaModeloCompativel`
+- [x] Frontend: adicionar campos Part Number, Fabricante, Aplicação no formulário de peças
+- [x] Frontend: multi-select de Modelos Compatíveis no formulário de peças
+- [x] Frontend: exibir `partNumber` na listagem de estoque
+- [x] Frontend: filtro por Modelo Compatível na listagem de estoque
 
 ### 3. Lista de Compras
 - [ ] Schema: tabela `listaCompras` (id, tenantId, pecaId?, itemDescription, quantityNeeded, reason, osId?, priority, status, notes, createdAt, updatedAt)

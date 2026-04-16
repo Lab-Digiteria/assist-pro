@@ -2,10 +2,12 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import {
   createPeca,
-  getPecas,
+  getEquipmentModels,
+  getPecasWithModels,
   getTenantByMember,
   getTenantByOwner,
   movimentarEstoque,
+  syncPecaCompatibleModels,
   updatePeca,
 } from "../db";
 import { protectedProcedure, router } from "../_core/trpc";
@@ -18,33 +20,49 @@ async function resolveTenantAndRole(userId: number) {
   throw new TRPCError({ code: "FORBIDDEN" });
 }
 
+const CATEGORIAS = ["tela", "bateria", "conector", "cabo", "placa", "chip", "acessorio", "outro"] as const;
+
 export const estoqueRouter = router({
-  list: protectedProcedure.query(async ({ ctx }) => {
+  list: protectedProcedure
+    .input(z.object({ compatibleModelId: z.number().optional() }).optional())
+    .query(async ({ ctx, input }) => {
+      const { tenantId } = await resolveTenantAndRole(ctx.user.id);
+      return getPecasWithModels(tenantId, input?.compatibleModelId);
+    }),
+
+  /** Lista os modelos de equipamentos do tenant para uso no multi-select */
+  listModels: protectedProcedure.query(async ({ ctx }) => {
     const { tenantId } = await resolveTenantAndRole(ctx.user.id);
-    return getPecas(tenantId);
+    return getEquipmentModels(tenantId);
   }),
 
   create: protectedProcedure
     .input(
       z.object({
         nome: z.string().min(1).max(255),
-        categoria: z.enum(["tela", "bateria", "conector", "cabo", "placa", "chip", "acessorio", "outro"]),
+        categoria: z.enum(CATEGORIAS),
         precoCusto: z.number().optional(),
         precoVenda: z.number().min(0),
         quantidadeAtual: z.number().min(0).default(0),
         quantidadeMinima: z.number().min(0).default(1),
+        partNumber: z.string().max(100).optional(),
+        manufacturer: z.string().max(150).optional(),
+        application: z.string().optional(),
+        compatibleModelIds: z.array(z.number()).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const { tenantId } = await resolveTenantAndRole(ctx.user.id);
-      return createPeca(tenantId, {
-        nome: input.nome,
-        categoria: input.categoria,
-        precoCusto: input.precoCusto ? String(input.precoCusto) : undefined,
-        precoVenda: String(input.precoVenda),
-        quantidadeAtual: input.quantidadeAtual,
-        quantidadeMinima: input.quantidadeMinima,
+      const { compatibleModelIds, precoCusto, precoVenda, ...rest } = input;
+      const peca = await createPeca(tenantId, {
+        ...rest,
+        precoCusto: precoCusto !== undefined ? String(precoCusto) : undefined,
+        precoVenda: String(precoVenda),
       });
+      if (peca && compatibleModelIds && compatibleModelIds.length > 0) {
+        await syncPecaCompatibleModels(peca.id, compatibleModelIds);
+      }
+      return peca;
     }),
 
   update: protectedProcedure
@@ -52,22 +70,28 @@ export const estoqueRouter = router({
       z.object({
         id: z.number(),
         nome: z.string().optional(),
-        categoria: z.enum(["tela", "bateria", "conector", "cabo", "placa", "chip", "acessorio", "outro"]).optional(),
+        categoria: z.enum(CATEGORIAS).optional(),
         precoCusto: z.number().optional(),
         precoVenda: z.number().optional(),
         quantidadeMinima: z.number().optional(),
+        partNumber: z.string().max(100).nullable().optional(),
+        manufacturer: z.string().max(150).nullable().optional(),
+        application: z.string().nullable().optional(),
+        compatibleModelIds: z.array(z.number()).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const { tenantId, role } = await resolveTenantAndRole(ctx.user.id);
-      const { id, precoCusto, precoVenda, ...rest } = input;
+      const { id, precoCusto, precoVenda, compatibleModelIds, ...rest } = input;
       const data: Record<string, unknown> = { ...rest };
       if (precoVenda !== undefined) data.precoVenda = String(precoVenda);
-      // Only admin/manager can see/update precoCusto
       if (precoCusto !== undefined && (role === "manager" || ctx.user.role === "admin")) {
         data.precoCusto = String(precoCusto);
       }
       await updatePeca(tenantId, id, data as any);
+      if (compatibleModelIds !== undefined) {
+        await syncPecaCompatibleModels(id, compatibleModelIds);
+      }
       return { success: true };
     }),
 

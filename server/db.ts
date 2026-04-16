@@ -16,6 +16,7 @@ import {
   osLancamentos,
   osPhotos,
   osStatusHistory,
+  pecaModeloCompativel,
   pecas,
   tenantMembers,
   tenants,
@@ -1145,4 +1146,69 @@ export async function deleteEquipmentModel(tenantId: number, id: number) {
   await db
     .delete(equipmentModels)
     .where(and(eq(equipmentModels.id, id), eq(equipmentModels.tenantId, tenantId)));
+}
+
+// ─── COMPATIBILIDADE PEÇA × MODELO ───────────────────────────────────────────
+
+/** Retorna os IDs de modelos compatíveis com uma peça */
+export async function getPecaCompatibleModels(pecaId: number): Promise<number[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db
+    .select({ equipmentModelId: pecaModeloCompativel.equipmentModelId })
+    .from(pecaModeloCompativel)
+    .where(eq(pecaModeloCompativel.pecaId, pecaId));
+  return rows.map((r) => r.equipmentModelId);
+}
+
+/** Sincroniza os modelos compatíveis de uma peça (substitui todos) */
+export async function syncPecaCompatibleModels(pecaId: number, modelIds: number[]) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(pecaModeloCompativel).where(eq(pecaModeloCompativel.pecaId, pecaId));
+  if (modelIds.length > 0) {
+    await db.insert(pecaModeloCompativel).values(
+      modelIds.map((equipmentModelId) => ({ pecaId, equipmentModelId }))
+    );
+  }
+}
+
+/** Retorna peças de um tenant com seus modelos compatíveis */
+export async function getPecasWithModels(tenantId: number, compatibleModelId?: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  let query = db.select().from(pecas).where(eq(pecas.tenantId, tenantId)).$dynamic();
+
+  const rows = await query.orderBy(desc(pecas.createdAt));
+
+  // Buscar compatibilidades de todas as peças de uma vez
+  const pecaIds = rows.map((p) => p.id);
+  let compatMap: Record<number, number[]> = {};
+  if (pecaIds.length > 0) {
+    const compats = await db
+      .select()
+      .from(pecaModeloCompativel)
+      .where(
+        pecaIds.length === 1
+          ? eq(pecaModeloCompativel.pecaId, pecaIds[0])
+          : sql`${pecaModeloCompativel.pecaId} IN (${sql.join(pecaIds.map((id) => sql`${id}`), sql`, `)})`
+      );
+    for (const c of compats) {
+      if (!compatMap[c.pecaId]) compatMap[c.pecaId] = [];
+      compatMap[c.pecaId].push(c.equipmentModelId);
+    }
+  }
+
+  const result = rows.map((p) => ({
+    ...p,
+    compatibleModelIds: compatMap[p.id] ?? [],
+  }));
+
+  // Filtrar por modelo compatível se solicitado
+  if (compatibleModelId) {
+    return result.filter((p) => p.compatibleModelIds.includes(compatibleModelId));
+  }
+
+  return result;
 }
