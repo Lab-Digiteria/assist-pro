@@ -30,6 +30,12 @@ import FluxoCaixa from "./pages/FluxoCaixa";
 import DRE from "./pages/DRE";
 import PlanoContas from "./pages/PlanoContas";
 import ImportarExtrato from "./pages/ImportarExtrato";
+import {
+  OrcamentoAprovado,
+  OrcamentoRejeitado,
+  OrcamentoRejeitar,
+  OrcamentoErro,
+} from "./pages/OrcamentoConfirmacao";
 
 // Control Plane — /super-admin (completamente isolado da área do tenant)
 // Acesso exclusivo via URL direta. Nunca aparece na navegação do tenant.
@@ -58,9 +64,14 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/planos" component={Planos} />
 
-      {/* ── Área do Cliente (público, sem auth) ──────────── */}
+      {/* ── Área do Cliente (público, sem auth) ──────────────── */}
       <Route path="/cliente/os/:token" component={AreaCliente} />
 
+      {/* ── Aprovação/Rejeição de Orçamento por e-mail (público) ── */}
+      <Route path="/orcamento/aprovado" component={OrcamentoAprovado} />
+      <Route path="/orcamento/rejeitado" component={OrcamentoRejeitado} />
+      <Route path="/orcamento/rejeitar" component={OrcamentoRejeitar} />
+      <Route path="/orcamento/erro" component={OrcamentoErro} />
       {/* ── Portal do Revendedor (público, JWT próprio) ──── */}
       <Route path="/revendedor/login" component={RevendedorLogin} />
       <Route path="/revendedor/dashboard" component={RevendedorDashboard} />

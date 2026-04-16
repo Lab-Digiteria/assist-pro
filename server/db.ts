@@ -26,7 +26,7 @@ import {
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 import { generateOsNumber, generatePartCode, generateSlug } from "../shared/utils";
-import { buildOsProntaEmail, sendEmail } from "./email";
+import { buildOsProntaEmail, buildOrcamentoEmail, sendEmail } from "./email";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -515,6 +515,41 @@ export async function updateOrdemServicoStatus(
     }
   }
 
+  // Disparar e-mail de orçamento ao cliente quando status muda para aguardando_aprovacao
+  if (newStatus === "aguardando_aprovacao") {
+    try {
+      const [cliente] = os.clienteId
+        ? await db.select().from(clientes).where(and(eq(clientes.id, os.clienteId), eq(clientes.tenantId, tenantId))).limit(1)
+        : [];
+      const [tenant] = await db.select().from(tenants).where(eq(tenants.id, tenantId)).limit(1);
+      if (cliente?.email && os.clientToken) {
+        const equipRows = os.equipamentoId
+          ? await db.select().from(equipamentos).where(and(eq(equipamentos.id, os.equipamentoId), eq(equipamentos.tenantId, tenantId))).limit(1)
+          : [];
+        const equipDescricao = equipRows[0] ? `${equipRows[0].marca} ${equipRows[0].modelo}` : "Equipamento";
+        // Derivar a origin da URL do portal OAuth (remove /login...)
+        const origin = (ENV as any).viteOauthPortalUrl?.replace(/\/login.*/, "") ?? "";
+        const aprovarUrl = `${origin}/api/orcamento/aprovar?token=${os.clientToken}`;
+        const rejeitarUrl = `${origin}/api/orcamento/rejeitar?token=${os.clientToken}`;
+        const { subject, html } = buildOrcamentoEmail({
+          clienteNome: cliente.nome,
+          osNumero: os.numero ?? `#${osId}`,
+          equipamentoDescricao: equipDescricao,
+          tenantNome: tenant?.name ?? "Assistência Técnica",
+          tenantWhatsapp: (tenant as any)?.whatsapp ?? undefined,
+          valorTotal: parseFloat(String(os.valorTotal ?? "0")),
+          laudoTecnico: os.laudoTecnico ?? undefined,
+          aprovarUrl,
+          rejeitarUrl,
+          validadeOrcamento: os.validadeOrcamento ?? undefined,
+        });
+        await sendEmail({ to: cliente.email, subject, html });
+        console.log(`[OS] E-mail de orçamento enviado para ${cliente.email} — OS #${osId}`);
+      }
+    } catch (emailErr) {
+      console.error("[OS] Falha ao enviar e-mail de orçamento:", emailErr);
+    }
+  }
   // Auto-fill encerramento fields
   if (newStatus === "encerrado") {
     updates.dataEncerramento = new Date();

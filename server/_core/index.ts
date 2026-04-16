@@ -9,6 +9,7 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { registerStripeWebhook } from "../stripe-webhook";
 import { startTrialAlertJob } from "../jobs/trialAlertJob";
+import { registerOrcamentoEmailRoutes } from "../orcamento-email-routes";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -34,6 +35,8 @@ async function startServer() {
   const server = createServer(app);
   // Stripe webhook MUST be registered BEFORE express.json() for raw body access
   registerStripeWebhook(app);
+  // Rotas GET públicas para aprovação/rejeição de orçamento via link de e-mail
+  registerOrcamentoEmailRoutes(app);
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));

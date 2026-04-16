@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import {
   ArrowLeft, Plus, DollarSign, History, Package, Camera, PenLine,
-  Shield, Link2, Copy, ClipboardList, AlertTriangle, Eye, Trash2,
+  Shield, Link2, Copy, ClipboardList, AlertTriangle, Eye, Trash2, Mail,
 } from "lucide-react";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Link, useParams } from "wouter";
@@ -187,6 +187,7 @@ export default function OrdemServicoDetalhe() {
   const saveSignature = trpc.os.saveSignature.useMutation({ onSuccess: () => { toast.success("Assinatura salva!"); setOpenSignature(false); utils.os.get.invalidate(); }, onError: e => toast.error(e.message) });
   const updateOS = trpc.os.update.useMutation({ onSuccess: () => { toast.success("OS atualizada!"); setEditLaudo(false); utils.os.get.invalidate(); utils.os.fieldAudit.invalidate(); }, onError: e => toast.error(e.message) });
   const regenToken = trpc.os.regenerateClientToken.useMutation({ onSuccess: () => { toast.success("Link regenerado!"); utils.os.get.invalidate(); }, onError: e => toast.error(e.message) });
+  const reenviarEmail = trpc.os.reenviarEmailOrcamento.useMutation({ onSuccess: (r) => toast.success(`E-mail de orçamento enviado para ${r.sentTo}`), onError: e => toast.error(e.message) });
 
   const clientLink = os?.clientToken
     ? `${window.location.origin}/cliente/os/${(os as any).clientToken}`
@@ -317,6 +318,18 @@ export default function OrdemServicoDetalhe() {
                       <Button size="sm" variant="ghost" className="w-full text-xs text-muted-foreground" onClick={() => regenToken.mutate({ osId })}>
                         Regenerar link
                       </Button>
+                      {(os as any).statusOrcamento === "pendente" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full text-xs gap-1 border-blue-200 text-blue-700 hover:bg-blue-50"
+                          disabled={reenviarEmail.isPending}
+                          onClick={() => reenviarEmail.mutate({ osId, origin: window.location.origin })}
+                        >
+                          <Mail className="w-3 h-3" />
+                          {reenviarEmail.isPending ? "Enviando..." : "Enviar orçamento por e-mail"}
+                        </Button>
+                      )}
                     </>
                   ) : (
                     <p className="text-sm text-muted-foreground">Link não disponível.</p>

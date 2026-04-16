@@ -273,12 +273,12 @@
 
 ## Melhorias Pendentes — Alta Prioridade
 
-- [ ] Segurança: hash da senha de desbloqueio da OS (atualmente em texto plano no banco)
-- [ ] Rate limiting no login (proteção brute force — máx. 5 tentativas/min por IP)
-- [ ] Relatórios avançados: gráfico de faturamento por mês (últimos 12 meses)
-- [ ] Relatórios avançados: ranking de técnicos por OS concluídas e faturamento
-- [ ] Notificação ao cliente por e-mail quando OS muda para "Pronto para retirada"
-- [ ] Import OFX/CSV: upload, parse, tela de revisão com categorização e detecção de duplicatas
+- [x] Segurança: hash da senha de desbloqueio da OS (atualmente em texto plano no banco)
+- [x] Rate limiting no login (proteção brute force — máx. 5 tentativas/min por IP)
+- [x] Relatórios avançados: gráfico de faturamento por mês (últimos 12 meses)
+- [x] Relatórios avançados: ranking de técnicos por OS concluídas e faturamento
+- [x] Notificação ao cliente por e-mail quando OS muda para "Pronto para retirada"
+- [x] Import OFX/CSV: upload, parse, tela de revisão com categorização e detecção de duplicatas
 
 ## Módulo de Estoque — Evolução Estrutural
 
@@ -363,3 +363,15 @@
 - [x] Relatórios avançados: ranking de técnicos por OS concluídas e faturamento gerado
 - [x] Notificação ao cliente por e-mail quando OS muda para "Pronto para retirada" (template buildOsProntaEmail)
 - [x] Import OFX/CSV: rota /financeiro/importar-extrato com parser client-side, revisão e categorização
+
+## Aprovação/Rejeição de Orçamento por E-mail
+
+- [x] Backend: rotas GET públicas `/api/orcamento/aprovar?token=` e `/api/orcamento/rejeitar?token=` no Express
+- [x] Backend: rota GET pública `/api/orcamento/info?token=` para buscar dados da OS
+- [x] Backend: e-mail HTML de orçamento com botões "Aprovar" e "Rejeitar" (template buildOrcamentoEmail)
+- [x] Backend: disparo automático do e-mail ao mudar status para aguardando_aprovacao
+- [x] Backend: notifyOwner ao receber aprovação ou rejeição via e-mail
+- [x] Backend: endpoint tRPC `os.reenviarEmailOrcamento` para reenvio manual
+- [x] Frontend: página pública `/orcamento/confirmacao` com estados aprovado/rejeitado/erro
+- [x] Frontend: botão "Enviar orçamento por e-mail" na tela da OS (visível quando status = pendente)
+- [x] Testes: 42 testes passando (6 arquivos)

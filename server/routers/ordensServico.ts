@@ -28,6 +28,10 @@ import {
 import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { storagePut } from "../storage";
 import { notifyOwner } from "../_core/notification";
+import { buildOrcamentoEmail, sendEmail } from "../email";
+import { getDb } from "../db";
+import { clientes, tenants, equipamentos } from "../../drizzle/schema";
+import { eq, and } from "drizzle-orm";
 
 async function resolveTenantId(userId: number): Promise<number> {
   const owned = await getTenantByOwner(userId);
@@ -456,5 +460,42 @@ export const ordensServicoRouter = router({
     .query(async ({ ctx, input }) => {
       const tenantId = await resolveTenantId(ctx.user.id);
       return getOsStatusHistory(tenantId, input.osId);
+    }),
+
+  // Reenviar e-mail de orçamento para o cliente
+  reenviarEmailOrcamento: protectedProcedure
+    .input(z.object({ osId: z.number(), origin: z.string().url() }))
+    .mutation(async ({ ctx, input }) => {
+      const tenantId = await resolveTenantId(ctx.user.id);
+      const os = await getOrdemServicoById(tenantId, input.osId);
+      if (!os) throw new TRPCError({ code: "NOT_FOUND", message: "OS não encontrada" });
+      if (!os.clientToken) throw new TRPCError({ code: "BAD_REQUEST", message: "OS sem token de cliente" });
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB indisponível" });
+      const [cliente] = os.clienteId
+        ? await db.select().from(clientes).where(and(eq(clientes.id, os.clienteId), eq(clientes.tenantId, tenantId))).limit(1)
+        : [];
+      if (!cliente?.email) throw new TRPCError({ code: "BAD_REQUEST", message: "Cliente sem e-mail cadastrado" });
+      const [tenant] = await db.select().from(tenants).where(eq(tenants.id, tenantId)).limit(1);
+      const equipRows = os.equipamentoId
+        ? await db.select().from(equipamentos).where(and(eq(equipamentos.id, os.equipamentoId), eq(equipamentos.tenantId, tenantId))).limit(1)
+        : [];
+      const equipDescricao = equipRows[0] ? `${equipRows[0].marca} ${equipRows[0].modelo}` : "Equipamento";
+      const aprovarUrl = `${input.origin}/api/orcamento/aprovar?token=${os.clientToken}`;
+      const rejeitarUrl = `${input.origin}/api/orcamento/rejeitar?token=${os.clientToken}`;
+      const { subject, html } = buildOrcamentoEmail({
+        clienteNome: cliente.nome,
+        osNumero: os.numero ?? `#${os.id}`,
+        equipamentoDescricao: equipDescricao,
+        tenantNome: (tenant as any)?.name ?? "Assistência Técnica",
+        tenantWhatsapp: (tenant as any)?.whatsapp ?? undefined,
+        valorTotal: parseFloat(String(os.valorTotal ?? "0")),
+        laudoTecnico: os.laudoTecnico ?? undefined,
+        aprovarUrl,
+        rejeitarUrl,
+        validadeOrcamento: os.validadeOrcamento ?? undefined,
+      });
+      await sendEmail({ to: cliente.email, subject, html });
+      return { success: true, sentTo: cliente.email };
     }),
 });

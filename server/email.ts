@@ -320,3 +320,98 @@ export function buildOsProntaEmail(opts: {
     `),
   };
 }
+
+/**
+ * Template: Orçamento aguardando aprovação do cliente
+ * Disparado automaticamente quando a OS muda para status "aguardando_aprovacao"
+ * Os botões Aprovar/Rejeitar são links GET simples — sem necessidade de login
+ */
+export function buildOrcamentoEmail(opts: {
+  clienteNome: string;
+  osNumero: string;
+  equipamentoDescricao: string;
+  tenantNome: string;
+  tenantWhatsapp?: string;
+  valorTotal: number;
+  laudoTecnico?: string;
+  aprovarUrl: string;
+  rejeitarUrl: string;
+  validadeOrcamento?: Date;
+}): { subject: string; html: string } {
+  const valorFormatado = new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(opts.valorTotal);
+  const validadeStr = opts.validadeOrcamento
+    ? new Intl.DateTimeFormat("pt-BR").format(opts.validadeOrcamento)
+    : null;
+
+  return {
+    subject: `📋 Orçamento disponível — OS ${opts.osNumero} (responda com 1 clique)`,
+    html: baseLayout(`
+      <h2 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#1e293b;">
+        Orçamento pronto para sua aprovação
+      </h2>
+      <p style="margin:0 0 24px;color:#64748b;font-size:15px;line-height:1.6;">
+        Olá, <strong>${opts.clienteNome}</strong>! O diagnóstico do seu equipamento foi concluído
+        e o orçamento está disponível. Revise e responda com um clique — nenhum login necessário.
+      </p>
+
+      <table width="100%" cellpadding="0" cellspacing="0"
+             style="background:#f8fafc;border-radius:10px;padding:20px;margin-bottom:24px;">
+        <tr><td>
+          <p style="margin:0 0 6px;font-size:13px;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Ordem de Serviço</p>
+          <p style="margin:0 0 16px;font-size:20px;font-weight:700;color:#1B4F8A;">${opts.osNumero}</p>
+
+          <p style="margin:0 0 6px;font-size:13px;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Equipamento</p>
+          <p style="margin:0 0 16px;font-size:16px;font-weight:600;color:#1e293b;">${opts.equipamentoDescricao}</p>
+
+          ${opts.laudoTecnico ? `
+          <p style="margin:0 0 6px;font-size:13px;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Diagnóstico / Laudo</p>
+          <p style="margin:0 0 16px;font-size:14px;color:#475569;line-height:1.6;white-space:pre-line;">${opts.laudoTecnico}</p>
+          ` : ""}
+
+          <p style="margin:0 0 6px;font-size:13px;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Valor Total do Serviço</p>
+          <p style="margin:0 ${validadeStr ? "0 16px" : "0"};font-size:32px;font-weight:800;color:#16a34a;">${valorFormatado}</p>
+
+          ${validadeStr ? `
+          <p style="margin:0 0 6px;font-size:13px;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Validade do Orçamento</p>
+          <p style="margin:0;font-size:14px;color:#ef4444;font-weight:600;">⏰ Válido até ${validadeStr}</p>
+          ` : ""}
+        </td></tr>
+      </table>
+
+      <!-- Botões de ação -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+        <tr>
+          <td width="50%" style="padding-right:8px;">
+            <a href="${opts.aprovarUrl}"
+               style="display:block;background:#16a34a;color:#ffffff;text-decoration:none;
+                      font-size:16px;font-weight:700;padding:18px 12px;border-radius:8px;
+                      text-align:center;">
+              ✅ Aprovar Orçamento
+            </a>
+          </td>
+          <td width="50%" style="padding-left:8px;">
+            <a href="${opts.rejeitarUrl}"
+               style="display:block;background:#dc2626;color:#ffffff;text-decoration:none;
+                      font-size:16px;font-weight:700;padding:18px 12px;border-radius:8px;
+                      text-align:center;">
+              ❌ Rejeitar Orçamento
+            </a>
+          </td>
+        </tr>
+      </table>
+
+      <p style="margin:0 0 8px;color:#94a3b8;font-size:13px;line-height:1.6;">
+        Ao clicar em <strong>Aprovar</strong>, você autoriza a execução do serviço pelo valor indicado.
+        Ao clicar em <strong>Rejeitar</strong>, você poderá informar o motivo e o equipamento será devolvido sem reparo.
+      </p>
+      ${opts.tenantWhatsapp ? `
+      <p style="margin:8px 0 0;color:#94a3b8;font-size:13px;">
+        Dúvidas? Fale conosco pelo WhatsApp: <strong>${opts.tenantWhatsapp}</strong>
+      </p>
+      ` : ""}
+    `),
+  };
+}
