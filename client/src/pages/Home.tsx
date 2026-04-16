@@ -277,7 +277,22 @@ export default function Home() {
                 Ver demonstração
               </a>
             </div>
-            <p className="text-xs text-white/35">✦ 14 dias grátis · Sem cartão de crédito · Cancele quando quiser</p>
+            <p className="text-xs text-white/35">❖ 14 dias grátis · Sem cartão de crédito · Cancele quando quiser</p>
+            {/* Dashboard Screenshot */}
+            <div className="mt-6 rounded-xl overflow-hidden border border-white/10 shadow-2xl hidden lg:block">
+              <div className="flex items-center gap-1.5 bg-[#161b22] px-3 py-2 border-b border-white/10">
+                <span className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
+                <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
+                <span className="w-2.5 h-2.5 rounded-full bg-green-500/60" />
+                <span className="ml-2 text-xs text-white/30">Assist-Pró — Dashboard</span>
+              </div>
+              <img
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310419663028604039/8gQd8FyXUu5BkEGDFjJzNt/dashboard-screenshot_d1524766.png"
+                alt="Dashboard do Assist-Pró com OS, faturamento e alertas"
+                className="w-full object-cover object-top"
+                style={{ maxHeight: '260px' }}
+              />
+            </div>
           </div>
           {/* Right — Cadastro */}
           <div id="cadastro" className="bg-[#161b22] border border-white/10 rounded-2xl p-6 shadow-2xl">

@@ -462,3 +462,15 @@
 - [x] 100% responsivo mobile-first
 - [x] Header com blur ao rolar
 - [x] Scroll suave entre seções (âncoras)
+
+## Screenshot Real no Hero da Landing Page
+
+- [ ] Capturar screenshot real do dashboard do Assist-Pró
+- [ ] Fazer upload para CDN
+- [ ] Substituir card mockup no Hero pela imagem real com borda e sombra
+
+## Correção — Nexar GraphQL campo inválido
+
+- [x] Removido campo `parentCategory` da query GraphQL (não existe no tipo SupCategory)
+- [x] Mantidos apenas `id` e `name` dentro do bloco `category`
+- [x] Teste do PN `15-11765-01` passando — confirma query sem `parentCategory` e retorno correto de mpn, manufacturer, category e referencePrice

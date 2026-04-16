@@ -174,6 +174,74 @@ describe("Nexar API Integration", () => {
     process.env.NEXAR_CLIENT_SECRET = originalClientSecret;
   });
 
+  it("deve retornar category corretamente sem parentCategory (PN 15-11765-01)", async () => {
+    // Mock do token
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        access_token: "mock-token-cisco",
+        expires_in: 3600,
+      }),
+    } as any);
+
+    // Mock da consulta GraphQL com category sem parentCategory
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        data: {
+          supSearchMpn: {
+            results: [
+              {
+                part: {
+                  mpn: "15-11765-01",
+                  shortDescription: "Cisco SFP-10G-SR Transceiver Module",
+                  manufacturer: { name: "Cisco", homepageUrl: "https://cisco.com" },
+                  category: { id: "cat-123", name: "Networking" },
+                  bestImage: null,
+                  bestDatasheet: null,
+                  specs: [],
+                  sellers: [
+                    {
+                      company: { name: "Mouser", homepageUrl: "https://mouser.com" },
+                      offers: [
+                        {
+                          clickUrl: "https://mouser.com/product/15-11765-01",
+                          inventoryLevel: 50,
+                          moq: 1,
+                          prices: [{ quantity: 1, price: 125.0, currency: "USD" }],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        },
+      }),
+    } as any);
+
+    const { lookupPartNumber } = await import("./nexar");
+    const result = await lookupPartNumber("15-11765-01");
+
+    expect(result.found).toBe(true);
+    if (result.found) {
+      expect(result.mpn).toBe("15-11765-01");
+      expect(result.description).toContain("Cisco");
+      expect(result.manufacturer).toBe("Cisco");
+      expect(result.category).toBe("Networking");
+      expect(result.referencePrice).toBe(125.0);
+      expect(result.referencePriceCurrency).toBe("USD");
+      expect(result.sellersWithStock).toBe(1);
+    }
+
+    // Confirma que a query enviada NÃO contém parentCategory
+    const graphqlCall = mockFetch.mock.calls[1];
+    const body = JSON.parse(graphqlCall[1].body as string);
+    expect(body.query).not.toContain("parentCategory");
+    expect(body.variables.q).toBe("15-11765-01");
+  });
+
   it("deve lançar erro quando a autenticação falha", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: false,

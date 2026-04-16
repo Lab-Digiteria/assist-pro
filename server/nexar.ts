@@ -103,10 +103,8 @@ const NEXAR_FULL_QUERY = `
             homepageUrl
           }
           category {
+            id
             name
-            parentCategory {
-              name
-            }
           }
           bestImage {
             url
@@ -248,8 +246,8 @@ export async function lookupPartNumber(partNumber: string): Promise<NexarLookupR
     description: part.shortDescription || "",
     manufacturer: part.manufacturer?.name || "",
     manufacturerUrl: part.manufacturer?.homepageUrl || null,
-    category: part.category?.parentCategory?.name || part.category?.name || null,
-    subcategory: part.category?.parentCategory ? part.category?.name : null,
+    category: part.category?.name || null,
+    subcategory: null,
     imageUrl: part.bestImage?.url || null,
     datasheetUrl: part.bestDatasheet?.url || null,
     specs,
