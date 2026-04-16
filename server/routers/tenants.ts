@@ -13,7 +13,7 @@ import {
   updateMemberRole,
   updateTenantStatus,
 } from "../db";
-import { subscriptions } from "../../drizzle/schema";
+import { subscriptions, tenants, leads, stripeEvents, plans } from "../../drizzle/schema";
 import { protectedProcedure, router } from "../_core/trpc";
 import { validateCNPJ, validateCPF } from "../../shared/utils";
 import { runStripeReconciliation } from "../stripe-reconcile";
@@ -162,5 +162,99 @@ export const tenantsRouter = router({
   stripeReconcile: protectedProcedure.mutation(async ({ ctx }) => {
     if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
     return runStripeReconciliation();
+  }),
+
+  // Admin: dashboard stats
+  adminStats: protectedProcedure.query(async ({ ctx }) => {
+    if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const [allTenants, allSubs, allWebhooks, allLeads] = await Promise.all([
+      db.select({ id: tenants.id }).from(tenants),
+      db.select({ status: subscriptions.status }).from(subscriptions),
+      db.select({ id: stripeEvents.id }).from(stripeEvents),
+      db.select({ id: leads.id }).from(leads),
+    ]);
+    const statusCounts = allSubs.reduce((acc, s) => {
+      acc[s.status] = (acc[s.status] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    return {
+      totalTenants: allTenants.length,
+      activeTenants: statusCounts["active"] || 0,
+      trialingTenants: statusCounts["trialing"] || 0,
+      pastDueTenants: statusCounts["past_due"] || 0,
+      suspendedTenants: statusCounts["suspended"] || 0,
+      canceledTenants: (statusCounts["canceled"] || 0) + (statusCounts["expired"] || 0),
+      totalWebhooksProcessed: allWebhooks.length,
+      totalLeads: allLeads.length,
+      statusCounts,
+    };
+  }),
+
+  // Admin: delete tenant in trial
+  adminDeleteTenant: protectedProcedure
+    .input(z.object({ tenantId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const [tenant] = await db.select().from(tenants).where(eq(tenants.id, input.tenantId)).limit(1);
+      if (!tenant) throw new TRPCError({ code: "NOT_FOUND" });
+      if (tenant.subscriptionStatus !== "trial") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Apenas tenants em trial podem ser excluídos" });
+      }
+      await db.delete(subscriptions).where(eq(subscriptions.tenantId, input.tenantId));
+      await db.delete(leads).where(eq(leads.tenantId, input.tenantId));
+      await db.delete(tenants).where(eq(tenants.id, input.tenantId));
+      return { success: true };
+    }),
+
+  // Admin: list all subscriptions with tenant name
+  adminListSubscriptions: protectedProcedure.query(async ({ ctx }) => {
+    if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+    const db = await getDb();
+    if (!db) return [];
+    const rows = await db
+      .select({
+        id: subscriptions.id,
+        tenantId: subscriptions.tenantId,
+        status: subscriptions.status,
+        trialEndsAt: subscriptions.trialEndsAt,
+        currentPeriodEndsAt: subscriptions.currentPeriodEndsAt,
+        stripeSubscriptionId: subscriptions.stripeSubscriptionId,
+        canceledAt: subscriptions.canceledAt,
+        createdAt: subscriptions.createdAt,
+        tenantName: tenants.name,
+        planId: subscriptions.planId,
+      })
+      .from(subscriptions)
+      .leftJoin(tenants, eq(subscriptions.tenantId, tenants.id))
+      .orderBy(subscriptions.createdAt);
+    return rows;
+  }),
+
+  // Admin: list processed Stripe webhook events
+  adminListWebhooks: protectedProcedure.query(async ({ ctx }) => {
+    if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+    const db = await getDb();
+    if (!db) return [];
+    return db.select().from(stripeEvents).orderBy(stripeEvents.processedAt).limit(200);
+  }),
+
+  // Admin: list all plans
+  adminListPlans: protectedProcedure.query(async ({ ctx }) => {
+    if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+    const db = await getDb();
+    if (!db) return [];
+    return db.select().from(plans).orderBy(plans.priceMonthly);
+  }),
+
+  // Admin: list all leads
+  adminListLeads: protectedProcedure.query(async ({ ctx }) => {
+    if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+    const db = await getDb();
+    if (!db) return [];
+    return db.select().from(leads).orderBy(leads.createdAt);
   }),
 });

@@ -113,3 +113,21 @@
 - [x] Frontend: SubscriptionGuard — tela de bloqueio para status inválidos
 - [x] Frontend: Admin — gestão completa de tenants com extendTrial, suspend, reactivate e leads
 - [x] Seed dos 3 planos no banco (Mensal R$99, Anual R$799, Vitalício R$1.499)
+
+## Control Plane (/admin) — Separado da área do tenant
+
+- [ ] Layout AdminControlPlane com sidebar própria e identidade visual distinta (tema escuro, logo "Control Plane")
+- [ ] Dashboard: Tenants Ativos, Endpoints S2S, Eventos de Auditoria, Webhooks, Estados de Assinatura, Atividade Recente
+- [ ] Módulo Assinantes: listagem com status, plano, trial restante, ações (extend, suspend, reactivate, delete)
+- [ ] Módulo Planos: CRUD de planos com preços e trial days
+- [ ] Módulo Assinaturas: listagem de todas as subscriptions com filtros por status
+- [ ] Módulo Billing: eventos de cobrança, reconciliação Stripe
+- [ ] Módulo Audit Logs: trilha de auditoria de todas as ações críticas
+- [ ] Módulo Webhooks: listagem de eventos Stripe processados
+- [ ] Módulo Leads: funil de leads com status e conversão
+- [ ] Módulo Comunicação: envio de mensagens customizadas para tenants
+- [ ] Módulo Monitoramento Trials: trials próximos de expirar, alertas
+- [ ] Módulo Campanhas Email: criação e envio de campanhas de reengajamento
+- [ ] Módulo Roteiro do Sistema: documentação interna do produto
+- [ ] Isolamento total: /admin não aparece na navegação do tenant
+- [ ] Guard de admin: apenas usuário com role=admin acessa /admin
