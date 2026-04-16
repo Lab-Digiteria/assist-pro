@@ -100,13 +100,13 @@ export default function OrdensServico() {
               {step === 1 && (
                 <div className="space-y-3">
                   <div><Label>Cliente *</Label>
-                    <Select value={String(form.clienteId)} onValueChange={v => setForm({...form, clienteId: Number(v), equipamentoId: 0})}>
+                    <Select value={form.clienteId ? String(form.clienteId) : ""} onValueChange={v => setForm({...form, clienteId: Number(v), equipamentoId: 0})}>
                       <SelectTrigger><SelectValue placeholder="Selecione o cliente" /></SelectTrigger>
                       <SelectContent>{clientes.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.nome}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                   <div><Label>Equipamento *</Label>
-                    <Select value={String(form.equipamentoId)} onValueChange={v => setForm({...form, equipamentoId: Number(v)})} disabled={!form.clienteId}>
+                    <Select value={form.equipamentoId ? String(form.equipamentoId) : ""} onValueChange={v => setForm({...form, equipamentoId: Number(v)})} disabled={!form.clienteId}>
                       <SelectTrigger><SelectValue placeholder={form.clienteId ? "Selecione o equipamento" : "Selecione um cliente primeiro"} /></SelectTrigger>
                       <SelectContent>{clienteEquips.map(e => <SelectItem key={e.id} value={String(e.id)}>{e.marca} {e.modelo}</SelectItem>)}</SelectContent>
                     </Select>

@@ -4,6 +4,7 @@ import Stripe from "stripe";
 import { getDb } from "./db";
 import { tenants, stripeEvents } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
+import { sendEmail, buildPaymentConfirmationEmail } from "./email";
 
 function getStripe(): Stripe | null {
   const key = process.env.STRIPE_SECRET_KEY;
@@ -93,6 +94,27 @@ export function registerStripeWebhook(app: Express) {
                 String(session.subscription),
                 plan ?? null
               );
+            }
+            // Send payment confirmation email
+            try {
+              const dbForEmail = await getDb();
+              if (dbForEmail) {
+                const [tenant] = await dbForEmail.select().from(tenants).where(eq(tenants.id, tenantId)).limit(1);
+                if (tenant?.email) {
+                  const planLabel = plan === "lifetime" ? "Vitalício" : plan === "annual" ? "Anual" : "Mensal";
+                  const amount = session.amount_total ? session.amount_total / 100 : 0;
+                  const { subject, html } = buildPaymentConfirmationEmail({
+                    name: tenant.name,
+                    companyName: tenant.name,
+                    planName: planLabel,
+                    amount: `R$ ${amount.toFixed(2)}`,
+                    loginUrl: "https://assistpro.com.br/login",
+                  });
+                  await sendEmail({ to: tenant.email, subject, html });
+                }
+              }
+            } catch (emailErr) {
+              console.error("[Stripe Webhook] Erro ao enviar e-mail de confirmação:", emailErr);
             }
             break;
           }

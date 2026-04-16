@@ -192,3 +192,40 @@
 - [x] Frontend: campo de observações adicionais do cliente (ex: "a senha é 1234")
 - [x] Frontend: botão "Copiar link do cliente" na tela da OS (para o gestor enviar manualmente)
 - [x] Frontend: exibir clientToken como QR code na tela da OS (opcional, para impressão)
+
+## Bug Crítico — SelectItem value vazio
+
+- [ ] Corrigir todos os `<SelectItem value="">` nas telas OrdensServico.tsx e OrdemServicoDetalhe.tsx
+
+## Segurança Crítica — Painel Admin exposto a tenants
+
+- [ ] Remover link "Painel Admin" do menu de navegação de tenants (AppLayout/DashboardLayout)
+- [ ] Verificar e reforçar AdminGuard para redirecionar tenants para /dashboard
+- [ ] Verificar todos os endpoints tRPC de admin (adminProcedure) e confirmar proteção
+
+## Bug Crítico — SelectItem value vazio em OS
+
+- [ ] Corrigir Select com value="0" (clienteId/equipamentoId) em OrdensServico.tsx
+- [ ] Corrigir Select com value="" (nextStatus) em OrdemServicoDetalhe.tsx
+
+## Integração Resend — E-mail Transacional
+
+- [ ] Configurar secret RESEND_API_KEY
+- [ ] Instalar dependência `resend`
+- [ ] Criar helper `server/email.ts` com função `sendEmail` e templates HTML
+- [ ] Template: e-mail de boas-vindas ao cadastrar trial
+- [ ] Template: alerta 3 dias antes do trial expirar
+- [ ] Template: confirmação de pagamento após upgrade
+- [ ] Disparar boas-vindas no endpoint `lead.register`
+- [ ] Disparar alerta de trial no job cron diário
+- [ ] Disparar confirmação de pagamento no webhook `checkout.session.completed`
+
+## Segurança Crítica — Isolamento Total do Painel Admin
+
+- [ ] Remover link "Painel Admin" do sidebar do tenant (AppLayout/DashboardLayout)
+- [ ] Criar SuperAdminGuard: bloqueia acesso a /super-admin para qualquer usuário sem isPlatformAdmin
+- [ ] Criar SuperAdminLayout: layout isolado com identidade visual distinta, sem conexão com o layout do tenant
+- [ ] Migrar todas as rotas /admin/* para /super-admin/* no App.tsx
+- [ ] Atualizar todos os links internos do Control Plane para /super-admin
+- [ ] Garantir que tenant com role=admin não acessa /super-admin (apenas isPlatformAdmin=true)
+- [ ] Verificar que nenhuma rota do tenant linka para /super-admin

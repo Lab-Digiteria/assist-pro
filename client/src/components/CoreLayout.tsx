@@ -30,19 +30,19 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/_core/hooks/useAuth";
 
 const navItems = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/tenants", label: "Assinantes", icon: Building2 },
-  { href: "/admin/plans", label: "Planos", icon: Package },
-  { href: "/admin/subscriptions", label: "Assinaturas", icon: CreditCard },
-  { href: "/admin/billing", label: "Billing", icon: FileText },
-  { href: "/admin/audit-logs", label: "Audit Logs", icon: Activity },
-  { href: "/admin/webhooks", label: "Webhooks", icon: Webhook },
-  { href: "/admin/leads", label: "Leads", icon: UserPlus },
-  { href: "/admin/communications", label: "Comunicação", icon: Mail },
-  { href: "/admin/resellers", label: "Revenda", icon: Handshake },
-  { href: "/admin/trials", label: "Monitoramento Trials", icon: Eye },
-  { href: "/admin/campaigns", label: "Campanhas Email", icon: Send },
-  { href: "/admin/playbook", label: "Roteiro do Sistema", icon: ClipboardList },
+  { href: "/super-admin", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/super-admin/tenants", label: "Assinantes", icon: Building2 },
+  { href: "/super-admin/plans", label: "Planos", icon: Package },
+  { href: "/super-admin/subscriptions", label: "Assinaturas", icon: CreditCard },
+  { href: "/super-admin/billing", label: "Billing", icon: FileText },
+  { href: "/super-admin/audit-logs", label: "Audit Logs", icon: Activity },
+  { href: "/super-admin/webhooks", label: "Webhooks", icon: Webhook },
+  { href: "/super-admin/leads", label: "Leads", icon: UserPlus },
+  { href: "/super-admin/communications", label: "Comunicação", icon: Mail },
+  { href: "/super-admin/resellers", label: "Revenda", icon: Handshake },
+  { href: "/super-admin/trials", label: "Monitoramento Trials", icon: Eye },
+  { href: "/super-admin/campaigns", label: "Campanhas Email", icon: Send },
+  { href: "/super-admin/playbook", label: "Roteiro do Sistema", icon: ClipboardList },
 ];
 
 interface CoreLayoutProps {
@@ -57,7 +57,7 @@ export function CoreLayout({ children, title }: CoreLayoutProps) {
   const logoutMutation = trpc.auth.logout.useMutation({
     onSuccess: () => {
       toast.success("Sessão encerrada");
-      window.location.href = "/admin";
+      window.location.href = "/login";
     },
   });
 
@@ -94,8 +94,8 @@ export function CoreLayout({ children, title }: CoreLayoutProps) {
           {navItems.map((item) => {
             const Icon = item.icon;
             const active =
-              item.href === "/admin"
-                ? location === "/admin"
+              item.href === "/super-admin"
+                ? location === "/super-admin"
                 : location.startsWith(item.href);
             return (
               <Link

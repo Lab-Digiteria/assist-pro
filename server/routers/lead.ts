@@ -212,7 +212,22 @@ export const leadRouter = router({
         // Não bloqueia
       }
 
-      // 10. Gerar JWT de sessão
+      // 10. Enviar e-mail de boas-vindas ao tenant
+      try {
+        const { sendEmail, buildWelcomeEmail } = await import("../email");
+        const origin = (ctx.req.headers.origin as string) ?? "https://assistpro.com.br";
+        const { subject, html } = buildWelcomeEmail({
+          name: input.name,
+          companyName: input.companyName,
+          trialDays: plan.trialDays,
+          loginUrl: `${origin}/login`,
+        });
+        await sendEmail({ to: input.email, subject, html });
+      } catch {
+        // Não bloqueia o cadastro
+      }
+
+      // 11. Gerar JWT de sessão
       const token = await signJwt({
         sub: newUser.id,
         email: newUser.email ?? "",

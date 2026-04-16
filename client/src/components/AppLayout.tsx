@@ -14,7 +14,6 @@ import {
   LogOut,
   Menu,
   Settings,
-  Shield,
   Smartphone,
   Users,
   X,
@@ -114,21 +113,8 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
           );
         })}
 
-        {user?.role === "admin" && (
-          <Link
-            href="/admin"
-            onClick={() => setSidebarOpen(false)}
-            className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors mt-2 border-t border-sidebar-border pt-4",
-              location === "/admin"
-                ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-            )}
-          >
-            <Shield className="w-4 h-4 flex-shrink-0" />
-            Painel Admin
-          </Link>
-        )}
+        {/* Painel Admin removido do menu do tenant.
+             Acesso ao Control Plane exclusivamente via /super-admin (URL direta). */}
       </nav>
 
       {/* User */}

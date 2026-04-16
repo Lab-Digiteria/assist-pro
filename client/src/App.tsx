@@ -19,8 +19,9 @@ import Login from "./pages/Login";
 import Planos from "./pages/Planos";
 import AreaCliente from "./pages/AreaCliente";
 
-// Control Plane — /admin (completamente separado da área do tenant)
-import { AdminGuard } from "./components/AdminGuard";
+// Control Plane — /super-admin (completamente isolado da área do tenant)
+// Acesso exclusivo via URL direta. Nunca aparece na navegação do tenant.
+import { SuperAdminGuard } from "./components/SuperAdminGuard";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminTenants from "./pages/admin/AdminTenants";
 import AdminPlans from "./pages/admin/AdminPlans";
@@ -50,6 +51,7 @@ function Router() {
       <Route path="/onboarding" component={Onboarding} />
 
       {/* ── App (área do tenant) ────────────────────────────── */}
+      {/* Nenhum link para /super-admin aqui — área completamente isolada */}
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/clientes" component={Clientes} />
       <Route path="/equipamentos" component={Equipamentos} />
@@ -60,21 +62,22 @@ function Router() {
       <Route path="/relatorios" component={Relatorios} />
       <Route path="/configuracoes" component={Configuracoes} />
 
-      {/* ── Control Plane (/admin) — separado da área do tenant */}
-      {/* Acesso restrito a usuários com role=admin via AdminGuard  */}
-      <Route path="/admin">{() => <AdminGuard><AdminDashboard /></AdminGuard>}</Route>
-      <Route path="/admin/tenants">{() => <AdminGuard><AdminTenants /></AdminGuard>}</Route>
-      <Route path="/admin/plans">{() => <AdminGuard><AdminPlans /></AdminGuard>}</Route>
-      <Route path="/admin/subscriptions">{() => <AdminGuard><AdminSubscriptions /></AdminGuard>}</Route>
-      <Route path="/admin/billing">{() => <AdminGuard><AdminBilling /></AdminGuard>}</Route>
-      <Route path="/admin/audit-logs">{() => <AdminGuard><AdminAuditLogs /></AdminGuard>}</Route>
-      <Route path="/admin/webhooks">{() => <AdminGuard><AdminWebhooks /></AdminGuard>}</Route>
-      <Route path="/admin/leads">{() => <AdminGuard><AdminLeads /></AdminGuard>}</Route>
-      <Route path="/admin/communication">{() => <AdminGuard><AdminCommunication /></AdminGuard>}</Route>
-      <Route path="/admin/trials">{() => <AdminGuard><AdminTrialMonitor /></AdminGuard>}</Route>
-      <Route path="/admin/campaigns">{() => <AdminGuard><AdminEmailCampaigns /></AdminGuard>}</Route>
-      <Route path="/admin/resale">{() => <AdminGuard><AdminResale /></AdminGuard>}</Route>
-      <Route path="/admin/playbook">{() => <AdminGuard><AdminPlaybook /></AdminGuard>}</Route>
+      {/* ── Control Plane (/super-admin) — ISOLADO da área do tenant ── */}
+      {/* Acesso via URL direta apenas. Guard verifica isPlatformAdmin=true. */}
+      {/* Tenants são redirecionados para /dashboard mesmo digitando a URL. */}
+      <Route path="/super-admin">{() => <SuperAdminGuard><AdminDashboard /></SuperAdminGuard>}</Route>
+      <Route path="/super-admin/tenants">{() => <SuperAdminGuard><AdminTenants /></SuperAdminGuard>}</Route>
+      <Route path="/super-admin/plans">{() => <SuperAdminGuard><AdminPlans /></SuperAdminGuard>}</Route>
+      <Route path="/super-admin/subscriptions">{() => <SuperAdminGuard><AdminSubscriptions /></SuperAdminGuard>}</Route>
+      <Route path="/super-admin/billing">{() => <SuperAdminGuard><AdminBilling /></SuperAdminGuard>}</Route>
+      <Route path="/super-admin/audit-logs">{() => <SuperAdminGuard><AdminAuditLogs /></SuperAdminGuard>}</Route>
+      <Route path="/super-admin/webhooks">{() => <SuperAdminGuard><AdminWebhooks /></SuperAdminGuard>}</Route>
+      <Route path="/super-admin/leads">{() => <SuperAdminGuard><AdminLeads /></SuperAdminGuard>}</Route>
+      <Route path="/super-admin/communication">{() => <SuperAdminGuard><AdminCommunication /></SuperAdminGuard>}</Route>
+      <Route path="/super-admin/trials">{() => <SuperAdminGuard><AdminTrialMonitor /></SuperAdminGuard>}</Route>
+      <Route path="/super-admin/campaigns">{() => <SuperAdminGuard><AdminEmailCampaigns /></SuperAdminGuard>}</Route>
+      <Route path="/super-admin/resale">{() => <SuperAdminGuard><AdminResale /></SuperAdminGuard>}</Route>
+      <Route path="/super-admin/playbook">{() => <SuperAdminGuard><AdminPlaybook /></SuperAdminGuard>}</Route>
 
       {/* ── 404 ─────────────────────────────────────────────── */}
       <Route path="/404" component={NotFound} />

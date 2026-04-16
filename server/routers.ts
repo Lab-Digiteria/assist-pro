@@ -25,6 +25,9 @@ export const appRouter = router({
         isImpersonating: opts.ctx.isImpersonating ?? false,
         impersonatedBy: opts.ctx.impersonatedBy,
         tenantId: opts.ctx.tenantId,
+        // isPlatformAdmin: true apenas quando role=admin E não é tenant (tenantId=null) E não está em impersonation
+        // Garante que tenants com role=admin na tabela users não vejam o painel admin
+        isPlatformAdmin: opts.ctx.user.role === "admin" && opts.ctx.tenantId === null && !opts.ctx.isImpersonating,
       };
     }),
     logout: publicProcedure.mutation(({ ctx }) => {
