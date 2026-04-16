@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Users, CreditCard, Building2, ExternalLink } from "lucide-react";
+import { Users, CreditCard, Building2, ExternalLink, Cpu, ChevronRight } from "lucide-react";
+import { Link } from "wouter";
 import { useState } from "react";
 import { toast } from "sonner";
 import { SUBSCRIPTION_STATUS_LABELS, PLANS } from "../../../shared/utils";
@@ -123,6 +124,26 @@ export default function Configuracoes() {
                 ))}
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Modelos de Equipamentos */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Cpu className="w-4 h-4" />Modelos de Equipamentos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-3">
+              Cadastre os modelos de equipamentos que você atende para facilitar a busca de peças compatíveis.
+            </p>
+            <Link href="/configuracoes/modelos-equipamentos">
+              <Button variant="outline" className="w-full flex items-center justify-between">
+                <span>Gerenciar Modelos</span>
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </Link>
           </CardContent>
         </Card>
 

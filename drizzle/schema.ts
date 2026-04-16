@@ -558,3 +558,26 @@ export const revendedorCommissions = mysqlTable("revendedorCommissions", {
 });
 export type RevendedorCommission = typeof revendedorCommissions.$inferSelect;
 export type InsertRevendedorCommission = typeof revendedorCommissions.$inferInsert;
+
+// ─── MODELOS DE EQUIPAMENTOS ─────────────────────────────────────────────────
+export const EQUIPMENT_CATEGORIES = [
+  "smartphone",
+  "notebook",
+  "tablet",
+  "videogame",
+  "desktop",
+  "impressora",
+  "tv",
+  "outro",
+] as const;
+
+export const equipmentModels = mysqlTable("equipmentModels", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull(),
+  brand: varchar("brand", { length: 100 }).notNull(),
+  modelName: varchar("modelName", { length: 200 }).notNull(),
+  category: mysqlEnum("category", EQUIPMENT_CATEGORIES).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type EquipmentModel = typeof equipmentModels.$inferSelect;
+export type InsertEquipmentModel = typeof equipmentModels.$inferInsert;

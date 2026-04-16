@@ -6,6 +6,7 @@ import {
   comissoesTecnicos,
   emailCampaigns,
   equipamentos,
+  equipmentModels,
   estoqueMovimentacoes,
   InsertUser,
   leads,
@@ -19,6 +20,7 @@ import {
   tenantMembers,
   tenants,
   users,
+  type EQUIPMENT_CATEGORIES,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 import { generateOsNumber, generatePartCode, generateSlug } from "../shared/utils";
@@ -1088,4 +1090,59 @@ export async function updateOsClientToken(osId: number, token: string, expiresAt
     .update(ordensServico)
     .set({ clientToken: token, clientTokenExpiresAt: expiresAt })
     .where(eq(ordensServico.id, osId));
+}
+
+// ─── MODELOS DE EQUIPAMENTOS ─────────────────────────────────────────────────
+export async function getEquipmentModels(tenantId: number, search?: string) {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db
+    .select()
+    .from(equipmentModels)
+    .where(eq(equipmentModels.tenantId, tenantId))
+    .orderBy(equipmentModels.brand, equipmentModels.modelName);
+  if (!search) return rows;
+  const q = search.toLowerCase();
+  return rows.filter(
+    (m) =>
+      m.brand.toLowerCase().includes(q) ||
+      m.modelName.toLowerCase().includes(q)
+  );
+}
+
+export async function createEquipmentModel(
+  tenantId: number,
+  data: { brand: string; modelName: string; category: typeof EQUIPMENT_CATEGORIES[number] }
+) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  await db.insert(equipmentModels).values({ ...data, tenantId });
+  const result = await db
+    .select()
+    .from(equipmentModels)
+    .where(eq(equipmentModels.tenantId, tenantId))
+    .orderBy(desc(equipmentModels.createdAt))
+    .limit(1);
+  return result[0];
+}
+
+export async function updateEquipmentModel(
+  tenantId: number,
+  id: number,
+  data: Partial<{ brand: string; modelName: string; category: typeof EQUIPMENT_CATEGORIES[number] }>
+) {
+  const db = await getDb();
+  if (!db) return;
+  await db
+    .update(equipmentModels)
+    .set(data)
+    .where(and(eq(equipmentModels.id, id), eq(equipmentModels.tenantId, tenantId)));
+}
+
+export async function deleteEquipmentModel(tenantId: number, id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db
+    .delete(equipmentModels)
+    .where(and(eq(equipmentModels.id, id), eq(equipmentModels.tenantId, tenantId)));
 }

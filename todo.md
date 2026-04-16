@@ -282,13 +282,14 @@
 ## Módulo de Estoque — Evolução Estrutural
 
 ### 1. Modelos de Equipamentos
-- [ ] Schema: tabela `equipmentModels` (id, tenantId, brand, modelName, category, createdAt)
-- [ ] Migration gerada e aplicada
-- [ ] Backend: CRUD completo em `server/routers/equipmentModels.ts` (list, create, update, delete)
-- [ ] Registrar router `equipmentModels` em `server/routers.ts`
-- [ ] Frontend: página `Configuracoes/ModelosEquipamentos.tsx` com listagem, criação, edição e exclusão
-- [ ] Rota `/configuracoes/modelos-equipamentos` em `App.tsx`
-- [ ] Link em Configurações no sidebar do `AppLayout.tsx`
+- [x] Schema: tabela `equipmentModels` (id, tenantId, brand, modelName, category, createdAt)
+- [x] Migration gerada e aplicada
+- [x] Backend: CRUD completo em `server/routers/equipmentModels.ts` (list, create, update, delete)
+- [x] Registrar router `equipmentModels` em `server/routers.ts`
+- [x] Frontend: página `Configuracoes/ModelosEquipamentos.tsx` com listagem, criação, edição e exclusão
+- [x] Rota `/configuracoes/modelos-equipamentos` em `App.tsx`
+- [x] Link em Configurações no sidebar do `AppLayout.tsx`
+- [x] Testes em `server/equipmentModels.test.ts`
 
 ### 2. Part Number, Fabricante e Compatibilidade
 - [ ] Schema: adicionar campos `partNumber`, `manufacturer`, `application` na tabela `pecas`
