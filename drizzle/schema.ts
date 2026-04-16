@@ -416,3 +416,20 @@ export const userPasswords = mysqlTable("userPasswords", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
+
+// ─── AUDIT LOGS ──────────────────────────────────────────────────────────────
+export const auditLogs = mysqlTable("auditLogs", {
+  id: int("id").autoincrement().primaryKey(),
+  actorId: int("actorId"),
+  actorName: varchar("actorName", { length: 255 }),
+  tenantId: int("tenantId"),
+  action: varchar("action", { length: 100 }).notNull(),
+  resource: varchar("resource", { length: 64 }),
+  resourceId: varchar("resourceId", { length: 64 }),
+  metadata: json("metadata"),
+  ipAddress: varchar("ipAddress", { length: 64 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type InsertAuditLog = typeof auditLogs.$inferInsert;

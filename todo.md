@@ -116,18 +116,18 @@
 
 ## Control Plane (/admin) — Separado da área do tenant
 
-- [ ] Layout AdminControlPlane com sidebar própria e identidade visual distinta (tema escuro, logo "Control Plane")
-- [ ] Dashboard: Tenants Ativos, Endpoints S2S, Eventos de Auditoria, Webhooks, Estados de Assinatura, Atividade Recente
-- [ ] Módulo Assinantes: listagem com status, plano, trial restante, ações (extend, suspend, reactivate, delete)
-- [ ] Módulo Planos: CRUD de planos com preços e trial days
-- [ ] Módulo Assinaturas: listagem de todas as subscriptions com filtros por status
-- [ ] Módulo Billing: eventos de cobrança, reconciliação Stripe
-- [ ] Módulo Audit Logs: trilha de auditoria de todas as ações críticas
-- [ ] Módulo Webhooks: listagem de eventos Stripe processados
-- [ ] Módulo Leads: funil de leads com status e conversão
-- [ ] Módulo Comunicação: envio de mensagens customizadas para tenants
-- [ ] Módulo Monitoramento Trials: trials próximos de expirar, alertas
-- [ ] Módulo Campanhas Email: criação e envio de campanhas de reengajamento
-- [ ] Módulo Roteiro do Sistema: documentação interna do produto
-- [ ] Isolamento total: /admin não aparece na navegação do tenant
-- [ ] Guard de admin: apenas usuário com role=admin acessa /admin
+- [x] Layout AdminControlPlane com sidebar própria e identidade visual distinta (tema escuro, logo "Control Plane")
+- [x] Dashboard: Tenants Ativos, Endpoints S2S, Eventos de Auditoria, Webhooks, Estados de Assinatura, Atividade Recente
+- [x] Módulo Assinantes: listagem com status, plano, trial restante, ações (extend, suspend, reactivate, delete)
+- [x] Módulo Planos: CRUD de planos com preços e trial days
+- [x] Módulo Assinaturas: listagem de todas as subscriptions com filtros por status
+- [x] Módulo Billing: eventos de cobrança, reconciliação Stripe
+- [x] Módulo Audit Logs: trilha de auditoria de todas as ações críticas
+- [x] Módulo Webhooks: listagem de eventos Stripe processados
+- [x] Módulo Leads: funil de leads com status e conversão
+- [x] Módulo Comunicação: envio de mensagens customizadas para tenants
+- [x] Módulo Monitoramento Trials: trials próximos de expirar, alertas
+- [x] Módulo Campanhas Email: criação e envio de campanhas de reengajamento
+- [x] Módulo Roteiro do Sistema: documentação interna do produto
+- [x] Isolamento total: /admin não aparece na navegação do tenant
+- [x] Guard de admin: apenas usuário com role=admin acessa /admin

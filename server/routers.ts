@@ -12,6 +12,7 @@ import { billingRouter } from "./routers/billing";
 import { leadRouter } from "./routers/lead";
 import { subscriptionsRouter } from "./routers/subscriptions";
 import { runStripeReconciliation } from "./stripe-reconcile";
+import { adminRouter } from "./routers/admin";
 
 export const appRouter = router({
   system: systemRouter,
@@ -35,6 +36,7 @@ export const appRouter = router({
   billing: billingRouter,
   lead: leadRouter,
   subscriptions: subscriptionsRouter,
+  admin: adminRouter,
 });
 
 export type AppRouter = typeof appRouter;

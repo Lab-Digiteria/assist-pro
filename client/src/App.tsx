@@ -19,6 +19,7 @@ import Login from "./pages/Login";
 import Planos from "./pages/Planos";
 
 // Control Plane — /admin (completamente separado da área do tenant)
+import { AdminGuard } from "./components/AdminGuard";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminTenants from "./pages/admin/AdminTenants";
 import AdminPlans from "./pages/admin/AdminPlans";
@@ -56,20 +57,20 @@ function Router() {
       <Route path="/configuracoes" component={Configuracoes} />
 
       {/* ── Control Plane (/admin) — separado da área do tenant */}
-      {/* Acesso restrito a usuários com role=admin              */}
-      <Route path="/admin" component={AdminDashboard} />
-      <Route path="/admin/tenants" component={AdminTenants} />
-      <Route path="/admin/plans" component={AdminPlans} />
-      <Route path="/admin/subscriptions" component={AdminSubscriptions} />
-      <Route path="/admin/billing" component={AdminBilling} />
-      <Route path="/admin/audit-logs" component={AdminAuditLogs} />
-      <Route path="/admin/webhooks" component={AdminWebhooks} />
-      <Route path="/admin/leads" component={AdminLeads} />
-      <Route path="/admin/communication" component={AdminCommunication} />
-      <Route path="/admin/trials" component={AdminTrialMonitor} />
-      <Route path="/admin/campaigns" component={AdminEmailCampaigns} />
-      <Route path="/admin/resale" component={AdminResale} />
-      <Route path="/admin/playbook" component={AdminPlaybook} />
+      {/* Acesso restrito a usuários com role=admin via AdminGuard  */}
+      <Route path="/admin">{() => <AdminGuard><AdminDashboard /></AdminGuard>}</Route>
+      <Route path="/admin/tenants">{() => <AdminGuard><AdminTenants /></AdminGuard>}</Route>
+      <Route path="/admin/plans">{() => <AdminGuard><AdminPlans /></AdminGuard>}</Route>
+      <Route path="/admin/subscriptions">{() => <AdminGuard><AdminSubscriptions /></AdminGuard>}</Route>
+      <Route path="/admin/billing">{() => <AdminGuard><AdminBilling /></AdminGuard>}</Route>
+      <Route path="/admin/audit-logs">{() => <AdminGuard><AdminAuditLogs /></AdminGuard>}</Route>
+      <Route path="/admin/webhooks">{() => <AdminGuard><AdminWebhooks /></AdminGuard>}</Route>
+      <Route path="/admin/leads">{() => <AdminGuard><AdminLeads /></AdminGuard>}</Route>
+      <Route path="/admin/communication">{() => <AdminGuard><AdminCommunication /></AdminGuard>}</Route>
+      <Route path="/admin/trials">{() => <AdminGuard><AdminTrialMonitor /></AdminGuard>}</Route>
+      <Route path="/admin/campaigns">{() => <AdminGuard><AdminEmailCampaigns /></AdminGuard>}</Route>
+      <Route path="/admin/resale">{() => <AdminGuard><AdminResale /></AdminGuard>}</Route>
+      <Route path="/admin/playbook">{() => <AdminGuard><AdminPlaybook /></AdminGuard>}</Route>
 
       {/* ── 404 ─────────────────────────────────────────────── */}
       <Route path="/404" component={NotFound} />
