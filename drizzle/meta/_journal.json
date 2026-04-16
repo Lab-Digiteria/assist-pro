@@ -43,6 +43,13 @@
       "when": 1776303925589,
       "tag": "0005_early_wind_dancer",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1776345617377,
+      "tag": "0006_productive_warhawk",
+      "breakpoints": true
     }
   ]
 }

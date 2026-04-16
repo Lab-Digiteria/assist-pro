@@ -35,6 +35,7 @@ import AdminTrialMonitor from "./pages/admin/AdminTrialMonitor";
 import AdminEmailCampaigns from "./pages/admin/AdminEmailCampaigns";
 import AdminResale from "./pages/admin/AdminResale";
 import AdminPlaybook from "./pages/admin/AdminPlaybook";
+import AdminRevendedores from "./pages/admin/AdminRevendedores";
 
 function Router() {
   return (
@@ -77,6 +78,7 @@ function Router() {
       <Route path="/super-admin/trials">{() => <SuperAdminGuard><AdminTrialMonitor /></SuperAdminGuard>}</Route>
       <Route path="/super-admin/campaigns">{() => <SuperAdminGuard><AdminEmailCampaigns /></SuperAdminGuard>}</Route>
       <Route path="/super-admin/resale">{() => <SuperAdminGuard><AdminResale /></SuperAdminGuard>}</Route>
+      <Route path="/super-admin/revendedores">{() => <SuperAdminGuard><AdminRevendedores /></SuperAdminGuard>}</Route>
       <Route path="/super-admin/playbook">{() => <SuperAdminGuard><AdminPlaybook /></SuperAdminGuard>}</Route>
 
       {/* ── 404 ─────────────────────────────────────────────── */}

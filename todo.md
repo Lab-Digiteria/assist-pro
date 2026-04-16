@@ -229,3 +229,17 @@
 - [ ] Atualizar todos os links internos do Control Plane para /super-admin
 - [ ] Garantir que tenant com role=admin não acessa /super-admin (apenas isPlatformAdmin=true)
 - [ ] Verificar que nenhuma rota do tenant linka para /super-admin
+
+## Área de Revendas
+
+- [ ] Schema: tabela `revendedores` (id, nome, email, whatsapp, cidade, estado, atuacao, mensagem, status enum draft/ativo/inativo, createdAt)
+- [ ] Migration gerada e aplicada
+- [ ] Backend: publicProcedure `revendedores.register` (cadastro público sem auth)
+- [ ] Backend: adminProcedure `revendedores.list` (listar todos com filtro de status)
+- [ ] Backend: adminProcedure `revendedores.updateStatus` (ativar/inativar revendedor)
+- [ ] Backend: notifyOwner ao receber novo cadastro de revendedor
+- [ ] Backend: e-mail de confirmação ao revendedor após cadastro
+- [ ] Landing page: seção "Seja um Revendedor" com proposta de valor (3 benefícios) e formulário
+- [ ] Landing page: âncora `#revendedores` para navegação direta
+- [ ] Super Admin: página `/super-admin/revendedores` com tabela de leads e ações de status
+- [ ] Super Admin: link "Revendedores" no menu do CoreLayout

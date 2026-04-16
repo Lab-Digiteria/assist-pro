@@ -39,7 +39,7 @@ const navItems = [
   { href: "/super-admin/webhooks", label: "Webhooks", icon: Webhook },
   { href: "/super-admin/leads", label: "Leads", icon: UserPlus },
   { href: "/super-admin/communications", label: "Comunicação", icon: Mail },
-  { href: "/super-admin/resellers", label: "Revenda", icon: Handshake },
+  { href: "/super-admin/revendedores", label: "Revendedores", icon: Handshake },
   { href: "/super-admin/trials", label: "Monitoramento Trials", icon: Eye },
   { href: "/super-admin/campaigns", label: "Campanhas Email", icon: Send },
   { href: "/super-admin/playbook", label: "Roteiro do Sistema", icon: ClipboardList },

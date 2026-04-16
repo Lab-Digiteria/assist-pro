@@ -12,7 +12,7 @@ import {
   Users, Shield, CheckCircle, ChevronDown, ChevronUp,
   Star, ArrowRight, Clock, AlertTriangle, TrendingUp,
   Zap, Menu, X, Eye, EyeOff, Loader2, ClipboardList,
-  Settings, Bell,
+  Settings, Bell, Handshake, Gift, TrendingUp as TrendUp, BadgeCheck,
 } from "lucide-react";
 
 // ── Paleta ──────────────────────────────────────────────────────────────────
@@ -70,6 +70,26 @@ export default function Home() {
   const [showPw, setShowPw] = useState(false);
   const [trialForm, setTrialForm] = useState({ name: "", email: "", password: "", companyName: "", phone: "", document: "" });
   const [trialSuccess, setTrialSuccess] = useState(false);
+  const [revendaForm, setRevendaForm] = useState({ nome: "", email: "", whatsapp: "", cidade: "", estado: "", atuacao: "assistencia_tecnica" as const, mensagem: "" });
+  const [revendaSuccess, setRevendaSuccess] = useState(false);
+
+  const registerRevenda = trpc.revendedores.register.useMutation({
+    onSuccess: () => {
+      setRevendaSuccess(true);
+      toast.success("Interesse registrado! Entraremos em contato em breve.");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const handleRevendaSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const { nome, email, whatsapp, cidade, estado, atuacao } = revendaForm;
+    if (!nome || !email || !whatsapp || !cidade || !estado) {
+      toast.error("Preencha todos os campos obrigatórios");
+      return;
+    }
+    registerRevenda.mutate({ ...revendaForm, atuacao });
+  };
 
   const registerTrial = trpc.lead.register.useMutation({
     onSuccess: (data) => {
@@ -113,6 +133,7 @@ export default function Home() {
             <a href="#depoimentos" className="hover:text-white transition-colors">Depoimentos</a>
             <a href="#precos" className="hover:text-white transition-colors">Preços</a>
             <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
+            <a href="#revendedores" className="hover:text-white transition-colors">Revendedores</a>
           </nav>
           <div className="hidden md:flex items-center gap-3">
             {isAuthenticated ? (
@@ -552,6 +573,128 @@ export default function Home() {
                 )}
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── REVENDEDORES ────────────────────────────────────────────────── */}
+      <section id="revendedores" className="py-20 px-4 border-t" style={{ borderColor: BORDER }}>
+        <div className="max-w-6xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-14">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-4" style={{ background: "rgba(232,197,71,0.12)", color: YELLOW, border: `1px solid rgba(232,197,71,0.25)` }}>
+              <Handshake className="w-3.5 h-3.5" /> PROGRAMA DE REVENDEDORES
+            </div>
+            <h2 className="text-3xl md:text-4xl font-black text-white mb-4">Ganhe dinheiro revendendo o Assist-Pró</h2>
+            <p className="text-lg max-w-2xl mx-auto" style={{ color: MUTED }}>
+              Indique assistências técnicas, ganhe comissão recorrente enquanto o cliente estiver ativo. Sem investimento inicial.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-12 items-start">
+            {/* Benefícios */}
+            <div className="space-y-6">
+              {[
+                { icon: Gift, title: "Comissão recorrente", desc: "Receba mensalmente enquanto o cliente estiver ativo. Quanto mais clientes você indicar, maior sua renda passiva." },
+                { icon: BadgeCheck, title: "Sem investimento inicial", desc: "Você não paga nada para começar. Recebe material de apoio, apresentações e suporte dedicado da nossa equipe." },
+                { icon: TrendUp, title: "Mercado em crescimento", desc: "Mais de 200 mil assistências técnicas no Brasil. A maioria ainda gerencia no papel ou em planilhas. O potencial é enorme." },
+              ].map((b, i) => (
+                <div key={i} className="flex gap-4 p-5 rounded-xl" style={{ background: CARD_BG, border: `1px solid ${BORDER}` }}>
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `rgba(232,197,71,0.12)` }}>
+                    <b.icon className="w-5 h-5" style={{ color: YELLOW }} />
+                  </div>
+                  <div>
+                    <div className="font-semibold text-white mb-1">{b.title}</div>
+                    <div className="text-sm leading-relaxed" style={{ color: MUTED }}>{b.desc}</div>
+                  </div>
+                </div>
+              ))}
+
+              <div className="p-5 rounded-xl" style={{ background: "rgba(232,197,71,0.06)", border: `1px solid rgba(232,197,71,0.2)` }}>
+                <div className="text-sm font-semibold mb-1" style={{ color: YELLOW }}>Perfis ideais para revendedor</div>
+                <div className="text-sm" style={{ color: MUTED }}>Consultores de TI, revendedores de software, donos de assistência técnica, agências de marketing digital e profissionais de vendas B2B.</div>
+              </div>
+            </div>
+
+            {/* Formulário */}
+            <div className="p-8 rounded-2xl" style={{ background: CARD_BG, border: `1px solid ${BORDER}` }}>
+              {revendaSuccess ? (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: "rgba(34,197,94,0.12)" }}>
+                    <CheckCircle className="w-8 h-8" style={{ color: "#22c55e" }} />
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-2">Interesse registrado!</h3>
+                  <p className="text-sm" style={{ color: MUTED }}>Nossa equipe entrará em contato em até 24 horas pelo WhatsApp ou e-mail informado.</p>
+                </div>
+              ) : (
+                <form onSubmit={handleRevendaSubmit} className="space-y-4">
+                  <h3 className="text-lg font-bold text-white mb-2">Quero ser revendedor</h3>
+                  <p className="text-sm mb-6" style={{ color: MUTED }}>Preencha o formulário e nossa equipe entrará em contato.</p>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs mb-1 block" style={{ color: MUTED }}>Nome completo *</Label>
+                      <Input value={revendaForm.nome} onChange={e => setRevendaForm(p => ({ ...p, nome: e.target.value }))}
+                        placeholder="Seu nome" className="bg-black/30 border-white/10 text-white placeholder:text-gray-600 text-sm" />
+                    </div>
+                    <div>
+                      <Label className="text-xs mb-1 block" style={{ color: MUTED }}>WhatsApp *</Label>
+                      <Input value={revendaForm.whatsapp} onChange={e => setRevendaForm(p => ({ ...p, whatsapp: e.target.value }))}
+                        placeholder="(11) 99999-9999" className="bg-black/30 border-white/10 text-white placeholder:text-gray-600 text-sm" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs mb-1 block" style={{ color: MUTED }}>E-mail *</Label>
+                    <Input type="email" value={revendaForm.email} onChange={e => setRevendaForm(p => ({ ...p, email: e.target.value }))}
+                      placeholder="seu@email.com" className="bg-black/30 border-white/10 text-white placeholder:text-gray-600 text-sm" />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs mb-1 block" style={{ color: MUTED }}>Cidade *</Label>
+                      <Input value={revendaForm.cidade} onChange={e => setRevendaForm(p => ({ ...p, cidade: e.target.value }))}
+                        placeholder="São Paulo" className="bg-black/30 border-white/10 text-white placeholder:text-gray-600 text-sm" />
+                    </div>
+                    <div>
+                      <Label className="text-xs mb-1 block" style={{ color: MUTED }}>Estado *</Label>
+                      <select value={revendaForm.estado} onChange={e => setRevendaForm(p => ({ ...p, estado: e.target.value }))}
+                        className="w-full h-10 px-3 rounded-md text-sm" style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.1)", color: revendaForm.estado ? "#fff" : "#4b5563" }}>
+                        <option value="">UF</option>
+                        {["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"].map(uf => (
+                          <option key={uf} value={uf}>{uf}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs mb-1 block" style={{ color: MUTED }}>Área de atuação *</Label>
+                    <select value={revendaForm.atuacao} onChange={e => setRevendaForm(p => ({ ...p, atuacao: e.target.value as typeof revendaForm.atuacao }))}
+                      className="w-full h-10 px-3 rounded-md text-sm" style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}>
+                      <option value="assistencia_tecnica">Assistência Técnica</option>
+                      <option value="consultor_ti">Consultor de TI</option>
+                      <option value="revendedor_software">Revendedor de Software</option>
+                      <option value="agencia_marketing">Agência de Marketing</option>
+                      <option value="outro">Outro</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs mb-1 block" style={{ color: MUTED }}>Mensagem (opcional)</Label>
+                    <textarea value={revendaForm.mensagem} onChange={e => setRevendaForm(p => ({ ...p, mensagem: e.target.value }))}
+                      placeholder="Conte um pouco sobre sua experiência ou região de atuação..."
+                      rows={3} className="w-full px-3 py-2 rounded-md text-sm resize-none" style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }} />
+                  </div>
+
+                  <Button type="submit" className="w-full font-semibold text-white py-5" style={{ background: YELLOW, color: "#0a0a0a" }}
+                    disabled={registerRevenda.isPending}>
+                    {registerRevenda.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Handshake className="w-4 h-4 mr-2" />}
+                    Quero ser revendedor
+                  </Button>
+                </form>
+              )}
+            </div>
           </div>
         </div>
       </section>

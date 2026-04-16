@@ -497,3 +497,26 @@ export const auditLogs = mysqlTable("auditLogs", {
 
 export type AuditLog = typeof auditLogs.$inferSelect;
 export type InsertAuditLog = typeof auditLogs.$inferInsert;
+
+// ─── REVENDEDORES ─────────────────────────────────────────────────────────────
+export const revendedores = mysqlTable("revendedores", {
+  id: int("id").autoincrement().primaryKey(),
+  nome: varchar("nome", { length: 255 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  whatsapp: varchar("whatsapp", { length: 20 }).notNull(),
+  cidade: varchar("cidade", { length: 100 }).notNull(),
+  estado: varchar("estado", { length: 2 }).notNull(),
+  atuacao: mysqlEnum("atuacao", [
+    "consultor_ti",
+    "revendedor_software",
+    "assistencia_tecnica",
+    "agencia_marketing",
+    "outro",
+  ]).notNull(),
+  mensagem: text("mensagem"),
+  status: mysqlEnum("status", ["pendente", "ativo", "inativo"]).default("pendente").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Revendedor = typeof revendedores.$inferSelect;
+export type InsertRevendedor = typeof revendedores.$inferInsert;
