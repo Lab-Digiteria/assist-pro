@@ -22,6 +22,13 @@ import RevendedorLogin from "./pages/RevendedorLogin";
 import RevendedorDashboard from "./pages/RevendedorDashboard";
 import ModelosEquipamentos from "./pages/ModelosEquipamentos";
 import ListaCompras from "./pages/ListaCompras";
+import Financeiro from "./pages/Financeiro";
+import ContasBancarias from "./pages/ContasBancarias";
+import ContasReceber from "./pages/ContasReceber";
+import ContasPagar from "./pages/ContasPagar";
+import FluxoCaixa from "./pages/FluxoCaixa";
+import DRE from "./pages/DRE";
+import PlanoContas from "./pages/PlanoContas";
 
 // Control Plane — /super-admin (completamente isolado da área do tenant)
 // Acesso exclusivo via URL direta. Nunca aparece na navegação do tenant.
@@ -73,6 +80,15 @@ function Router() {
       <Route path="/configuracoes" component={Configuracoes} />
       <Route path="/configuracoes/modelos-equipamentos" component={ModelosEquipamentos} />
       <Route path="/estoque/lista-compras" component={ListaCompras} />
+
+      {/* ── Financeiro ──────────────────────────────────────── */}
+      <Route path="/financeiro" component={Financeiro} />
+      <Route path="/financeiro/contas-bancarias" component={ContasBancarias} />
+      <Route path="/financeiro/contas-receber" component={ContasReceber} />
+      <Route path="/financeiro/contas-pagar" component={ContasPagar} />
+      <Route path="/financeiro/fluxo-caixa" component={FluxoCaixa} />
+      <Route path="/financeiro/dre" component={DRE} />
+      <Route path="/financeiro/plano-contas" component={PlanoContas} />
 
       {/* ── Control Plane (/super-admin) — ISOLADO da área do tenant ── */}
       {/* Acesso via URL direta apenas. Guard verifica isPlatformAdmin=true. */}

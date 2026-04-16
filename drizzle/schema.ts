@@ -614,3 +614,86 @@ export const listaCompras = mysqlTable("listaCompras", {
 });
 export type ListaCompra = typeof listaCompras.$inferSelect;
 export type InsertListaCompra = typeof listaCompras.$inferInsert;
+
+// ─── MÓDULO FINANCEIRO ────────────────────────────────────────────────────────
+
+// Plano de Contas Gerencial
+export const chartOfAccounts = mysqlTable("chartOfAccounts", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull(),
+  code: varchar("code", { length: 20 }).notNull(),
+  name: varchar("name", { length: 200 }).notNull(),
+  type: mysqlEnum("type", ["receita", "custo", "despesa"]).notNull(),
+  parentId: int("parentId"),
+  isActive: boolean("isActive").default(true).notNull(),
+  isSystem: boolean("isSystem").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type ChartOfAccount = typeof chartOfAccounts.$inferSelect;
+export type InsertChartOfAccount = typeof chartOfAccounts.$inferInsert;
+
+// Contas Bancárias e Caixas
+export const bankAccounts = mysqlTable("bankAccounts", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull(),
+  name: varchar("name", { length: 200 }).notNull(),
+  type: mysqlEnum("type", ["checking", "savings", "cash", "digital"]).notNull(),
+  bankName: varchar("bankName", { length: 100 }),
+  agency: varchar("agency", { length: 20 }),
+  accountNumber: varchar("accountNumber", { length: 30 }),
+  initialBalance: decimal("initialBalance", { precision: 12, scale: 2 }).default("0.00").notNull(),
+  currentBalance: decimal("currentBalance", { precision: 12, scale: 2 }).default("0.00").notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type BankAccount = typeof bankAccounts.$inferSelect;
+export type InsertBankAccount = typeof bankAccounts.$inferInsert;
+
+// Contas a Receber
+export const receivables = mysqlTable("receivables", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull(),
+  description: varchar("description", { length: 500 }).notNull(),
+  amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
+  dueDate: varchar("dueDate", { length: 10 }).notNull(),   // YYYY-MM-DD string
+  receivedDate: varchar("receivedDate", { length: 10 }),
+  status: mysqlEnum("status", ["pending", "received", "overdue", "cancelled"]).default("pending").notNull(),
+  paymentMethod: mysqlEnum("paymentMethod", ["dinheiro", "pix", "debito", "credito", "boleto", "outros"]),
+  bankAccountId: int("bankAccountId"),
+  chartOfAccountId: int("chartOfAccountId"),
+  serviceOrderId: int("serviceOrderId"),
+  customerId: int("customerId"),
+  installmentGroup: varchar("installmentGroup", { length: 36 }),
+  installmentNumber: int("installmentNumber").default(1).notNull(),
+  installmentTotal: int("installmentTotal").default(1).notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Receivable = typeof receivables.$inferSelect;
+export type InsertReceivable = typeof receivables.$inferInsert;
+
+// Contas a Pagar
+export const payables = mysqlTable("payables", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull(),
+  description: varchar("description", { length: 500 }).notNull(),
+  amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
+  dueDate: varchar("dueDate", { length: 10 }).notNull(),   // YYYY-MM-DD string
+  paidDate: varchar("paidDate", { length: 10 }),
+  status: mysqlEnum("status", ["pending", "paid", "overdue", "cancelled"]).default("pending").notNull(),
+  paymentMethod: mysqlEnum("paymentMethod", ["dinheiro", "pix", "debito", "credito", "boleto", "outros"]),
+  bankAccountId: int("bankAccountId"),
+  chartOfAccountId: int("chartOfAccountId"),
+  supplierName: varchar("supplierName", { length: 200 }),
+  documentNumber: varchar("documentNumber", { length: 100 }),
+  isRecurring: boolean("isRecurring").default(false).notNull(),
+  recurrenceConfig: json("recurrenceConfig"),
+  notes: text("notes"),
+  parentPayableId: int("parentPayableId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Payable = typeof payables.$inferSelect;
+export type InsertPayable = typeof payables.$inferInsert;

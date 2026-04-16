@@ -319,3 +319,37 @@
 ## Bug — Perda de foco no formulário de Novo Cliente
 
 - [x] Corrigir perda de foco (cursor some a cada letra) no modal de cadastro de clientes — causa: componente de formulário/tab definido dentro do render do pai, causando remontagem a cada keystroke
+
+## Módulo Financeiro Completo
+
+### Schema e Banco
+- [x] Tabela `chartOfAccounts` (plano de contas: id, tenantId, code, name, type receita/custo/despesa, parentId, isActive)
+- [x] Tabela `bankAccounts` (contas bancárias: id, tenantId, name, type, bankName, agency, accountNumber, initialBalance, currentBalance, isActive)
+- [x] Tabela `receivables` (contas a receber: id, tenantId, description, amount, dueDate, receivedDate, status, paymentMethod, bankAccountId, chartOfAccountId, serviceOrderId, customerId, installments, notes)
+- [x] Tabela `payables` (contas a pagar: id, tenantId, description, amount, dueDate, paidDate, status, paymentMethod, bankAccountId, chartOfAccountId, supplierName, documentNumber, isRecurring, recurrenceConfig, notes)
+- [x] Migration gerada e aplicada
+
+### Backend
+- [x] Seed automático do plano de contas ao criar novo tenant (função seedChartOfAccounts)
+- [x] Router `financeiroV2.chartOfAccounts` (list, create, update, toggle ativo)
+- [x] Router `financeiroV2.bankAccounts` (list, create, update, transfer entre contas)
+- [x] Router `financeiroV2.receivables` (list com filtros, create, update, baixar pagamento)
+- [x] Router `financeiroV2.payables` (list com filtros, create, update, marcar pago, gerar próxima recorrência)
+- [x] Router `financeiroV2.cashFlow` (fluxo de caixa por período com saldo acumulado)
+- [x] Router `financeiroV2.dre` (DRE por período com comparativo)
+- [x] Router `financeiroV2.dashboardFinanceiro` (KPIs: saldo total, a receber 30d, a pagar 30d, resultado mês, gráfico 6 meses)
+- [x] Recorrência: ao pagar payable com isRecurring=true, gerar próximo lançamento
+
+### Frontend
+- [x] Rota `/financeiro` → Dashboard Financeiro (visão geral com KPIs e gráfico)
+- [x] Rota `/financeiro/contas-bancarias` → Gestão de contas com saldo e transferências
+- [x] Rota `/financeiro/contas-receber` → Listagem com filtros e baixa de pagamento
+- [x] Rota `/financeiro/contas-pagar` → Listagem com filtros, marcar pago, criar recorrência
+- [x] Rota `/financeiro/fluxo-caixa` → Tabela com saldo acumulado, filtros, gráfico de área
+- [x] Rota `/financeiro/dre` → DRE com comparativo e exportar CSV
+- [x] Rota `/financeiro/plano-contas` → CRUD do plano de contas com seed automático
+- [x] Link "Financeiro" no menu lateral (AppLayout) com submenu colapsável
+- [ ] Import OFX/CSV: upload, parse, tela de revisão com categorização e detecção de duplicatas (backlog)
+
+### Testes
+- [x] 42 testes passando (6 arquivos)
