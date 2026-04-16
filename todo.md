@@ -140,3 +140,13 @@
 - [x] Frontend: botão "Acessar como Tenant" no AdminTenants
 - [x] Frontend: banner laranja "Modo Impersonation" fixo no topo com botão "Sair"
 - [x] Frontend: ao sair da impersonation, retornar para /admin
+
+## Redesign Landing Page — Tema Escuro Premium (ref: OficinaPro)
+
+- [x] Fundo escuro #0a0a0a em toda a página (não branco)
+- [x] Headline com peso 800-900, tamanho mínimo 4rem no desktop
+- [x] Cards de funcionalidades escuros (bg #141414, border white/10)
+- [x] Seção "Veja como funciona" com mockups/screenshots do app
+- [x] Seção "Como funciona em 3 passos" (cadastro → acesso → uso)
+- [x] Seção depoimentos com 3 clientes fictícios realistas
+- [x] Manter conteúdo (textos, planos, FAQ) — mudar apenas visual
