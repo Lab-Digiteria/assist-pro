@@ -131,3 +131,12 @@
 - [x] Módulo Roteiro do Sistema: documentação interna do produto
 - [x] Isolamento total: /admin não aparece na navegação do tenant
 - [x] Guard de admin: apenas usuário com role=admin acessa /admin
+
+## Impersonation (Control Plane)
+
+- [x] Backend: endpoint adminImpersonate gera JWT temporário (1h) com flag isImpersonating=true e tenantId do alvo
+- [x] Backend: logAudit registra admin.impersonate com adminId e tenantId alvo
+- [x] Backend: endpoint exitImpersonation para limpar token de impersonation
+- [x] Frontend: botão "Acessar como Tenant" no AdminTenants
+- [x] Frontend: banner laranja "Modo Impersonation" fixo no topo com botão "Sair"
+- [x] Frontend: ao sair da impersonation, retornar para /admin

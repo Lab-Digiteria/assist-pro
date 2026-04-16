@@ -9,6 +9,7 @@ const SECRET = new TextEncoder().encode(ENV.cookieSecret || "assist-pro-secret-f
 const ISSUER = "assist-pro";
 const AUDIENCE = "assist-pro-app";
 const EXPIRY = "365d";
+const IMPERSONATE_EXPIRY = "1h";
 
 export interface AssistJwtPayload extends JWTPayload {
   userId: number;
@@ -17,6 +18,8 @@ export interface AssistJwtPayload extends JWTPayload {
   role: string;
   tenantId?: number;
   tenantSlug?: string;
+  isImpersonating?: boolean;
+  impersonatedBy?: number;
 }
 
 export interface JwtPayload {
@@ -26,6 +29,8 @@ export interface JwtPayload {
   role: string;
   tenantId?: number;
   tenantSlug?: string;
+  isImpersonating?: boolean;
+  impersonatedBy?: number;
 }
 
 export async function signJwt(payload: JwtPayload): Promise<string> {
@@ -47,6 +52,39 @@ export async function signJwt(payload: JwtPayload): Promise<string> {
     .sign(SECRET);
 }
 
+/**
+ * Gera um JWT de impersonation com expiração curta (1h).
+ * O token carrega o userId e tenantId do tenant-alvo,
+ * mas marca isImpersonating=true e impersonatedBy=adminId.
+ */
+export async function signImpersonateJwt(params: {
+  adminId: number;
+  targetUserId: number;
+  targetEmail: string;
+  targetName: string;
+  targetTenantId: number;
+  targetTenantSlug: string;
+}): Promise<string> {
+  const claims: AssistJwtPayload = {
+    sub: String(params.targetUserId),
+    userId: params.targetUserId,
+    email: params.targetEmail,
+    name: params.targetName,
+    role: "manager", // impersonation sempre entra como manager
+    tenantId: params.targetTenantId,
+    tenantSlug: params.targetTenantSlug,
+    isImpersonating: true,
+    impersonatedBy: params.adminId,
+  };
+  return new SignJWT(claims)
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setIssuer(ISSUER)
+    .setAudience(AUDIENCE)
+    .setExpirationTime(IMPERSONATE_EXPIRY)
+    .sign(SECRET);
+}
+
 export async function verifyJwt(token: string): Promise<JwtPayload | null> {
   try {
     const { payload } = await jwtVerify(token, SECRET, {
@@ -61,6 +99,8 @@ export async function verifyJwt(token: string): Promise<JwtPayload | null> {
       role: p.role,
       tenantId: p.tenantId,
       tenantSlug: p.tenantSlug,
+      isImpersonating: p.isImpersonating,
+      impersonatedBy: p.impersonatedBy,
     };
   } catch {
     return null;

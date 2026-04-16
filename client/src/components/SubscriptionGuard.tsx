@@ -6,6 +6,7 @@
  * Status permitidos: trialing, active
  */
 import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle, CreditCard, Clock, XCircle } from "lucide-react";
@@ -18,6 +19,8 @@ interface SubscriptionGuardProps {
 }
 
 export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
+  const { user } = useAuth();
+  const meData = user as (typeof user & { isImpersonating?: boolean }) | null;
   const { data: sub, isLoading } = trpc.subscriptions.mySubscription.useQuery(undefined, {
     refetchInterval: 60_000, // Verificar a cada minuto
     staleTime: 30_000,
@@ -31,6 +34,9 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
     },
     onError: (e) => toast.error(e.message),
   });
+
+  // Durante impersonation, admin sempre tem acesso total (sem bloqueio de assinatura)
+  if (meData?.isImpersonating) return <>{children}</>;
 
   // Enquanto carrega, renderiza normalmente (evita flash de bloqueio)
   if (isLoading || !sub) return <>{children}</>;

@@ -8,7 +8,10 @@ import { z } from "zod";
 import { auditLogs, emailCampaigns, leads, plans, subscriptions, tenants } from "../../drizzle/schema";
 import { nanoid } from "nanoid";
 import { logAudit } from "../audit";
-import { getDb } from "../db";
+import { getDb, getTenantMembers, getUserById } from "../db";
+import { signImpersonateJwt } from "../jwt";
+import { getSessionCookieOptions } from "../_core/cookies";
+import { IMPERSONATE_COOKIE_NAME } from "../../shared/const";
 import { protectedProcedure, router } from "../_core/trpc";
 
 // Middleware admin-only
@@ -20,6 +23,75 @@ const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
 });
 
 export const adminRouter = router({
+  // ─── IMPERSONATION ──────────────────────────────────────────────────────────
+  /**
+   * Gera um JWT de impersonation (1h) e seta o cookie de sessão.
+   * O admin passa a navegar como o tenant-alvo sem saber a senha.
+   */
+  impersonate: adminProcedure
+    .input(z.object({ tenantId: z.number().int() }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      // Buscar o tenant alvo
+      const [tenant] = await db
+        .select()
+        .from(tenants)
+        .where(eq(tenants.id, input.tenantId))
+        .limit(1);
+      if (!tenant) throw new TRPCError({ code: "NOT_FOUND", message: "Tenant não encontrado." });
+
+      // Buscar o primeiro membro (owner) do tenant
+      const members = await getTenantMembers(input.tenantId);
+      if (!members || members.length === 0) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Nenhum usuário encontrado para este tenant." });
+      }
+      const firstMember = members[0];
+      const targetUser = firstMember.userId ? await getUserById(firstMember.userId) : null;
+      if (!targetUser) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Usuário do tenant não encontrado." });
+      }
+
+      // Gerar JWT de impersonation (expira em 1h)
+      const token = await signImpersonateJwt({
+        adminId: ctx.user.id,
+        targetUserId: targetUser.id,
+        targetEmail: targetUser.email ?? "",
+        targetName: targetUser.name ?? tenant.name,
+        targetTenantId: tenant.id,
+        targetTenantSlug: tenant.slug,
+      });
+
+      // Registrar no audit log
+      await logAudit({
+        actorId: ctx.user.id,
+        actorName: ctx.user.name ?? "admin",
+        action: "admin.impersonate",
+        resource: "tenant",
+        resourceId: String(input.tenantId),
+        metadata: { tenantName: tenant.name, targetUserId: targetUser.id },
+      });
+
+      // Setar cookie de impersonation separado (ap_impersonate) — 1h de validade
+      // O cookie de sessão do admin (COOKIE_NAME) é preservado
+      const cookieOptions = getSessionCookieOptions(ctx.req);
+      ctx.res.cookie(IMPERSONATE_COOKIE_NAME, token, { ...cookieOptions, maxAge: 60 * 60 * 1000 });
+
+      return { success: true, tenantSlug: tenant.slug };
+    }),
+
+  /**
+   * Limpa o cookie de impersonation (ap_impersonate).
+   * O cookie de sessão do admin (COOKIE_NAME) é preservado — admin continua logado.
+   */
+  exitImpersonation: protectedProcedure
+    .mutation(({ ctx }) => {
+      const cookieOptions = getSessionCookieOptions(ctx.req);
+      ctx.res.clearCookie(IMPERSONATE_COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+      return { success: true };
+    }),
+
   // ─── PLANOS (CRUD) ──────────────────────────────────────────────────────────
   plans: router({
     list: adminProcedure.query(async () => {

@@ -16,7 +16,7 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
-import { Building2, Search, Clock, CheckCircle2, XCircle, AlertCircle, Trash2, RefreshCw, Ban, Play } from "lucide-react";
+import { Building2, Search, Clock, CheckCircle2, XCircle, AlertCircle, Trash2, RefreshCw, Ban, Play, Eye } from "lucide-react";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   trial:     { label: "Trial",     color: "#3b82f6", icon: Clock },
@@ -52,6 +52,16 @@ export default function AdminTenants() {
 
   const reactivateMutation = trpc.tenants.adminReactivate.useMutation({
     onSuccess: () => { toast.success("Tenant reativado"); utils.tenants.adminList.invalidate(); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const impersonateMutation = trpc.admin.impersonate.useMutation({
+    onSuccess: () => {
+      toast.success("Acessando como tenant... redirecionando");
+      setTimeout(() => {
+        window.location.href = "/dashboard";
+      }, 600);
+    },
     onError: (e) => toast.error(e.message),
   });
 
@@ -155,6 +165,13 @@ export default function AdminTenants() {
                               <Play className="w-3 h-3 mr-1" /> Reativar
                             </Button>
                           )}
+                          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs"
+                            style={{ color: "#a855f7" }}
+                            title="Acessar como este tenant (impersonation)"
+                            disabled={impersonateMutation.isPending}
+                            onClick={() => impersonateMutation.mutate({ tenantId: t.id })}>
+                            <Eye className="w-3 h-3 mr-1" /> Acessar
+                          </Button>
                           {t.subscriptionStatus === "trial" && (
                             <Button variant="ghost" size="sm" className="h-7 px-2 text-xs"
                               style={{ color: "#ef4444" }}

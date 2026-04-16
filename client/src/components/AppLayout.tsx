@@ -3,6 +3,7 @@ import { getLoginUrl } from "@/const";
 import { cn } from "@/lib/utils";
 import { SubscriptionGuard } from "./SubscriptionGuard";
 import { TrialBanner } from "./TrialBanner";
+import { ImpersonationBanner } from "./ImpersonationBanner";
 import {
   BarChart3,
   Box,
@@ -183,6 +184,8 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Impersonation Banner — exibido quando admin acessa como tenant */}
+        <ImpersonationBanner />
         {/* Trial Banner */}
         <TrialBanner />
 
