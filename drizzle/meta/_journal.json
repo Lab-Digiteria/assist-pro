@@ -134,6 +134,13 @@
       "when": 1776418078322,
       "tag": "0018_nosy_titania",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "5",
+      "when": 1776467840111,
+      "tag": "0019_thick_mister_fear",
+      "breakpoints": true
     }
   ]
 }

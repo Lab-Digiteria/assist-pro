@@ -3,9 +3,9 @@
  * Todos os endpoints são protegidos por adminProcedure (role=admin)
  */
 import { TRPCError } from "@trpc/server";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
-import { auditLogs, emailCampaigns, leads, plans, subscriptions, tenants } from "../../drizzle/schema";
+import { auditLogs, emailCampaigns, leads, plans, subscriptions, tenants, users } from "../../drizzle/schema";
 import { nanoid } from "nanoid";
 import { logAudit } from "../audit";
 import { getDb, getTenantMembers, getUserById } from "../db";
@@ -300,7 +300,143 @@ export const adminRouter = router({
       }),
   }),
 
-  // ─── TENANTS (admin view) ───────────────────────────────────────────────────
+  // ─── TENANTS (admin view) ──────────────────────────────────────────────────────────────────────────
+  /**
+   * Lista todos os tenants com informações de acesso gratuito.
+   */
+  listTenants: adminProcedure.query(async () => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const now = new Date();
+    const rows = await db
+      .select({
+        id: tenants.id,
+        name: tenants.name,
+        slug: tenants.slug,
+        email: tenants.email,
+        whatsapp: tenants.whatsapp,
+        subscriptionStatus: tenants.subscriptionStatus,
+        trialEndsAt: tenants.trialEndsAt,
+        subscriptionEndsAt: tenants.subscriptionEndsAt,
+        freeAccessEnabled: tenants.freeAccessEnabled,
+        freeAccessGrantedAt: tenants.freeAccessGrantedAt,
+        freeAccessExpiresAt: tenants.freeAccessExpiresAt,
+        freeAccessNote: tenants.freeAccessNote,
+        freeAccessGrantedBy: tenants.freeAccessGrantedBy,
+        createdAt: tenants.createdAt,
+        ownerUserId: tenants.ownerUserId,
+      })
+      .from(tenants)
+      .orderBy(desc(tenants.createdAt));
+
+    // Enrich with owner name
+    const enriched = await Promise.all(
+      rows.map(async (t) => {
+        const owner = await getUserById(t.ownerUserId);
+        // Determine effective access status
+        let accessStatus: "free" | "free_expired" | "active" | "trial" | "trial_expired" | "suspended" | "canceled" = "canceled";
+        if (t.freeAccessEnabled) {
+          if (!t.freeAccessExpiresAt || t.freeAccessExpiresAt > now) {
+            accessStatus = "free";
+          } else {
+            accessStatus = "free_expired";
+          }
+        } else if (t.subscriptionStatus === "active") {
+          accessStatus = "active";
+        } else if (t.subscriptionStatus === "trial") {
+          accessStatus = t.trialEndsAt && t.trialEndsAt > now ? "trial" : "trial_expired";
+        } else if (t.subscriptionStatus === "suspended" || t.subscriptionStatus === "past_due") {
+          accessStatus = "suspended";
+        } else {
+          accessStatus = "canceled";
+        }
+        return { ...t, ownerName: owner?.name ?? null, ownerEmail: owner?.email ?? null, accessStatus };
+      })
+    );
+    return enriched;
+  }),
+
+  /**
+   * Concede acesso gratuito a um tenant.
+   * expiresAt = null significa acesso indefinido.
+   */
+  grantFreeAccess: adminProcedure
+    .input(
+      z.object({
+        tenantId: z.number().int(),
+        expiresAt: z.string().datetime().nullable().optional(), // ISO string or null
+        note: z.string().max(500).optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const [tenant] = await db.select().from(tenants).where(eq(tenants.id, input.tenantId)).limit(1);
+      if (!tenant) throw new TRPCError({ code: "NOT_FOUND", message: "Tenant não encontrado." });
+
+      await db
+        .update(tenants)
+        .set({
+          freeAccessEnabled: true,
+          freeAccessGrantedAt: new Date(),
+          freeAccessExpiresAt: input.expiresAt ? new Date(input.expiresAt) : null,
+          freeAccessGrantedBy: ctx.user.id,
+          freeAccessNote: input.note ?? null,
+          updatedAt: new Date(),
+        })
+        .where(eq(tenants.id, input.tenantId));
+
+      await logAudit({
+        actorId: ctx.user.id,
+        actorName: ctx.user.name ?? "admin",
+        action: "admin.grantFreeAccess",
+        resource: "tenant",
+        resourceId: String(input.tenantId),
+        metadata: {
+          tenantName: tenant.name,
+          expiresAt: input.expiresAt ?? "indefinite",
+          note: input.note,
+        },
+      });
+
+      return { success: true };
+    }),
+
+  /**
+   * Revoga o acesso gratuito de um tenant.
+   */
+  revokeFreeAccess: adminProcedure
+    .input(z.object({ tenantId: z.number().int() }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const [tenant] = await db.select().from(tenants).where(eq(tenants.id, input.tenantId)).limit(1);
+      if (!tenant) throw new TRPCError({ code: "NOT_FOUND", message: "Tenant não encontrado." });
+
+      await db
+        .update(tenants)
+        .set({
+          freeAccessEnabled: false,
+          freeAccessExpiresAt: null,
+          freeAccessNote: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(tenants.id, input.tenantId));
+
+      await logAudit({
+        actorId: ctx.user.id,
+        actorName: ctx.user.name ?? "admin",
+        action: "admin.revokeFreeAccess",
+        resource: "tenant",
+        resourceId: String(input.tenantId),
+        metadata: { tenantName: tenant.name },
+      });
+
+      return { success: true };
+    }),
+
   tenantStats: adminProcedure.query(async () => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });

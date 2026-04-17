@@ -56,6 +56,12 @@ export const tenants = mysqlTable("tenants", {
   email: varchar("email", { length: 320 }),
   // OS counter
   osCounter: int("osCounter").default(0).notNull(),
+  // Free access (granted by admin master)
+  freeAccessEnabled: boolean("freeAccessEnabled").default(false).notNull(),
+  freeAccessGrantedAt: timestamp("freeAccessGrantedAt"),
+  freeAccessExpiresAt: timestamp("freeAccessExpiresAt"), // null = indefinite
+  freeAccessGrantedBy: int("freeAccessGrantedBy"), // userId of admin who granted
+  freeAccessNote: varchar("freeAccessNote", { length: 500 }), // internal note
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

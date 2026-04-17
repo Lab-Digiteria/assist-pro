@@ -594,3 +594,18 @@
 - [x] Frontend: 4 cards de métricas (total gasto, nº de compras, ticket médio, última compra)
 - [x] Frontend: tabela unificada com data, origem (OS/Lista), descrição, qtd, valor unitário e total
 - [x] Frontend: filtro por período (30/90/365 dias ou tudo)
+
+## Acesso Gratuito Gerenciado pelo Admin Master
+
+- [x] Schema: campos `freeAccessEnabled`, `freeAccessGrantedAt`, `freeAccessExpiresAt`, `freeAccessNote` na tabela `tenants`
+- [x] Schema: campo `freeAccessGrantedBy` (userId do admin que concedeu) na tabela `tenants`
+- [x] Migration gerada e aplicada
+- [x] Backend: endpoint `admin.grantFreeAccess` — conceder acesso gratuito (indefinido ou com data de expiração)
+- [x] Backend: endpoint `admin.revokeFreeAccess` — revogar acesso gratuito e restaurar status anterior
+- [x] Backend: logAudit registra todas as ações de acesso gratuito com actorId e tenantId
+- [x] Frontend: badge "Gratuito" (roxo) e "Gratuito Exp." no STATUS_CONFIG do AdminTenants
+- [x] Frontend: botão "Gratuito" em cada linha da tabela (visível apenas quando tenant não tem acesso gratuito)
+- [x] Frontend: botão "Revogar" para tenants com acesso gratuito ativo
+- [x] Frontend: modal com opção Indefinido / Com data de expiração + campo de observação interna
+- [x] Frontend: exibir data de expiração ou "indefinido" abaixo do badge de status
+- [x] 48 testes passando, 0 erros TypeScript
