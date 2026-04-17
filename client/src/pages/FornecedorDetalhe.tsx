@@ -45,6 +45,11 @@ import {
   Calendar,
   ExternalLink,
   X,
+  History,
+  TrendingUp,
+  ShoppingCart,
+  ClipboardList,
+  Filter,
 } from "lucide-react";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -252,9 +257,14 @@ export default function FornecedorDetalhe() {
   const [bankModal, setBankModal] = useState(false);
   const [editingAccount, setEditingAccount] = useState<BankAccount | null>(null);
   const [uploadingDoc, setUploadingDoc] = useState(false);
+  const [historyDays, setHistoryDays] = useState<number | undefined>(undefined);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data, isLoading, refetch } = trpc.suppliers.getById.useQuery({ id: supplierId });
+  const { data: historyData, isLoading: historyLoading } = trpc.suppliers.purchaseHistory.useQuery(
+    { supplierId, days: historyDays },
+    { enabled: !!supplierId }
+  );
 
   const deleteMutation = trpc.suppliers.delete.useMutation({
     onSuccess: () => { toast.success("Fornecedor excluído"); navigate("/fornecedores"); },
@@ -388,6 +398,12 @@ export default function FornecedorDetalhe() {
             <FileText className="w-4 h-4" />Documentos
             {documents.length > 0 && (
               <Badge variant="secondary" className="ml-1 text-xs">{documents.length}</Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="historico" className="gap-2">
+            <History className="w-4 h-4" />Histórico
+            {historyData && historyData.metrics.totalPurchases > 0 && (
+              <Badge variant="secondary" className="ml-1 text-xs">{historyData.metrics.totalPurchases}</Badge>
             )}
           </TabsTrigger>
         </TabsList>
@@ -691,6 +707,171 @@ export default function FornecedorDetalhe() {
               ))}
             </div>
           )}
+        </TabsContent>
+
+        {/* ── Histórico de Compras ── */}
+        <TabsContent value="historico" className="pt-4 space-y-4">
+          {/* Filtro de período */}
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">Período:</span>
+            {[{label: "30 dias", value: 30}, {label: "90 dias", value: 90}, {label: "1 ano", value: 365}, {label: "Tudo", value: undefined}].map(opt => (
+              <button
+                key={opt.label}
+                onClick={() => setHistoryDays(opt.value)}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                  historyDays === opt.value
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Cards de métricas */}
+          {historyLoading ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[...Array(4)].map((_, i) => (
+                <Card key={i}><CardContent className="pt-6"><div className="h-12 bg-muted animate-pulse rounded" /></CardContent></Card>
+              ))}
+            </div>
+          ) : historyData ? (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Card>
+                  <CardContent className="pt-5">
+                    <div className="flex items-center gap-2 mb-1">
+                      <TrendingUp className="w-4 h-4 text-green-500" />
+                      <span className="text-xs text-muted-foreground">Total Gasto</span>
+                    </div>
+                    <p className="text-xl font-bold">
+                      {historyData.metrics.totalSpent.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-5">
+                    <div className="flex items-center gap-2 mb-1">
+                      <ShoppingCart className="w-4 h-4 text-blue-500" />
+                      <span className="text-xs text-muted-foreground">Nº de Compras</span>
+                    </div>
+                    <p className="text-xl font-bold">{historyData.metrics.totalPurchases}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {historyData.metrics.osItemsCount} em OS · {historyData.metrics.listaItemsCount} na Lista
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-5">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Package className="w-4 h-4 text-purple-500" />
+                      <span className="text-xs text-muted-foreground">Ticket Médio</span>
+                    </div>
+                    <p className="text-xl font-bold">
+                      {historyData.metrics.avgTicket.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-5">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Calendar className="w-4 h-4 text-orange-500" />
+                      <span className="text-xs text-muted-foreground">Última Compra</span>
+                    </div>
+                    <p className="text-sm font-bold">
+                      {historyData.metrics.lastPurchase
+                        ? new Date(historyData.metrics.lastPurchase).toLocaleDateString("pt-BR")
+                        : "Nenhuma"}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Tabela unificada */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <History className="w-4 h-4" /> Todas as Compras
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {historyData.osItems.length === 0 && historyData.listaItems.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                      <ShoppingCart className="w-10 h-10 mb-3 opacity-30" />
+                      <p className="text-sm">Nenhuma compra registrada neste período.</p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b bg-muted/40">
+                            <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Data</th>
+                            <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Origem</th>
+                            <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Descrição</th>
+                            <th className="text-right px-4 py-2.5 font-medium text-muted-foreground">Qtd</th>
+                            <th className="text-right px-4 py-2.5 font-medium text-muted-foreground">Custo Unit.</th>
+                            <th className="text-right px-4 py-2.5 font-medium text-muted-foreground">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {/* Itens de OS */}
+                          {historyData.osItems.map(item => (
+                            <tr key={`os-${item.id}`} className="border-b hover:bg-muted/20 transition-colors">
+                              <td className="px-4 py-2.5 text-muted-foreground whitespace-nowrap">
+                                {new Date(item.createdAt).toLocaleDateString("pt-BR")}
+                              </td>
+                              <td className="px-4 py-2.5">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400">
+                                  <ClipboardList className="w-3 h-3" /> {item.sourceRef}
+                                </span>
+                              </td>
+                              <td className="px-4 py-2.5">{item.descricao}</td>
+                              <td className="px-4 py-2.5 text-right">{item.quantidade}</td>
+                              <td className="px-4 py-2.5 text-right">
+                                {item.valorCusto > 0
+                                  ? item.valorCusto.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+                                  : "—"}
+                              </td>
+                              <td className="px-4 py-2.5 text-right font-medium">
+                                {item.valorTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                              </td>
+                            </tr>
+                          ))}
+                          {/* Itens da Lista de Compras */}
+                          {historyData.listaItems.map(item => (
+                            <tr key={`lista-${item.id}`} className="border-b hover:bg-muted/20 transition-colors">
+                              <td className="px-4 py-2.5 text-muted-foreground whitespace-nowrap">
+                                {new Date(item.createdAt).toLocaleDateString("pt-BR")}
+                              </td>
+                              <td className="px-4 py-2.5">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-orange-500/10 text-orange-400">
+                                  <ShoppingCart className="w-3 h-3" /> {item.sourceRef}
+                                </span>
+                              </td>
+                              <td className="px-4 py-2.5">{item.descricao}</td>
+                              <td className="px-4 py-2.5 text-right">{item.quantidade}</td>
+                              <td className="px-4 py-2.5 text-right">—</td>
+                              <td className="px-4 py-2.5 text-right">
+                                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                  item.status === "received" ? "bg-green-500/10 text-green-400" :
+                                  item.status === "ordered" ? "bg-blue-500/10 text-blue-400" :
+                                  "bg-yellow-500/10 text-yellow-400"
+                                }`}>
+                                  {item.status === "received" ? "Recebido" : item.status === "ordered" ? "Pedido" : "Pendente"}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </>
+          ) : null}
         </TabsContent>
       </Tabs>
 

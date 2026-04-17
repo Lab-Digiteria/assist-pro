@@ -7,7 +7,11 @@ import {
   suppliers,
   supplierBankAccounts,
   supplierDocuments,
+  osItens,
+  ordensServico,
+  listaCompras,
 } from "../../drizzle/schema";
+import { sql } from "drizzle-orm";
 import { storagePut } from "../storage";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -310,5 +314,116 @@ export const suppliersRouter = router({
       await db.delete(supplierDocuments)
         .where(and(eq(supplierDocuments.id, input.id), eq(supplierDocuments.tenantId, tenantId)));
       return { success: true };
+    }),
+
+  // ── PURCHASE HISTORY ──────────────────────────────────────────────────────
+  purchaseHistory: protectedProcedure
+    .input(z.object({
+      supplierId: z.number(),
+      days: z.number().optional(), // 30, 90, 365, undefined = all time
+    }))
+    .query(async ({ ctx, input }) => {
+      const tenantId = await resolveTenant(ctx);
+      const db = await requireDb();
+
+      // Date cutoff
+      const cutoff = input.days
+        ? new Date(Date.now() - input.days * 24 * 60 * 60 * 1000)
+        : null;
+
+      // ── Items from OS ─────────────────────────────────────────────────────
+      const osItemsRows = await db
+        .select({
+          id: osItens.id,
+          osId: osItens.osId,
+          osNumero: ordensServico.numero,
+          descricao: osItens.descricao,
+          tipo: osItens.tipo,
+          quantidade: osItens.quantidade,
+          valorUnitario: osItens.valorUnitario,
+          valorCusto: osItens.valorCusto,
+          valorTotal: osItens.valorTotal,
+          createdAt: osItens.createdAt,
+        })
+        .from(osItens)
+        .leftJoin(ordensServico, eq(osItens.osId, ordensServico.id))
+        .where(
+          and(
+            eq(osItens.tenantId, tenantId),
+            eq(osItens.supplierId, input.supplierId),
+            cutoff ? sql`${osItens.createdAt} >= ${cutoff.toISOString().slice(0, 19).replace('T', ' ')}` : undefined,
+          )
+        )
+        .orderBy(desc(osItens.createdAt));
+
+      // ── Items from Lista de Compras ───────────────────────────────────────
+      const listaRows = await db
+        .select({
+          id: listaCompras.id,
+          descricao: listaCompras.itemDescription,
+          quantidade: listaCompras.quantityNeeded,
+          status: listaCompras.status,
+          priority: listaCompras.priority,
+          serviceOrderId: listaCompras.serviceOrderId,
+          createdAt: listaCompras.createdAt,
+        })
+        .from(listaCompras)
+        .where(
+          and(
+            eq(listaCompras.tenantId, tenantId),
+            eq(listaCompras.supplierId, input.supplierId),
+            cutoff ? sql`${listaCompras.createdAt} >= ${cutoff.toISOString().slice(0, 19).replace('T', ' ')}` : undefined,
+          )
+        )
+        .orderBy(desc(listaCompras.createdAt));
+
+      // ── Metrics ───────────────────────────────────────────────────────────
+      const totalSpentOs = osItemsRows.reduce((acc, r) => acc + parseFloat(String(r.valorCusto ?? r.valorTotal ?? 0)), 0);
+      const totalPurchases = osItemsRows.length + listaRows.length;
+      const avgTicket = osItemsRows.length > 0 ? totalSpentOs / osItemsRows.length : 0;
+
+      const allDates = [
+        ...osItemsRows.map(r => r.createdAt),
+        ...listaRows.map(r => r.createdAt),
+      ].filter(Boolean).sort();
+      const firstPurchase = allDates[0] ?? null;
+      const lastPurchase = allDates[allDates.length - 1] ?? null;
+
+      return {
+        metrics: {
+          totalSpent: totalSpentOs,
+          totalPurchases,
+          avgTicket,
+          firstPurchase,
+          lastPurchase,
+          osItemsCount: osItemsRows.length,
+          listaItemsCount: listaRows.length,
+        },
+        osItems: osItemsRows.map(r => ({
+          id: r.id,
+          source: "os" as const,
+          sourceRef: r.osNumero ? `OS ${r.osNumero}` : `OS #${r.osId}`,
+          sourceId: r.osId,
+          descricao: r.descricao,
+          tipo: r.tipo,
+          quantidade: r.quantidade,
+          valorUnitario: parseFloat(String(r.valorUnitario ?? 0)),
+          valorCusto: parseFloat(String(r.valorCusto ?? 0)),
+          valorTotal: parseFloat(String(r.valorTotal ?? 0)),
+          createdAt: r.createdAt,
+        })),
+        listaItems: listaRows.map(r => ({
+          id: r.id,
+          source: "lista" as const,
+          sourceRef: r.serviceOrderId ? `OS #${r.serviceOrderId}` : "Lista de Compras",
+          sourceId: r.serviceOrderId ?? null,
+          descricao: r.descricao,
+          tipo: "peca" as const,
+          quantidade: r.quantidade,
+          status: r.status,
+          priority: r.priority,
+          createdAt: r.createdAt,
+        })),
+      };
     }),
 });

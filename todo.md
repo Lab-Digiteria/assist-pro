@@ -585,3 +585,12 @@
 - [x] BUG #1: Cliente não renderiza no detalhe da OS — corrigido: LEFT JOIN com tabela clientes no getOrdemServicoById
 - [x] BUG #2: Equipamento vazio no detalhe da OS — corrigido: LEFT JOIN com tabela equipamentos no getOrdemServicoById
 - [x] BUG #3: ViaCEP não auto-preenche endereço — corrigido: busca automática ao digitar 8 dígitos no campo CEP de Clientes e Fornecedores
+
+## Histórico de Compras por Fornecedor
+
+- [x] Backend: endpoint `suppliers.purchaseHistory` agregando itens de OS e Lista de Compras vinculados ao fornecedor
+- [x] Backend: retornar métricas (total gasto, qtd de compras, primeira e última compra, ticket médio)
+- [x] Frontend: aba "Histórico" na página de detalhe do fornecedor
+- [x] Frontend: 4 cards de métricas (total gasto, nº de compras, ticket médio, última compra)
+- [x] Frontend: tabela unificada com data, origem (OS/Lista), descrição, qtd, valor unitário e total
+- [x] Frontend: filtro por período (30/90/365 dias ou tudo)
