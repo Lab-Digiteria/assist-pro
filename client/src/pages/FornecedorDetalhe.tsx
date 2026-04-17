@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { useParams, useLocation } from "wouter";
+import AppLayout from "@/components/AppLayout";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -297,18 +298,22 @@ export default function FornecedorDetalhe() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
+      <AppLayout title="Fornecedor">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        </div>
+      </AppLayout>
     );
   }
 
   if (!data) {
     return (
-      <div className="p-6 text-center">
-        <p className="text-muted-foreground">Fornecedor não encontrado.</p>
-        <Button variant="link" onClick={() => navigate("/fornecedores")}>Voltar</Button>
-      </div>
+      <AppLayout title="Fornecedor">
+        <div className="p-6 text-center">
+          <p className="text-muted-foreground">Fornecedor não encontrado.</p>
+          <Button variant="link" onClick={() => navigate("/fornecedores")}>Voltar</Button>
+        </div>
+      </AppLayout>
     );
   }
 
@@ -317,6 +322,7 @@ export default function FornecedorDetalhe() {
   const documents = (s.documents || []) as unknown as Document[];
 
   return (
+    <AppLayout title={s.tradeName || s.corporateName || "Fornecedor"}>
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
@@ -697,5 +703,6 @@ export default function FornecedorDetalhe() {
         onSaved={refetch}
       />
     </div>
+    </AppLayout>
   );
 }

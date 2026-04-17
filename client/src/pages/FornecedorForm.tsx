@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation, useParams } from "wouter";
+import AppLayout from "@/components/AppLayout";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -457,6 +458,7 @@ export default function FornecedorForm() {
   }
 
   return (
+    <AppLayout title={isEdit ? "Editar Fornecedor" : "Novo Fornecedor"}>
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
@@ -1005,5 +1007,6 @@ export default function FornecedorForm() {
         </div>
       </form>
     </div>
+    </AppLayout>
   );
 }

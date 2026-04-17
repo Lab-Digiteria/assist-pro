@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
+import AppLayout from "@/components/AppLayout";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -67,6 +68,7 @@ export default function Fornecedores() {
   const formatPhone = (p?: string | null) => p || "—";
 
   return (
+    <AppLayout title="Fornecedores">
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -266,5 +268,6 @@ export default function Fornecedores() {
         </div>
       )}
     </div>
+    </AppLayout>
   );
 }
