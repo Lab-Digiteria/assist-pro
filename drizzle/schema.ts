@@ -187,6 +187,7 @@ export const ordensServico = mysqlTable("ordensServico", {
   clienteId: int("clienteId").notNull(),
   equipamentoId: int("equipamentoId").notNull(),
   tecnicoId: int("tecnicoId"),
+  attendantId: int("attendantId"),
   status: mysqlEnum("status", [
     "recebido",
     "em_diagnostico",
@@ -803,3 +804,75 @@ export const supplierDocuments = mysqlTable("supplierDocuments", {
 });
 export type SupplierDocument = typeof supplierDocuments.$inferSelect;
 export type InsertSupplierDocument = typeof supplierDocuments.$inferInsert;
+
+// ─── COMPANY SETTINGS ────────────────────────────────────────────────────────
+export const companySettings = mysqlTable("companySettings", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull().unique(),
+  // Identidade
+  logoUrl: varchar("logoUrl", { length: 1000 }),
+  logoKey: varchar("logoKey", { length: 500 }),
+  companyName: varchar("companyName", { length: 255 }),
+  tradeName: varchar("tradeName", { length: 255 }),
+  cnpj: varchar("cnpj", { length: 18 }),
+  stateRegistration: varchar("stateRegistration", { length: 50 }),
+  municipalRegistration: varchar("municipalRegistration", { length: 50 }),
+  // Contato
+  phonePrimary: varchar("phonePrimary", { length: 20 }),
+  phoneSecondary: varchar("phoneSecondary", { length: 20 }),
+  whatsapp: varchar("whatsapp", { length: 20 }),
+  emailPrimary: varchar("emailPrimary", { length: 320 }),
+  emailSecondary: varchar("emailSecondary", { length: 320 }),
+  website: varchar("website", { length: 255 }),
+  // Endereço
+  zipCode: varchar("zipCode", { length: 9 }),
+  street: varchar("street", { length: 255 }),
+  number: varchar("number", { length: 20 }),
+  complement: varchar("complement", { length: 100 }),
+  neighborhood: varchar("neighborhood", { length: 100 }),
+  city: varchar("city", { length: 100 }),
+  state: varchar("state", { length: 2 }),
+  // Identidade visual para documentos
+  primaryColor: varchar("primaryColor", { length: 7 }).default("#1B4F8A"),
+  secondaryColor: varchar("secondaryColor", { length: 7 }).default("#C4733A"),
+  documentHeaderText: text("documentHeaderText"),
+  documentFooterText: text("documentFooterText"),
+  warrantyText: text("warrantyText"),
+  osTerms: text("osTerms"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type CompanySettings = typeof companySettings.$inferSelect;
+export type InsertCompanySettings = typeof companySettings.$inferInsert;
+
+// ─── EMPLOYEES (TÉCNICOS E COLABORADORES) ────────────────────────────────────
+export const employees = mysqlTable("employees", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull(),
+  // Dados pessoais
+  fullName: varchar("fullName", { length: 255 }).notNull(),
+  cpf: varchar("cpf", { length: 14 }),
+  rg: varchar("rg", { length: 20 }),
+  birthDate: varchar("birthDate", { length: 10 }),
+  phone: varchar("phone", { length: 20 }),
+  email: varchar("email", { length: 320 }),
+  photoUrl: varchar("photoUrl", { length: 1000 }),
+  photoKey: varchar("photoKey", { length: 500 }),
+  // Endereço
+  address: text("address"),
+  // Dados profissionais
+  role: mysqlEnum("role", ["technician", "attendant", "manager", "admin"]).default("technician").notNull(),
+  specialties: json("specialties"), // string[]
+  hireDate: varchar("hireDate", { length: 10 }),
+  isActive: boolean("isActive").default(true).notNull(),
+  userAccountId: int("userAccountId"),
+  // Dados de comissão
+  commissionType: mysqlEnum("commissionType", ["none", "percentage", "fixed"]).default("none").notNull(),
+  commissionPercentage: decimal("commissionPercentage", { precision: 5, scale: 2 }),
+  commissionFixedValue: decimal("commissionFixedValue", { precision: 10, scale: 2 }),
+  commissionBase: mysqlEnum("commissionBase", ["services_only", "services_and_parts", "total"]).default("services_only"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Employee = typeof employees.$inferSelect;
+export type InsertEmployee = typeof employees.$inferInsert;

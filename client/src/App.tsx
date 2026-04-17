@@ -34,6 +34,8 @@ import ImportarExtrato from "./pages/ImportarExtrato";
 import Fornecedores from "./pages/Fornecedores";
 import FornecedorForm from "./pages/FornecedorForm";
 import FornecedorDetalhe from "./pages/FornecedorDetalhe";
+import MinhaEmpresa from "./pages/MinhaEmpresa";
+import Tecnicos from "./pages/Tecnicos";
 import {
   OrcamentoAprovado,
   OrcamentoRejeitado,
@@ -95,6 +97,8 @@ function Router() {
       <Route path="/relatorios" component={Relatorios} />
       <Route path="/configuracoes" component={Configuracoes} />
       <Route path="/configuracoes/modelos-equipamentos" component={ModelosEquipamentos} />
+      <Route path="/configuracoes/minha-empresa" component={MinhaEmpresa} />
+      <Route path="/configuracoes/tecnicos" component={Tecnicos} />
       <Route path="/estoque/lista-compras" component={ListaCompras} />
       <Route path="/fornecedores" component={Fornecedores} />
       <Route path="/fornecedores/novo" component={FornecedorForm} />

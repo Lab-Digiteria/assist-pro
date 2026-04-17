@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Users, CreditCard, Building2, ExternalLink, Cpu, ChevronRight } from "lucide-react";
+import { Users, CreditCard, Building2, ExternalLink, Cpu, ChevronRight, UserCog } from "lucide-react";
 import { Link } from "wouter";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -65,6 +65,32 @@ export default function Configuracoes() {
             <div className="flex justify-between"><span className="text-muted-foreground">Nome</span><span className="font-medium">{tenant.name}</span></div>
             {tenant.cpfCnpj && <div className="flex justify-between"><span className="text-muted-foreground">CPF/CNPJ</span><span>{tenant.cpfCnpj}</span></div>}
             {tenant.whatsapp && <div className="flex justify-between"><span className="text-muted-foreground">WhatsApp</span><span>{tenant.whatsapp}</span></div>}
+            <Link href="/configuracoes/minha-empresa">
+              <Button variant="outline" className="w-full flex items-center justify-between mt-2">
+                <span>Editar dados completos da empresa</span>
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        {/* Técnicos */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <UserCog className="w-4 h-4" />Técnicos e Colaboradores
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-3">
+              Cadastre os técnicos e atendentes da sua equipe para vinculará-los às OS e calcular comissões automaticamente.
+            </p>
+            <Link href="/configuracoes/tecnicos">
+              <Button variant="outline" className="w-full flex items-center justify-between">
+                <span>Gerenciar Técnicos</span>
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </Link>
           </CardContent>
         </Card>
 

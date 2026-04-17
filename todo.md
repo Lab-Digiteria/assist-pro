@@ -533,3 +533,22 @@
 - [x] Frontend OS: selector de fornecedor no modal de adicionar peça/serviço
 - [x] Frontend Lista de Compras: selector de fornecedor no formulário de novo item
 - [x] Exibir nome do fornecedor na listagem de itens da OS e na Lista de Compras
+
+## Cadastro da Empresa, Técnicos e Impressão Profissional de OS
+
+- [x] Schema: tabela `companySettings` com identidade, contato, endereço e identidade visual
+- [x] Schema: tabela `employees` com dados pessoais, profissionais e comissão
+- [x] Schema: campo `attendantId` na tabela `ordensServico`
+- [x] Migration gerada e aplicada
+- [x] Backend: router `companySettings` (get, update, uploadLogo)
+- [x] Backend: router `employees` (list, getById, create, update, delete, toggleActive, uploadPhoto)
+- [x] Backend: OS atualizada para aceitar `attendantId`
+- [x] Frontend: tela Configurações → Minha Empresa com todos os campos + upload de logo + color picker
+- [x] Frontend: tela Técnicos/Colaboradores com CRUD completo e multi-select de especialidades
+- [x] Frontend: campo Técnico Responsável e Atendente na criação de OS (etapa 3)
+- [x] Frontend: card "Equipe Responsável" na página de detalhe da OS
+- [x] Frontend: links de acesso em Configurações para Minha Empresa e Técnicos
+- [x] Impressão OS: novo template HTML A4 com cabeçalho colorido (primaryColor), logo, dados reais da empresa
+- [x] Impressão OS: blocos completos (cliente, equipamento, diagnóstico, itens, pagamentos, técnico, assinatura)
+- [x] Impressão OS: termos e garantia configuráveis + rodapé personalizado
+- [x] 48 testes passando, 0 erros TypeScript

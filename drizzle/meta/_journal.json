@@ -127,6 +127,13 @@
       "when": 1776387829678,
       "tag": "0017_fair_callisto",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "5",
+      "when": 1776418078322,
+      "tag": "0018_nosy_titania",
+      "breakpoints": true
     }
   ]
 }

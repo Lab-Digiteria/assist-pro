@@ -83,6 +83,7 @@ export const ordensServicoRouter = router({
         clienteId: z.number(),
         equipamentoId: z.number(),
         tecnicoId: z.number().optional(),
+        attendantId: z.number().optional(),
         prazoOrcamento: z.string().optional(),
         descricaoProblema: z.string().optional(),
         checklistEstadoFisico: z.record(z.string(), z.any()).optional(),
@@ -106,6 +107,7 @@ export const ordensServicoRouter = router({
         clienteId: input.clienteId,
         equipamentoId: input.equipamentoId,
         tecnicoId: input.tecnicoId,
+        attendantId: input.attendantId,
         prazoOrcamento: input.prazoOrcamento ? new Date(input.prazoOrcamento) : undefined,
         descricaoProblema: input.descricaoProblema,
         checklistEstadoFisico: (input.checklistEstadoFisico ?? null) as any,
@@ -177,6 +179,7 @@ export const ordensServicoRouter = router({
       z.object({
         id: z.number(),
         tecnicoId: z.number().optional(),
+        attendantId: z.number().optional(),
         prazoOrcamento: z.string().optional(),
         descricaoProblema: z.string().optional(),
         observacoesInternas: z.string().optional(),
@@ -214,6 +217,7 @@ export const ordensServicoRouter = router({
       };
 
       if (data.tecnicoId !== undefined) track("tecnicoId", data.tecnicoId);
+      if (data.attendantId !== undefined) updates.attendantId = data.attendantId;
       if (data.descricaoProblema !== undefined) track("descricaoProblema", data.descricaoProblema);
       if (data.observacoesInternas !== undefined) updates.observacoesInternas = data.observacoesInternas;
       // Hash da senha de desbloqueio antes de salvar

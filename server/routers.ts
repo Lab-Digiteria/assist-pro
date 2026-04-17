@@ -18,6 +18,8 @@ import { equipmentModelsRouter } from "./routers/equipmentModels";
 import { listaComprasRouter } from "./routers/listaCompras";
 import { financeiroV2Router } from "./routers/financeiroV2";
 import { suppliersRouter } from "./routers/suppliers";
+import { companySettingsRouter } from "./routers/companySettings";
+import { employeesRouter } from "./routers/employees";
 
 export const appRouter = router({
   system: systemRouter,
@@ -58,5 +60,7 @@ export const appRouter = router({
   listaCompras:  listaComprasRouter,
   financeiroV2: financeiroV2Router,
   suppliers: suppliersRouter,
+  companySettings: companySettingsRouter,
+  employees: employeesRouter,
 });
 export type AppRouter = typeof appRouter;

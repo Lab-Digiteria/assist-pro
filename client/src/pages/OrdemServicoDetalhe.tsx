@@ -113,7 +113,7 @@ function PhotoUploader({ osId, tipo, onDone }: { osId: number; tipo: "entrada" |
 }
 
 // ── Print Modal ───────────────────────────────────────────────────────────────
-function PrintModal({ os, itens, lancamentos }: { os: any; itens: any[]; lancamentos: any[] }) {
+function PrintModal({ os, itens, lancamentos, companySettings, employees }: { os: any; itens: any[]; lancamentos: any[]; companySettings?: any; employees?: any[] }) {
   const [open, setOpen] = useState(false);
 
   const totalOS = parseFloat(String(os.valorTotal ?? 0));
@@ -123,79 +123,186 @@ function PrintModal({ os, itens, lancamentos }: { os: any; itens: any[]; lancame
   const printA4 = useCallback(() => {
     const win = window.open("", "_blank");
     if (!win) return;
-    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>OS ${os.numero}</title>
+    const cs = companySettings;
+    const primaryColor = cs?.primaryColor ?? "#1B4F8A";
+    const secondaryColor = cs?.secondaryColor ?? "#C4733A";
+    const companyName = cs?.tradeName || cs?.companyName || "Assistência Técnica";
+    const companyAddress = [cs?.street, cs?.number, cs?.neighborhood, cs?.city, cs?.state].filter(Boolean).join(", ");
+    const companyPhone = cs?.phonePrimary ?? "";
+    const companyWhatsapp = cs?.whatsapp ?? "";
+    const companyEmail = cs?.emailPrimary ?? "";
+    const companyWebsite = cs?.website ?? "";
+    const companyCnpj = cs?.cnpj ?? "";
+    const logoUrl = cs?.logoUrl ?? "";
+    const headerText = cs?.documentHeaderText ?? "";
+    const footerText = cs?.documentFooterText ?? "";
+    const warrantyText = cs?.warrantyText ?? "";
+    const osTerms = cs?.osTerms ?? "";
+    const techName = employees?.find((e: any) => e.id === os.tecnicoId)?.fullName ?? "";
+    const attendantName = employees?.find((e: any) => e.id === os.attendantId)?.fullName ?? "";
+
+    const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>OS ${os.numero}</title>
 <style>
-  body { font-family: Arial, sans-serif; font-size: 12px; margin: 20px; color: #111; }
-  h1 { font-size: 18px; margin: 0 0 4px; }
-  h2 { font-size: 13px; margin: 16px 0 6px; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
-  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
-  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; background: #e5e7eb; }
-  table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
-  th { background: #f3f4f6; text-align: left; padding: 6px 8px; font-size: 11px; }
-  td { padding: 5px 8px; border-bottom: 1px solid #e5e7eb; font-size: 11px; }
-  .total-row td { font-weight: bold; border-top: 2px solid #111; }
-  .saldo { color: ${saldo > 0 ? "#dc2626" : "#16a34a"}; font-weight: bold; }
-  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .field { margin-bottom: 8px; }
-  .label { font-size: 10px; color: #6b7280; text-transform: uppercase; }
-  .value { font-size: 12px; }
-  .sig-area { border: 1px solid #ccc; height: 60px; margin-top: 8px; border-radius: 4px; }
-  @media print { body { margin: 10px; } button { display: none; } }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: #1a1a1a; background: #fff; }
+  @page { size: A4; margin: 12mm 14mm; }
+  @media print { body { margin: 0; } .no-print { display: none; } }
+
+  /* HEADER */
+  .doc-header { background: ${primaryColor}; color: #fff; padding: 14px 16px; display: flex; align-items: center; gap: 14px; margin-bottom: 0; }
+  .doc-header img { height: 52px; width: auto; object-fit: contain; background: rgba(255,255,255,0.15); border-radius: 4px; padding: 3px; }
+  .doc-header .company-info h1 { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; }
+  .doc-header .company-info p { font-size: 10px; opacity: 0.88; margin-top: 2px; }
+  .doc-header .os-badge { margin-left: auto; text-align: right; }
+  .doc-header .os-badge .os-num { font-size: 20px; font-weight: 800; font-family: 'Courier New', monospace; }
+  .doc-header .os-badge .os-date { font-size: 10px; opacity: 0.85; }
+
+  /* STATUS BAR */
+  .status-bar { background: ${secondaryColor}; color: #fff; padding: 5px 16px; font-size: 11px; font-weight: 600; display: flex; justify-content: space-between; }
+
+  /* BODY */
+  .doc-body { padding: 12px 0; }
+  .section { margin-bottom: 12px; }
+  .section-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: ${primaryColor}; border-bottom: 1.5px solid ${primaryColor}; padding-bottom: 3px; margin-bottom: 8px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .field { margin-bottom: 6px; }
+  .field-label { font-size: 9px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.3px; }
+  .field-value { font-size: 11px; font-weight: 500; }
+
+  /* TABLE */
+  table { width: 100%; border-collapse: collapse; font-size: 10.5px; }
+  thead tr { background: ${primaryColor}; color: #fff; }
+  th { padding: 5px 7px; text-align: left; font-size: 10px; }
+  td { padding: 4px 7px; border-bottom: 1px solid #e5e7eb; }
+  tr:nth-child(even) td { background: #f9fafb; }
+  .total-row td { font-weight: 700; border-top: 2px solid ${primaryColor}; background: #f3f4f6 !important; }
+  .saldo-row td { font-weight: 700; color: ${saldo > 0 ? "#dc2626" : "#16a34a"}; }
+
+  /* FINANCIAL SUMMARY */
+  .fin-summary { border: 1px solid #e5e7eb; border-radius: 6px; overflow: hidden; }
+  .fin-row { display: flex; justify-content: space-between; padding: 5px 10px; font-size: 11px; border-bottom: 1px solid #f0f0f0; }
+  .fin-row:last-child { border-bottom: none; }
+  .fin-row.total { background: ${primaryColor}; color: #fff; font-weight: 700; }
+  .fin-row.saldo { background: ${saldo > 0 ? "#fef2f2" : "#f0fdf4"}; color: ${saldo > 0 ? "#dc2626" : "#16a34a"}; font-weight: 700; }
+
+  /* SIGNATURE */
+  .sig-box { border: 1px solid #d1d5db; border-radius: 4px; height: 56px; display: flex; align-items: flex-end; padding: 4px 8px; }
+  .sig-box img { max-height: 50px; }
+
+  /* WARRANTY / TERMS */
+  .terms-box { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 4px; padding: 8px 10px; font-size: 9.5px; color: #4b5563; line-height: 1.5; white-space: pre-wrap; }
+
+  /* FOOTER */
+  .doc-footer { border-top: 1px solid #e5e7eb; padding-top: 8px; margin-top: 14px; font-size: 9.5px; color: #6b7280; text-align: center; }
 </style></head><body>
-<div class="header">
-  <div>
-    <h1>Ordem de Serviço ${os.numero}</h1>
-    <p>Abertura: ${new Date(os.createdAt).toLocaleDateString("pt-BR")} &nbsp;|&nbsp; Status: <span class="badge">${OS_STATUS_LABELS[os.status] ?? os.status}</span></p>
-    ${os.prazoOrcamento ? `<p>Prazo: ${new Date(os.prazoOrcamento).toLocaleDateString("pt-BR")}</p>` : ""}
+
+<!-- HEADER -->
+<div class="doc-header">
+  ${logoUrl ? `<img src="${logoUrl}" alt="Logo" />` : ""}
+  <div class="company-info">
+    <h1>${companyName}</h1>
+    ${headerText ? `<p>${headerText}</p>` : ""}
+    <p>${[companyAddress, companyPhone && `Tel: ${companyPhone}`, companyWhatsapp && `WhatsApp: ${companyWhatsapp}`, companyEmail, companyWebsite].filter(Boolean).join(" &nbsp;·&nbsp; ")}</p>
+    ${companyCnpj ? `<p>CNPJ: ${companyCnpj}</p>` : ""}
+  </div>
+  <div class="os-badge">
+    <div class="os-num">${os.numero}</div>
+    <div class="os-date">Abertura: ${new Date(os.createdAt).toLocaleDateString("pt-BR")}</div>
+    ${os.prazoOrcamento ? `<div class="os-date">Prazo: ${new Date(os.prazoOrcamento).toLocaleDateString("pt-BR")}</div>` : ""}
   </div>
 </div>
-<div class="two-col">
+<div class="status-bar">
+  <span>Status: ${OS_STATUS_LABELS[os.status] ?? os.status}</span>
+  ${techName ? `<span>Técnico: ${techName}</span>` : ""}
+  ${attendantName ? `<span>Atendente: ${attendantName}</span>` : ""}
+</div>
+
+<div class="doc-body">
+
+<!-- CLIENTE E EQUIPAMENTO -->
+<div class="two-col section">
   <div>
-    <h2>Cliente</h2>
-    <div class="field"><div class="label">Nome</div><div class="value">${os.clienteNome ?? "—"}</div></div>
-    <div class="field"><div class="label">Telefone</div><div class="value">${os.clienteWhatsapp ?? "—"}</div></div>
+    <div class="section-title">Cliente</div>
+    <div class="field"><div class="field-label">Nome</div><div class="field-value">${os.clienteNome ?? "—"}</div></div>
+    <div class="field"><div class="field-label">Telefone / WhatsApp</div><div class="field-value">${os.clienteWhatsapp ?? "—"}</div></div>
+    ${os.clienteEmail ? `<div class="field"><div class="field-label">E-mail</div><div class="field-value">${os.clienteEmail}</div></div>` : ""}
   </div>
   <div>
-    <h2>Equipamento</h2>
-    <div class="field"><div class="label">Aparelho</div><div class="value">${os.equipamentoMarca ?? ""} ${os.equipamentoModelo ?? ""}</div></div>
-    ${os.equipamentoImei ? `<div class="field"><div class="label">IMEI/Série</div><div class="value">${os.equipamentoImei}</div></div>` : ""}
-    ${os.equipamentoCor ? `<div class="field"><div class="label">Cor</div><div class="value">${os.equipamentoCor}</div></div>` : ""}
+    <div class="section-title">Equipamento</div>
+    <div class="field"><div class="field-label">Aparelho</div><div class="field-value">${os.equipamentoMarca ?? ""} ${os.equipamentoModelo ?? ""}</div></div>
+    ${os.equipamentoCor ? `<div class="field"><div class="field-label">Cor</div><div class="field-value">${os.equipamentoCor}</div></div>` : ""}
+    ${os.equipamentoImei ? `<div class="field"><div class="field-label">IMEI / Série</div><div class="field-value" style="font-family:monospace">${os.equipamentoImei}</div></div>` : ""}
+    ${os.numeroLacre ? `<div class="field"><div class="field-label">Lacre</div><div class="field-value" style="font-family:monospace;color:${secondaryColor}">${os.numeroLacre}</div></div>` : ""}
   </div>
 </div>
-${os.descricaoProblema ? `<h2>Problema Relatado</h2><p>${os.descricaoProblema}</p>` : ""}
-${os.laudoTecnico ? `<h2>Laudo Técnico</h2><p style="white-space:pre-wrap">${os.laudoTecnico}</p>` : ""}
-<h2>Serviços e Peças</h2>
-<table>
-  <thead><tr><th>Item</th><th>Tipo</th><th>Qtd</th><th>Unit.</th><th>Total</th></tr></thead>
-  <tbody>
-    ${itens.map(i => `<tr><td>${i.descricao}</td><td>${i.tipo === "peca" ? "Peça" : "Serviço"}</td><td>${i.quantidade}</td><td>R$ ${parseFloat(String(i.valorUnitario)).toFixed(2)}</td><td>R$ ${parseFloat(String(i.valorTotal)).toFixed(2)}</td></tr>`).join("")}
-    <tr class="total-row"><td colspan="4">Total</td><td>R$ ${totalOS.toFixed(2)}</td></tr>
-  </tbody>
-</table>
-<div class="two-col">
+
+${os.descricaoProblema ? `
+<div class="section">
+  <div class="section-title">Problema Relatado pelo Cliente</div>
+  <p style="font-size:11px;line-height:1.5">${os.descricaoProblema}</p>
+</div>` : ""}
+
+${os.laudoTecnico ? `
+<div class="section">
+  <div class="section-title">Laudo Técnico</div>
+  <p style="font-size:11px;line-height:1.5;white-space:pre-wrap">${os.laudoTecnico}</p>
+</div>` : ""}
+
+<!-- SERVIÇOS E PEÇAS -->
+<div class="section">
+  <div class="section-title">Serviços e Peças</div>
+  <table>
+    <thead><tr><th style="width:50%">Descrição</th><th>Tipo</th><th>Qtd</th><th>Unitário</th><th>Total</th></tr></thead>
+    <tbody>
+      ${itens.map(i => `<tr><td>${i.descricao}</td><td>${i.tipo === "peca" ? "Peça" : "Serviço"}</td><td>${i.quantidade}</td><td>R$ ${parseFloat(String(i.valorUnitario)).toFixed(2)}</td><td>R$ ${parseFloat(String(i.valorTotal)).toFixed(2)}</td></tr>`).join("")}
+      <tr class="total-row"><td colspan="4" style="text-align:right">Total da OS</td><td>R$ ${totalOS.toFixed(2)}</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- FINANCEIRO E ASSINATURA -->
+<div class="two-col section">
   <div>
-    <h2>Pagamentos</h2>
-    <table>
-      <thead><tr><th>Forma</th><th>Tipo</th><th>Valor</th></tr></thead>
-      <tbody>
-        ${lancamentos.map(l => `<tr><td>${FORMA_PAGAMENTO_LABELS[l.formaPagamento ?? ""] ?? l.formaPagamento}</td><td>${l.tipo}</td><td>R$ ${parseFloat(String(l.valor)).toFixed(2)}</td></tr>`).join("")}
-        <tr><td colspan="2">Total Pago</td><td>R$ ${totalPago.toFixed(2)}</td></tr>
-        <tr><td colspan="2"><strong>Saldo em Aberto</strong></td><td class="saldo">R$ ${saldo.toFixed(2)}</td></tr>
-      </tbody>
-    </table>
+    <div class="section-title">Resumo Financeiro</div>
+    <div class="fin-summary">
+      <div class="fin-row"><span>Total dos Serviços</span><span>R$ ${totalOS.toFixed(2)}</span></div>
+      ${lancamentos.map(l => `<div class="fin-row"><span>${FORMA_PAGAMENTO_LABELS[l.formaPagamento ?? ""] ?? l.formaPagamento}</span><span>R$ ${parseFloat(String(l.valor)).toFixed(2)}</span></div>`).join("")}
+      <div class="fin-row total"><span>Total Pago</span><span>R$ ${totalPago.toFixed(2)}</span></div>
+      <div class="fin-row saldo"><span>Saldo em Aberto</span><span>R$ ${saldo.toFixed(2)}</span></div>
+    </div>
   </div>
   <div>
-    <h2>Assinatura do Cliente</h2>
-    ${os.assinaturaClienteUrl ? `<img src="${os.assinaturaClienteUrl}" style="max-height:60px;border:1px solid #ccc;padding:4px;border-radius:4px;" />` : '<div class="sig-area"></div>'}
-    <p style="font-size:10px;color:#6b7280;margin-top:4px;">Confirmo o recebimento do equipamento nas condições descritas.</p>
+    <div class="section-title">Assinatura do Cliente</div>
+    <div class="sig-box">
+      ${os.assinaturaClienteUrl ? `<img src="${os.assinaturaClienteUrl}" />` : ""}
+    </div>
+    <p style="font-size:9.5px;color:#6b7280;margin-top:4px">Confirmo o recebimento do equipamento nas condições descritas acima.</p>
   </div>
 </div>
+
+${warrantyText ? `
+<div class="section">
+  <div class="section-title">Garantia</div>
+  <div class="terms-box">${warrantyText}</div>
+</div>` : ""}
+
+${osTerms ? `
+<div class="section">
+  <div class="section-title">Termos e Condições</div>
+  <div class="terms-box">${osTerms}</div>
+</div>` : ""}
+
+</div><!-- /doc-body -->
+
+${footerText ? `<div class="doc-footer">${footerText}</div>` : ""}
+
 <script>window.onload = () => window.print();</script>
 </body></html>`;
     win.document.write(html);
     win.document.close();
     setOpen(false);
-  }, [os, itens, lancamentos, saldo]);
+  }, [os, itens, lancamentos, saldo, companySettings, employees]);
 
   const printThermal = useCallback(() => {
     const win = window.open("", "_blank");
@@ -434,6 +541,8 @@ export default function OrdemServicoDetalhe() {
   const { data: history = [] } = trpc.os.history.useQuery({ osId }, { enabled: isValidId });
   const { data: photos = [], refetch: refetchPhotos } = trpc.os.photos.useQuery({ osId }, { enabled: isValidId });
   const { data: auditLog = [] } = trpc.os.fieldAudit.useQuery({ osId }, { enabled: isValidId });
+  const { data: employees = [] } = trpc.employees.list.useQuery({});
+  const { data: companySettings } = trpc.companySettings.get.useQuery();
 
   // Forms
   const [lancForm, setLancForm] = useState({ tipo: "pagamento_final" as any, formaPagamento: "pix" as any, valor: 0, observacao: "" });
@@ -518,7 +627,7 @@ export default function OrdemServicoDetalhe() {
             </div>
           </div>
           <div className="flex gap-2 flex-wrap">
-            <PrintModal os={{ ...os, clienteNome: (os as any).clienteNome, clienteWhatsapp: (os as any).clienteWhatsapp, equipamentoMarca: (os as any).equipamentoMarca, equipamentoModelo: (os as any).equipamentoModelo, equipamentoImei: (os as any).equipamentoImei, equipamentoCor: (os as any).equipamentoCor }} itens={itens} lancamentos={lancamentos} />
+            <PrintModal os={{ ...os, clienteNome: (os as any).clienteNome, clienteWhatsapp: (os as any).clienteWhatsapp, clienteEmail: (os as any).clienteEmail, equipamentoMarca: (os as any).equipamentoMarca, equipamentoModelo: (os as any).equipamentoModelo, equipamentoImei: (os as any).equipamentoImei, equipamentoCor: (os as any).equipamentoCor, tecnicoId: (os as any).tecnicoId, attendantId: (os as any).attendantId, assinaturaClienteUrl: (os as any).assinaturaClienteUrl }} itens={itens} lancamentos={lancamentos} companySettings={companySettings} employees={employees} />
             {!["encerrado","cancelado","devolvido_sem_reparo"].includes(os.status) && (
               <Dialog open={openStatus} onOpenChange={setOpenStatus}>
                 <DialogTrigger asChild>
@@ -553,6 +662,28 @@ export default function OrdemServicoDetalhe() {
 
         {/* ── BLOCO 1 — Cliente e Equipamento ── */}
         <div className="grid md:grid-cols-2 gap-4">
+          {/* Técnico e Atendente */}
+          {((os as any).tecnicoId || (os as any).attendantId) && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2"><Wrench className="w-4 h-4 text-orange-600" />Equipe Responsável</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-1.5 text-sm">
+                {(os as any).tecnicoId && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">Técnico:</span>
+                    <span className="font-medium">{employees.find(e => e.id === (os as any).tecnicoId)?.fullName ?? `#${(os as any).tecnicoId}`}</span>
+                  </div>
+                )}
+                {(os as any).attendantId && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">Atendente:</span>
+                    <span className="font-medium">{employees.find(e => e.id === (os as any).attendantId)?.fullName ?? `#${(os as any).attendantId}`}</span>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2"><User className="w-4 h-4 text-blue-600" />Cliente</CardTitle>

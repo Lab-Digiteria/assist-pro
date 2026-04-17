@@ -158,6 +158,7 @@ export default function OrdensServico() {
     clienteId: 0, clienteNome: "",
     equipamentoId: 0, equipamentoLabel: "",
     tecnicoId: undefined as number | undefined,
+    attendantId: undefined as number | undefined,
     prazoOrcamento: "", descricaoProblema: "", senhaDesbloqueio: "",
     checklistEstadoFisico: {} as Record<string, string>,
     checklistSintomas: {} as Record<string, string>,
@@ -168,6 +169,7 @@ export default function OrdensServico() {
   const { data: osList = [], isLoading } = trpc.os.list.useQuery({ status: statusFilter === "all" ? undefined : statusFilter, search });
   const { data: clientes = [] } = trpc.clientes.list.useQuery({});
   const { data: equips = [] } = trpc.equipamentos.list.useQuery({});
+  const { data: employees = [] } = trpc.employees.list.useQuery({ isActive: true });
 
   const create = trpc.os.create.useMutation({
     onSuccess: () => {
@@ -175,7 +177,7 @@ export default function OrdensServico() {
       setOpen(false);
       setStep(1);
       utils.os.list.invalidate();
-      setForm({ clienteId: 0, clienteNome: "", equipamentoId: 0, equipamentoLabel: "", tecnicoId: undefined, prazoOrcamento: "", descricaoProblema: "", senhaDesbloqueio: "", checklistEstadoFisico: {}, checklistSintomas: {}, acessoriosEntregues: [] });
+      setForm({ clienteId: 0, clienteNome: "", equipamentoId: 0, equipamentoLabel: "", tecnicoId: undefined, attendantId: undefined, prazoOrcamento: "", descricaoProblema: "", senhaDesbloqueio: "", checklistEstadoFisico: {}, checklistSintomas: {}, acessoriosEntregues: [] });
       setClienteSearch("");
     },
     onError: (e) => toast.error(e.message),
@@ -376,12 +378,38 @@ export default function OrdensServico() {
                       </label>
                     ))}
                   </div>
+                  {/* Técnico e Atendente */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label>Técnico Responsável</Label>
+                      <Select value={form.tecnicoId?.toString() ?? ""} onValueChange={v => setForm(f => ({ ...f, tecnicoId: v ? parseInt(v) : undefined }))}>
+                        <SelectTrigger><SelectValue placeholder="Selecionar técnico" /></SelectTrigger>
+                        <SelectContent>
+                          {employees.filter(e => ["technician","manager","admin"].includes(e.role)).map(e => (
+                            <SelectItem key={e.id} value={e.id.toString()}>{e.fullName}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Atendente</Label>
+                      <Select value={form.attendantId?.toString() ?? ""} onValueChange={v => setForm(f => ({ ...f, attendantId: v ? parseInt(v) : undefined }))}>
+                        <SelectTrigger><SelectValue placeholder="Selecionar atendente" /></SelectTrigger>
+                        <SelectContent>
+                          {employees.filter(e => ["attendant","manager","admin"].includes(e.role)).map(e => (
+                            <SelectItem key={e.id} value={e.id.toString()}>{e.fullName}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
                   <div className="flex gap-2">
                     <Button variant="outline" onClick={() => setStep(2)} className="flex-1">Voltar</Button>
                     <Button style={{ background: "#1B4F8A" }} onClick={() => create.mutate({
                       clienteId: form.clienteId,
                       equipamentoId: form.equipamentoId,
                       tecnicoId: form.tecnicoId,
+                      attendantId: form.attendantId,
                       prazoOrcamento: form.prazoOrcamento || undefined,
                       descricaoProblema: form.descricaoProblema || undefined,
                       senhaDesbloqueio: form.senhaDesbloqueio || undefined,
