@@ -493,3 +493,10 @@
 - [x] Frontend: campo de busca único aceita SKU, nome, PN; Enter dispara busca imediata (suporte a leitor)
 - [x] Frontend: hint de compatibilidade com leitor de código de barras
 - [x] 48 testes passando (TypeScript 0 erros)
+## Bug — Migration SKU não aplicada no banco de produção
+
+- [x] Causa raiz identificada: índice UNIQUE global em `pecas.codigo` causava conflito entre tenants diferentes
+- [x] Schema corrigido: índice composto `(tenantId, codigo)` substitui o UNIQUE global
+- [x] Migration 0015 gerada e aplicada no banco
+- [x] Validado: tenant 30001 consegue criar peça com código PÇ-000001 sem conflito com tenant 1
+- [x] TypeScript 0 erros após a correção

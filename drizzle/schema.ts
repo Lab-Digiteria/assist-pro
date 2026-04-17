@@ -7,6 +7,7 @@ import {
   mysqlTable,
   text,
   timestamp,
+  uniqueIndex,
   varchar,
 } from "drizzle-orm/mysql-core";
 
@@ -350,10 +351,12 @@ export const caixaLancamentos = mysqlTable("caixaLancamentos", {
 export type CaixaLancamento = typeof caixaLancamentos.$inferSelect;
 
 // ─── ESTOQUE DE PEÇAS ────────────────────────────────────────────────────────
-export const pecas = mysqlTable("pecas", {
+export const pecas = mysqlTable(
+  "pecas",
+  {
   id: int("id").autoincrement().primaryKey(),
   tenantId: int("tenantId").notNull(),
-  codigo: varchar("codigo", { length: 20 }).notNull().unique(), // PÇ-NNNNNN
+  codigo: varchar("codigo", { length: 20 }).notNull(), // PÇ-NNNNNN (unique per tenant)
   nome: varchar("nome", { length: 255 }).notNull(),
   categoria: mysqlEnum("categoria", [
     "tela",
@@ -376,7 +379,11 @@ export const pecas = mysqlTable("pecas", {
   sku: varchar("sku", { length: 50 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+  },
+  (t) => ({
+    tenantCodigoUnique: uniqueIndex("pecas_tenant_codigo_unique").on(t.tenantId, t.codigo),
+  })
+);
 export type Peca = typeof pecas.$inferSelect;
 
 // ─── MOVIMENTAÇÕES DE ESTOQUE ────────────────────────────────────────────────
