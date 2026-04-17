@@ -552,3 +552,30 @@
 - [x] Impressão OS: blocos completos (cliente, equipamento, diagnóstico, itens, pagamentos, técnico, assinatura)
 - [x] Impressão OS: termos e garantia configuráveis + rodapé personalizado
 - [x] 48 testes passando, 0 erros TypeScript
+
+## Redesign Completo UX/UI — Design System Maduro
+
+- [ ] Tokens CSS globais: paleta, tipografia, espaçamento, bordas e sombras (index.css)
+- [ ] Tema escuro GitHub-inspired aplicado em todo o sistema
+- [ ] Sidebar redesenhada: 220px, grupos com labels, item ativo com borda esquerda, avatar no rodapé
+- [ ] Topbar 48px com breadcrumb e título da página
+- [ ] Dashboard reformulado: 4 cards de métricas, gráfico barras 6 meses, tabela OS recentes, alertas
+- [ ] Tabelas compactas: linhas 40-48px, header --bg-surface-2, hover sutil, ações visíveis no hover
+- [ ] Badges de status padronizados com variantes por cor e borda
+- [ ] Botões padronizados com 5 variantes (primário, destaque, secundário, perigo, ghost)
+- [ ] Formulários com agrupamento visual e grid responsivo
+- [ ] Modais com overlay blur, animação fade+scale, separadores
+- [ ] Empty states em todas as listagens com ícone, título e CTA
+- [ ] Skeleton loading substituindo spinners de tela cheia
+
+## Redesign Completo UX/UI — Design System Maduro
+
+- [x] Tokens CSS globais: paleta escura GitHub-inspired, variáveis --surface-1/2/3, --text-primary/secondary/muted, --brand-primary
+- [x] Tipografia Inter via Google Fonts, font-size base 14px, antialiasing
+- [x] AppLayout redesenhado: sidebar 220px com grupos de menu, item ativo com borda esquerda azul, avatar no rodapé
+- [x] Dashboard reformulado: 4 cards de métricas, gráfico de barras 6 meses, tabela OS recentes, alertas laterais
+- [x] Listagem OS: tabela compacta com status-badge colorido, skeleton loading, empty state
+- [x] Listagem Clientes: tabela compacta com avatar, badge de classificação, skeleton loading, empty state
+- [x] Listagem Estoque: tabela compacta com indicador de estoque baixo, ações inline, skeleton loading, empty state
+- [x] Classes CSS globais: .data-table, .data-table-container, .status-badge (todos os status de OS), .skeleton, .empty-state
+- [x] 48 testes passando, 0 erros TypeScript

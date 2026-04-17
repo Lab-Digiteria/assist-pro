@@ -426,43 +426,81 @@ export default function OrdensServico() {
           </Dialog>
         </div>
 
-        {/* Lista de OS */}
-        {isLoading ? <div className="text-center py-12 text-muted-foreground">Carregando...</div> :
-          osList.length === 0 ? <div className="text-center py-12 text-muted-foreground">Nenhuma OS encontrada.</div> :
-          <div className="space-y-2">
-            {osList.map(o => {
-              const isVencida = o.prazoOrcamento && new Date(o.prazoOrcamento) < new Date() && !["encerrado","cancelado","devolvido_sem_reparo"].includes(o.status);
-              return (
-                <Link key={o.id} href={`/ordens-servico/${o.id}`}>
-                  <Card className={`cursor-pointer hover:shadow-md transition-shadow ${isVencida ? "border-destructive/50" : ""}`}>
-                    <CardContent className="p-4 flex items-center gap-3">
-                      {isVencida && <AlertTriangle className="w-4 h-4 text-destructive flex-shrink-0" />}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-mono font-semibold text-sm">{o.numero}</span>
-                          <Badge className={`text-xs ${OS_STATUS_COLORS[o.status] ?? "bg-gray-100 text-gray-700"}`}>
-                            {OS_STATUS_LABELS[o.status] ?? o.status}
-                          </Badge>
+        {/* Lista de OS — tabela compacta */}
+        <div className="data-table-container">
+          {isLoading ? (
+            <div className="space-y-0">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-4 px-4 py-3" style={{ borderBottom: "1px solid var(--surface-border)" }}>
+                  <div className="skeleton w-24 h-4 rounded" />
+                  <div className="skeleton w-20 h-5 rounded-full" />
+                  <div className="skeleton flex-1 h-4 rounded" />
+                  <div className="skeleton w-16 h-4 rounded" />
+                </div>
+              ))}
+            </div>
+          ) : osList.length === 0 ? (
+            <div className="empty-state">
+              <Smartphone size={36} style={{ color: "var(--text-muted)", marginBottom: 12 }} />
+              <p className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>Nenhuma OS encontrada</p>
+              <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>Crie uma nova OS usando o botão acima</p>
+            </div>
+          ) : (
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Número</th>
+                  <th>Status</th>
+                  <th>Cliente / Equipamento</th>
+                  <th>Prazo</th>
+                  <th className="text-right">Valor</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {osList.map(o => {
+                  const isVencida = o.prazoOrcamento && new Date(o.prazoOrcamento) < new Date() && !["encerrado","cancelado","devolvido_sem_reparo"].includes(o.status);
+                  return (
+                    <tr key={o.id} className="cursor-pointer" onClick={() => window.location.href = `/ordens-servico/${o.id}`}>
+                      <td>
+                        <div className="flex items-center gap-1.5">
+                          {isVencida && <AlertTriangle size={12} style={{ color: "#fca5a5", flexShrink: 0 }} />}
+                          <span className="font-mono text-xs font-semibold" style={{ color: "var(--text-primary)" }}>{o.numero}</span>
                         </div>
-                        <p className="text-sm text-muted-foreground">{o.clienteNome} — {o.equipamentoMarca} {o.equipamentoModelo}</p>
-                        {o.prazoOrcamento && (
-                          <p className={`text-xs flex items-center gap-1 mt-0.5 ${isVencida ? "text-destructive" : "text-muted-foreground"}`}>
-                            <Clock className="w-3 h-3" />
-                            Prazo: {new Date(o.prazoOrcamento).toLocaleDateString("pt-BR")}
-                          </p>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        {o.valorTotal && <p className="font-semibold text-sm">R$ {parseFloat(String(o.valorTotal)).toFixed(2)}</p>}
-                        <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto mt-1" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              );
-            })}
-          </div>
-        }
+                      </td>
+                      <td>
+                        <span className={`status-badge ${o.status}`}>
+                          {OS_STATUS_LABELS[o.status] ?? o.status}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{o.clienteNome}</div>
+                        <div className="text-xs" style={{ color: "var(--text-muted)" }}>{o.equipamentoMarca} {o.equipamentoModelo}</div>
+                      </td>
+                      <td>
+                        {o.prazoOrcamento ? (
+                          <span className="text-xs" style={{ color: isVencida ? "#fca5a5" : "var(--text-muted)" }}>
+                            {new Date(o.prazoOrcamento).toLocaleDateString("pt-BR")}
+                          </span>
+                        ) : <span className="text-xs" style={{ color: "var(--text-muted)" }}>—</span>}
+                      </td>
+                      <td className="text-right">
+                        {o.valorTotal ? (
+                          <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+                            R$ {parseFloat(String(o.valorTotal)).toFixed(2)}
+                          </span>
+                        ) : <span style={{ color: "var(--text-muted)" }}>—</span>}
+                      </td>
+                      <td>
+                        <ChevronRight size={14} style={{ color: "var(--text-muted)" }} />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
       </div>
     </AppLayout>
   );

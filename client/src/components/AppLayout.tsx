@@ -7,7 +7,6 @@ import { ImpersonationBanner } from "./ImpersonationBanner";
 import {
   BarChart3,
   Box,
-  ChevronLeft,
   ChevronDown,
   ClipboardList,
   CreditCard,
@@ -17,8 +16,6 @@ import {
   Settings,
   ShoppingCart,
   Smartphone,
-  TrendingDown,
-  TrendingUp,
   Users,
   Wallet,
   X,
@@ -29,6 +26,7 @@ import {
   Upload,
   Search,
   Building2,
+  Bell,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
@@ -36,16 +34,19 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "./ui/button";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 
-const navItems = [
+// ── Nav structure ────────────────────────────────────────────────────────────
+const mainNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/ordens-servico", label: "Ordens de Serviço", icon: ClipboardList },
   { href: "/clientes", label: "Clientes", icon: Users },
   { href: "/equipamentos", label: "Equipamentos", icon: Smartphone },
+];
+
+const estoqueNavItems = [
   { href: "/estoque", label: "Estoque", icon: Box, exact: true },
-  { href: "/estoque/lista-compras", label: "Lista de Compras", icon: ShoppingCart, indent: true },
-  { href: "/busca-peca", label: "Busca Nexar", icon: Search, indent: true },
+  { href: "/estoque/lista-compras", label: "Lista de Compras", icon: ShoppingCart },
+  { href: "/busca-peca", label: "Busca Nexar", icon: Search },
   { href: "/fornecedores", label: "Fornecedores", icon: Building2 },
-  { href: "/caixa", label: "Caixa", icon: CreditCard },
 ];
 
 const financeiroItems = [
@@ -58,21 +59,65 @@ const financeiroItems = [
   { href: "/financeiro/importar-extrato", label: "Importar Extrato", icon: Upload },
 ];
 
-const bottomNavItems = [
+const caixaNavItems = [
+  { href: "/caixa", label: "Caixa", icon: CreditCard },
   { href: "/relatorios", label: "Relatórios", icon: BarChart3 },
+];
+
+const configNavItems = [
   { href: "/configuracoes", label: "Configurações", icon: Settings },
 ];
 
 interface AppLayoutProps {
   children: React.ReactNode;
   title?: string;
+  subtitle?: string;
 }
 
-export default function AppLayout({ children, title }: AppLayoutProps) {
+function NavItem({
+  href,
+  label,
+  icon: Icon,
+  exact,
+  indent,
+  onClick,
+}: {
+  href: string;
+  label: string;
+  icon: React.ElementType;
+  exact?: boolean;
+  indent?: boolean;
+  onClick?: () => void;
+}) {
+  const [location] = useLocation();
+  const active = exact
+    ? location === href
+    : location === href || location.startsWith(href + "/");
+
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className={cn(
+        "nav-item",
+        indent && "pl-8",
+        active && "active"
+      )}
+    >
+      <Icon size={15} className="flex-shrink-0" />
+      <span className="truncate">{label}</span>
+    </Link>
+  );
+}
+
+function NavGroupLabel({ children }: { children: React.ReactNode }) {
+  return <div className="nav-group-label">{children}</div>;
+}
+
+export default function AppLayout({ children, title, subtitle }: AppLayoutProps) {
   const { user, loading, isAuthenticated } = useAuth();
   const [location] = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  // Todos os hooks ANTES de qualquer return condicional (regra dos hooks do React)
   const [financeiroOpen, setFinanceiroOpen] = useState(false);
   const logout = trpc.auth.logout.useMutation({
     onSuccess: () => (window.location.href = "/"),
@@ -81,12 +126,10 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
 
   const isFinanceiroActive = location.startsWith("/financeiro");
 
-  // Sincroniza financeiroOpen com a rota ativa (sem violar regra dos hooks)
   useEffect(() => {
     if (isFinanceiroActive) setFinanceiroOpen(true);
   }, [isFinanceiroActive]);
 
-  // Redirects via useEffect para não violar a regra dos hooks
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       window.location.href = getLoginUrl();
@@ -108,171 +151,145 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--surface-base)" }}>
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "#C4733A" }}>
+            <Smartphone className="w-4 h-4 text-white" />
+          </div>
+          <div className="flex gap-1">
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className="w-1.5 h-1.5 rounded-full"
+                style={{
+                  background: "var(--brand-primary)",
+                  animation: `bounce 1s ease-in-out ${i * 0.15}s infinite`,
+                }}
+              />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
 
-  if (!isAuthenticated) {
-    return null;
-  }
-
-  // Enquanto aguarda tenant carregar (undefined = ainda carregando, null = não tem)
-  if (tenant === null) {
-    return null;
-  }
+  if (!isAuthenticated || tenant === null) return null;
 
   const SidebarContent = () => (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full" style={{ background: "var(--surface-1)" }}>
       {/* Logo */}
-      <div className="px-6 py-5 border-b border-sidebar-border">
-        <Link href="/dashboard" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "#C4733A" }}>
-            <Smartphone className="w-4 h-4 text-white" />
+      <div className="px-4 py-4" style={{ borderBottom: "1px solid var(--surface-border)" }}>
+        <Link href="/dashboard" className="flex items-center gap-2.5 no-underline">
+          <div className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0" style={{ background: "#C4733A" }}>
+            <Smartphone size={14} className="text-white" />
           </div>
-          <span className="font-bold text-lg text-sidebar-foreground">Assist-Pró</span>
+          <div className="min-w-0">
+            <span className="font-bold text-sm block" style={{ color: "var(--text-primary)" }}>Assist-Pró</span>
+            {tenant && (
+              <span className="text-xs truncate block" style={{ color: "var(--text-muted)" }}>{tenant.name}</span>
+            )}
+          </div>
         </Link>
-        {tenant && (
-          <p className="text-xs text-sidebar-foreground/60 mt-1 truncate">{tenant.name}</p>
-        )}
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const active = item.exact ? location === item.href : location === item.href || location.startsWith(item.href + "/");
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setSidebarOpen(false)}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                item.indent && "pl-7",
-                active
-                  ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                  : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-              )}
-            >
-              <Icon className="w-4 h-4 flex-shrink-0" />
-              {item.label}
-            </Link>
-          );
-        })}
+      <nav className="flex-1 px-2 py-3 overflow-y-auto space-y-0.5">
+        {/* Principal */}
+        <NavGroupLabel>Principal</NavGroupLabel>
+        {mainNavItems.map((item) => (
+          <NavItem key={item.href} {...item} onClick={() => setSidebarOpen(false)} />
+        ))}
 
-        {/* Financeiro — grupo colapsável */}
-        <div>
-          <button
-            onClick={() => setFinanceiroOpen(v => !v)}
-            className={cn(
-              "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-              isFinanceiroActive
-                ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-            )}
-          >
-            <Wallet className="w-4 h-4 flex-shrink-0" />
-            <span className="flex-1 text-left">Financeiro</span>
-            <ChevronDown className={cn("w-4 h-4 transition-transform", financeiroOpen && "rotate-180")} />
-          </button>
-          {financeiroOpen && (
-            <div className="mt-1 space-y-0.5">
-              {financeiroItems.map((item) => {
-                const Icon = item.icon;
-                const active = item.exact ? location === item.href : location === item.href || location.startsWith(item.href + "/");
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setSidebarOpen(false)}
-                    className={cn(
-                      "flex items-center gap-3 pl-7 pr-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                      active
-                        ? "bg-sidebar-primary/80 text-sidebar-primary-foreground"
-                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                    )}
-                  >
-                    <Icon className="w-3.5 h-3.5 flex-shrink-0" />
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </div>
+        {/* Estoque */}
+        <NavGroupLabel>Estoque</NavGroupLabel>
+        {estoqueNavItems.map((item) => (
+          <NavItem key={item.href} {...item} onClick={() => setSidebarOpen(false)} />
+        ))}
+
+        {/* Financeiro — colapsável */}
+        <NavGroupLabel>Financeiro</NavGroupLabel>
+        <button
+          onClick={() => setFinanceiroOpen(v => !v)}
+          className={cn(
+            "nav-item w-full",
+            isFinanceiroActive && "active"
           )}
-        </div>
+        >
+          <Wallet size={15} className="flex-shrink-0" />
+          <span className="flex-1 text-left truncate">Financeiro</span>
+          <ChevronDown
+            size={13}
+            className="flex-shrink-0 transition-transform duration-150"
+            style={{ transform: financeiroOpen ? "rotate(180deg)" : "rotate(0deg)" }}
+          />
+        </button>
+        {financeiroOpen && (
+          <div className="space-y-0.5 mt-0.5">
+            {financeiroItems.map((item) => (
+              <NavItem key={item.href} {...item} indent onClick={() => setSidebarOpen(false)} />
+            ))}
+          </div>
+        )}
 
-        {bottomNavItems.map((item) => {
-          const Icon = item.icon;
-          const active = location === item.href || location.startsWith(item.href + "/");
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setSidebarOpen(false)}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                active
-                  ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                  : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-              )}
-            >
-              <Icon className="w-4 h-4 flex-shrink-0" />
-              {item.label}
-            </Link>
-          );
-        })}
+        {/* Caixa */}
+        <NavGroupLabel>Gestão</NavGroupLabel>
+        {caixaNavItems.map((item) => (
+          <NavItem key={item.href} {...item} onClick={() => setSidebarOpen(false)} />
+        ))}
 
-        {/* Painel Admin removido do menu do tenant.
-             Acesso ao Control Plane exclusivamente via /super-admin (URL direta). */}
+        {/* Config */}
+        <NavGroupLabel>Sistema</NavGroupLabel>
+        {configNavItems.map((item) => (
+          <NavItem key={item.href} {...item} onClick={() => setSidebarOpen(false)} />
+        ))}
       </nav>
 
-      {/* User */}
-      <div className="px-3 py-4 border-t border-sidebar-border">
-        <div className="flex items-center gap-3 px-3 py-2">
-          <Avatar className="w-8 h-8">
-            <AvatarFallback className="text-xs bg-sidebar-primary text-sidebar-primary-foreground">
+      {/* User footer */}
+      <div className="px-2 py-3" style={{ borderTop: "1px solid var(--surface-border)" }}>
+        <div className="flex items-center gap-2.5 px-2 py-2 rounded-md" style={{ background: "var(--surface-2)" }}>
+          <Avatar className="w-7 h-7 flex-shrink-0">
+            <AvatarFallback className="text-xs font-semibold" style={{ background: "var(--brand-primary)", color: "#fff" }}>
               {initials}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-sidebar-foreground truncate">{user?.name}</p>
-            <p className="text-xs text-sidebar-foreground/60 truncate">{user?.email}</p>
+            <p className="text-xs font-semibold truncate" style={{ color: "var(--text-primary)" }}>{user?.name}</p>
+            <p className="text-xs truncate" style={{ color: "var(--text-muted)" }}>{user?.email}</p>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-sidebar-foreground/60 hover:text-sidebar-foreground"
+          <button
             onClick={() => logout.mutate()}
+            className="p-1 rounded transition-colors hover:bg-white/10"
+            title="Sair"
+            style={{ color: "var(--text-muted)" }}
           >
-            <LogOut className="w-4 h-4" />
-          </Button>
+            <LogOut size={13} />
+          </button>
         </div>
       </div>
     </div>
   );
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
-      {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex w-64 flex-col bg-sidebar flex-shrink-0">
+    <div className="flex h-screen overflow-hidden" style={{ background: "var(--surface-base)" }}>
+      {/* Desktop Sidebar — 220px */}
+      <aside
+        className="hidden lg:flex flex-col flex-shrink-0"
+        style={{ width: 220, borderRight: "1px solid var(--surface-border)" }}
+      >
         <SidebarContent />
       </aside>
 
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div
-            className="absolute inset-0 bg-black/50"
-            onClick={() => setSidebarOpen(false)}
-          />
-          <aside className="absolute left-0 top-0 bottom-0 w-64 bg-sidebar flex flex-col">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setSidebarOpen(false)} />
+          <aside className="absolute left-0 top-0 bottom-0 flex flex-col" style={{ width: 220, borderRight: "1px solid var(--surface-border)" }}>
             <button
-              className="absolute top-4 right-4 text-sidebar-foreground/60"
+              className="absolute top-3 right-3 p-1 rounded"
+              style={{ color: "var(--text-muted)" }}
               onClick={() => setSidebarOpen(false)}
             >
-              <X className="w-5 h-5" />
+              <X size={16} />
             </button>
             <SidebarContent />
           </aside>
@@ -281,25 +298,64 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Impersonation Banner — exibido quando admin acessa como tenant */}
         <ImpersonationBanner />
-        {/* Trial Banner */}
         <TrialBanner />
 
-        {/* Top bar (mobile) */}
-        <header className="lg:hidden flex items-center gap-3 px-4 py-3 border-b bg-white">
-          <button onClick={() => setSidebarOpen(true)}>
-            <Menu className="w-5 h-5" />
+        {/* Topbar — 48px desktop */}
+        <header
+          className="flex items-center px-4 lg:px-6 flex-shrink-0"
+          style={{
+            height: 48,
+            background: "var(--surface-1)",
+            borderBottom: "1px solid var(--surface-border)",
+          }}
+        >
+          {/* Mobile menu button */}
+          <button
+            className="lg:hidden mr-3 p-1 rounded"
+            style={{ color: "var(--text-secondary)" }}
+            onClick={() => setSidebarOpen(true)}
+          >
+            <Menu size={18} />
           </button>
-          <span className="font-semibold text-sm">{title ?? "Assist-Pró"}</span>
+
+          {/* Breadcrumb / page name */}
+          <div className="flex-1 min-w-0">
+            <span className="text-sm font-medium truncate" style={{ color: "var(--text-secondary)" }}>
+              {title ?? "Assist-Pró"}
+            </span>
+          </div>
+
+          {/* Right actions */}
+          <div className="flex items-center gap-2">
+            <button
+              className="p-1.5 rounded-md transition-colors hover:bg-white/5"
+              style={{ color: "var(--text-muted)" }}
+              title="Notificações"
+            >
+              <Bell size={16} />
+            </button>
+            <Avatar className="w-7 h-7">
+              <AvatarFallback className="text-xs font-semibold" style={{ background: "var(--brand-primary)", color: "#fff" }}>
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+          </div>
         </header>
 
-        {/* Page Content — bloqueado se subscription inativa */}
+        {/* Page Header */}
+        {title && (
+          <div
+            className="px-6 pt-5 pb-0 flex-shrink-0"
+          >
+            <h1 className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>{title}</h1>
+            {subtitle && <p className="text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>{subtitle}</p>}
+          </div>
+        )}
+
+        {/* Page Content */}
         <SubscriptionGuard>
           <main className="flex-1 overflow-y-auto p-4 lg:p-6">
-            {title && (
-              <h1 className="text-xl font-bold text-foreground mb-6 hidden lg:block">{title}</h1>
-            )}
             {children}
           </main>
         </SubscriptionGuard>

@@ -459,69 +459,96 @@ export default function Estoque() {
 
         {/* Lista de peças */}
         {isLoading ? (
-          <div className="text-center py-12 text-muted-foreground">Carregando...</div>
+          <div className="space-y-0">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-4 px-4 py-3" style={{ borderBottom: "1px solid var(--surface-border)" }}>
+                <div className="skeleton w-24 h-4 rounded" />
+                <div className="skeleton flex-1 h-4 rounded" />
+                <div className="skeleton w-16 h-4 rounded" />
+                <div className="skeleton w-16 h-4 rounded" />
+              </div>
+            ))}
+          </div>
         ) : pecas.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            {debouncedSearch ? `Nenhuma peça encontrada para "${debouncedSearch}".` : filterModelId ? "Nenhuma peça compatível com este modelo." : "Nenhuma peça cadastrada."}
+          <div className="empty-state">
+            <Package size={36} style={{ color: "var(--text-muted)", marginBottom: 12 }} />
+            <p className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
+              {debouncedSearch ? `Nenhuma peça para "${debouncedSearch}"` : filterModelId ? "Nenhuma peça compatível" : "Nenhuma peça cadastrada"}
+            </p>
+            <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>Adicione peças usando o botão acima</p>
           </div>
         ) : (
-          <div className="grid gap-3">
-            {pecas.map((p) => {
-              const baixo = p.quantidadeAtual < p.quantidadeMinima;
-              const compatModels = models.filter((m) => p.compatibleModelIds?.includes(m.id));
-              const isExactMatch = exactSkuMatch?.id === p.id;
-              return (
-                <Card key={p.id} className={`${baixo ? "border-orange-200" : ""} ${isExactMatch ? "border-green-300 ring-2 ring-green-200" : ""}`}>
-                  <CardContent className="p-4 flex items-start gap-3">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${baixo ? "bg-orange-100" : isExactMatch ? "bg-green-100" : "bg-primary/10"}`}>
-                      <Package className={`w-5 h-5 ${baixo ? "text-orange-600" : isExactMatch ? "text-green-600" : "text-primary"}`} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-semibold">{p.nome}</p>
-                        <Badge variant="outline" className="text-xs">{CAT_LABELS[p.categoria] ?? p.categoria}</Badge>
-                        {baixo && <Badge className="text-xs bg-orange-100 text-orange-700">Estoque Baixo</Badge>}
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Peça / Código</th>
+                <th>Categoria</th>
+                <th>Qtd</th>
+                <th>Venda</th>
+                {isManager && <th>Custo</th>}
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pecas.map((p) => {
+                const baixo = p.quantidadeAtual < p.quantidadeMinima;
+                const isExactMatch = exactSkuMatch?.id === p.id;
+                return (
+                  <tr key={p.id} className={isExactMatch ? "ring-1 ring-inset" : ""}
+                    style={isExactMatch ? { boxShadow: "inset 0 0 0 1px #22c55e" } : {}}>
+                    <td>
+                      <div className="font-medium text-sm" style={{ color: "var(--text-primary)" }}>{p.nome}</div>
+                      <div className="flex gap-2 mt-0.5 flex-wrap">
+                        <span className="font-mono text-xs" style={{ color: "var(--text-muted)" }}>{p.codigo}</span>
+                        {(p as any).sku && <span className="font-mono text-xs" style={{ color: "var(--text-muted)" }}>SKU: {(p as any).sku}</span>}
+                        {p.partNumber && <span className="text-xs" style={{ color: "var(--text-muted)" }}>PN: {p.partNumber}</span>}
                       </div>
-                      {/* Códigos de identificação */}
-                      <div className="flex gap-3 mt-0.5 text-xs text-muted-foreground flex-wrap">
-                        <span className="font-mono">{p.codigo}</span>
-                        {(p as any).sku && (
-                          <span className="flex items-center gap-1">
-                            <Barcode className="w-3 h-3" />
-                            <span className="font-mono font-medium text-foreground">{(p as any).sku}</span>
-                          </span>
-                        )}
-                        {p.partNumber && <span>PN: <span className="font-mono font-medium text-foreground">{p.partNumber}</span></span>}
-                        {p.manufacturer && <span>Fab: <span className="font-medium text-foreground">{p.manufacturer}</span></span>}
+                    </td>
+                    <td>
+                      <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: "var(--surface-2)", color: "var(--text-secondary)" }}>
+                        {CAT_LABELS[p.categoria] ?? p.categoria}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-semibold text-sm" style={{ color: baixo ? "#fdba74" : "var(--text-primary)" }}>
+                          {p.quantidadeAtual}
+                        </span>
+                        <span className="text-xs" style={{ color: "var(--text-muted)" }}>/ {p.quantidadeMinima}</span>
+                        {baixo && <span className="text-xs px-1 py-0.5 rounded" style={{ background: "rgba(196,115,58,0.15)", color: "#fdba74" }}>Baixo</span>}
                       </div>
-                      <div className="flex gap-4 mt-1 text-sm flex-wrap">
-                        <span>Atual: <strong>{p.quantidadeAtual}</strong></span>
-                        <span className="text-muted-foreground">Mín: {p.quantidadeMinima}</span>
-                        <span>Venda: <strong>R$ {parseFloat(String(p.precoVenda)).toFixed(2)}</strong></span>
-                        {isManager && p.precoCusto && (
-                          <span className="text-muted-foreground">Custo: R$ {parseFloat(String(p.precoCusto)).toFixed(2)}</span>
-                        )}
+                    </td>
+                    <td>
+                      <span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
+                        R$ {parseFloat(String(p.precoVenda)).toFixed(2)}
+                      </span>
+                    </td>
+                    {isManager && (
+                      <td>
+                        <span className="text-sm" style={{ color: "var(--text-muted)" }}>
+                          {p.precoCusto ? `R$ ${parseFloat(String(p.precoCusto)).toFixed(2)}` : "—"}
+                        </span>
+                      </td>
+                    )}
+                    <td>
+                      <div className="flex gap-1">
+                        <button
+                          className="px-2 py-1 rounded text-xs transition-colors"
+                          style={{ background: "var(--surface-2)", color: "var(--text-secondary)", border: "1px solid var(--surface-border)" }}
+                          onClick={(e) => { e.stopPropagation(); startEdit(p); }}
+                        >Editar</button>
+                        <button
+                          className="px-2 py-1 rounded text-xs transition-colors"
+                          style={{ background: "var(--surface-2)", color: "var(--text-secondary)", border: "1px solid var(--surface-border)" }}
+                          onClick={(e) => { e.stopPropagation(); setSelectedPecaId(p.id); setMovOpen(true); }}
+                        >Movimentar</button>
                       </div>
-                      {compatModels.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-1.5">
-                          {compatModels.map((m) => (
-                            <Badge key={m.id} variant="secondary" className="text-xs">{m.brand} {m.modelName}</Badge>
-                          ))}
-                        </div>
-                      )}
-                      {p.application && (
-                        <p className="text-xs text-muted-foreground mt-1 italic line-clamp-1">{p.application}</p>
-                      )}
-                    </div>
-                    <div className="flex gap-1 flex-shrink-0">
-                      <Button size="sm" variant="outline" onClick={() => startEdit(p)}>Editar</Button>
-                      <Button size="sm" variant="outline" onClick={() => { setSelectedPecaId(p.id); setMovOpen(true); }}>Movimentar</Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         )}
 
         {/* Modal Editar */}

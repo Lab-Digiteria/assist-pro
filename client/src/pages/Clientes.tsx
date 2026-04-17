@@ -386,66 +386,83 @@ export default function Clientes() {
           </Dialog>
         </div>
 
-        {isLoading ? (
-          <div className="text-center py-12 text-muted-foreground">Carregando...</div>
-        ) : clientes.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">Nenhum cliente encontrado.</div>
-        ) : (
-          <div className="grid gap-3">
-            {clientes.map((c) => {
-              const classif = (c as any).classificacao ?? "padrao";
-              return (
-                <Card
-                  key={c.id}
-                  className="cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => openDetail(c.id)}
-                >
-                  <CardContent className="p-4 flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      {c.tipo === "pj" ? (
-                        <Building2 className="w-5 h-5 text-primary" />
-                      ) : (
-                        <User className="w-5 h-5 text-primary" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="font-semibold">{c.nome}</p>
-                        {classif !== "padrao" && (
-                          <Badge className={`text-xs px-1.5 py-0 flex items-center gap-1 ${CLASSIFICACAO_COLORS[classif]}`}>
-                            {CLASSIFICACAO_ICONS[classif]}
-                            {classif === "vip" ? "VIP" : classif === "recorrente" ? "Recorrente" : "Inadimplente"}
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-muted-foreground">{c.cpfCnpj}</p>
-                      <div className="flex gap-4 mt-1">
-                        {c.whatsapp && (
-                          <span className="text-xs flex items-center gap-1">
-                            <Phone className="w-3 h-3" />{c.whatsapp}
-                          </span>
-                        )}
-                        {c.email && (
-                          <span className="text-xs flex items-center gap-1">
-                            <Mail className="w-3 h-3" />{c.email}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {c.cidade && (
-                        <span className="text-xs text-muted-foreground flex items-center gap-1">
-                          <MapPin className="w-3 h-3" />{c.cidade}/{c.estado}
-                        </span>
-                      )}
-                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        )}
+        <div className="data-table-container">
+          {isLoading ? (
+            <div className="space-y-0">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-4 px-4 py-3" style={{ borderBottom: "1px solid var(--surface-border)" }}>
+                  <div className="skeleton w-8 h-8 rounded-full" />
+                  <div className="skeleton flex-1 h-4 rounded" />
+                  <div className="skeleton w-28 h-4 rounded" />
+                  <div className="skeleton w-20 h-4 rounded" />
+                </div>
+              ))}
+            </div>
+          ) : clientes.length === 0 ? (
+            <div className="empty-state">
+              <User size={36} style={{ color: "var(--text-muted)", marginBottom: 12 }} />
+              <p className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>Nenhum cliente encontrado</p>
+              <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>Cadastre o primeiro cliente usando o botão acima</p>
+            </div>
+          ) : (
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>CPF / CNPJ</th>
+                  <th>WhatsApp</th>
+                  <th>Cidade</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {clientes.map((c) => {
+                  const classif = (c as any).classificacao ?? "padrao";
+                  return (
+                    <tr key={c.id} className="cursor-pointer" onClick={() => openDetail(c.id)}>
+                      <td>
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+                            style={{ background: "rgba(27,79,138,0.2)" }}>
+                            {c.tipo === "pj" ? (
+                              <Building2 size={13} style={{ color: "#60a5fa" }} />
+                            ) : (
+                              <User size={13} style={{ color: "#60a5fa" }} />
+                            )}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{c.nome}</span>
+                              {classif !== "padrao" && (
+                                <Badge className={`text-xs px-1.5 py-0 flex items-center gap-1 ${CLASSIFICACAO_COLORS[classif]}`}>
+                                  {CLASSIFICACAO_ICONS[classif]}
+                                  {classif === "vip" ? "VIP" : classif === "recorrente" ? "Recorrente" : "Inadimplente"}
+                                </Badge>
+                              )}
+                            </div>
+                            {c.email && <div className="text-xs" style={{ color: "var(--text-muted)" }}>{c.email}</div>}
+                          </div>
+                        </div>
+                      </td>
+                      <td><span className="text-xs" style={{ color: "var(--text-muted)" }}>{c.cpfCnpj || "—"}</span></td>
+                      <td>
+                        {c.whatsapp ? (
+                          <span className="text-xs" style={{ color: "var(--text-secondary)" }}>{c.whatsapp}</span>
+                        ) : <span style={{ color: "var(--text-muted)" }}>—</span>}
+                      </td>
+                      <td>
+                        {c.cidade ? (
+                          <span className="text-xs" style={{ color: "var(--text-muted)" }}>{c.cidade}/{c.estado}</span>
+                        ) : <span style={{ color: "var(--text-muted)" }}>—</span>}
+                      </td>
+                      <td><ChevronRight size={14} style={{ color: "var(--text-muted)" }} /></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
       </div>
 
       {/* Detail Sheet */}
