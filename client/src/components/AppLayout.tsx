@@ -28,6 +28,7 @@ import {
   LineChart,
   Upload,
   Search,
+  Building2,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
@@ -43,6 +44,7 @@ const navItems = [
   { href: "/estoque", label: "Estoque", icon: Box, exact: true },
   { href: "/estoque/lista-compras", label: "Lista de Compras", icon: ShoppingCart, indent: true },
   { href: "/busca-peca", label: "Busca Nexar", icon: Search, indent: true },
+  { href: "/fornecedores", label: "Fornecedores", icon: Building2 },
   { href: "/caixa", label: "Caixa", icon: CreditCard },
 ];
 

@@ -31,6 +31,9 @@ import FluxoCaixa from "./pages/FluxoCaixa";
 import DRE from "./pages/DRE";
 import PlanoContas from "./pages/PlanoContas";
 import ImportarExtrato from "./pages/ImportarExtrato";
+import Fornecedores from "./pages/Fornecedores";
+import FornecedorForm from "./pages/FornecedorForm";
+import FornecedorDetalhe from "./pages/FornecedorDetalhe";
 import {
   OrcamentoAprovado,
   OrcamentoRejeitado,
@@ -93,6 +96,10 @@ function Router() {
       <Route path="/configuracoes" component={Configuracoes} />
       <Route path="/configuracoes/modelos-equipamentos" component={ModelosEquipamentos} />
       <Route path="/estoque/lista-compras" component={ListaCompras} />
+      <Route path="/fornecedores" component={Fornecedores} />
+      <Route path="/fornecedores/novo" component={FornecedorForm} />
+      <Route path="/fornecedores/:id/editar" component={FornecedorForm} />
+      <Route path="/fornecedores/:id" component={FornecedorDetalhe} />
       <Route path="/busca-peca" component={BuscaPeca} />
 
       {/* ── Financeiro ──────────────────────────────────────── */}

@@ -500,3 +500,25 @@
 - [x] Migration 0015 gerada e aplicada no banco
 - [x] Validado: tenant 30001 consegue criar peça com código PÇ-000001 sem conflito com tenant 1
 - [x] TypeScript 0 erros após a correção
+
+## Módulo de Fornecedores — Cadastro Completo
+
+- [x] Schema: tabela `suppliers` com todos os campos de identificação, contato, endereço e dados comerciais
+- [x] Schema: tabela `supplierBankAccounts` para múltiplas contas bancárias por fornecedor
+- [x] Schema: tabela `supplierDocuments` para upload de arquivos vinculados
+- [x] Migration gerada e aplicada
+- [x] Backend: CRUD completo de fornecedores (list, getById, create, update, delete, toggleActive)
+- [x] Backend: CRUD de contas bancárias (add, update, remove)
+- [x] Backend: upload de documentos para S3 (presigned URL + save metadata)
+- [x] Backend: busca CEP via ViaCEP integrada no frontend
+- [x] Frontend: listagem com busca, filtros (ativo/inativo, preferencial, categoria), badge preferencial
+- [x] Frontend: formulário wizard multi-seção (Identificação, Contato, Endereço, Comercial, Produtos, Avaliação)
+- [x] Frontend: busca automática de CEP via ViaCEP ao preencher zip_code
+- [x] Frontend: validação CNPJ e CPF com máscara
+- [x] Frontend: multi-select de categorias e marcas
+- [x] Frontend: avaliação por estrelas (1-5) com campo de justificativa
+- [x] Frontend: upload de documentos com nome, tipo e data
+- [x] Frontend: página de detalhe com abas (Dados, Bancário, Documentos)
+- [x] Rota /fornecedores e /fornecedores/:id registradas no App.tsx
+- [x] Link "Fornecedores" no sidebar
+- [x] 48 testes passando (7 arquivos)

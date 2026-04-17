@@ -17,6 +17,7 @@ import { revendedoresRouter } from "./routers/revendedores";
 import { equipmentModelsRouter } from "./routers/equipmentModels";
 import { listaComprasRouter } from "./routers/listaCompras";
 import { financeiroV2Router } from "./routers/financeiroV2";
+import { suppliersRouter } from "./routers/suppliers";
 
 export const appRouter = router({
   system: systemRouter,
@@ -56,5 +57,6 @@ export const appRouter = router({
   equipmentModels: equipmentModelsRouter,
   listaCompras:  listaComprasRouter,
   financeiroV2: financeiroV2Router,
+  suppliers: suppliersRouter,
 });
 export type AppRouter = typeof appRouter;

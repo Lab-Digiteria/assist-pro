@@ -707,3 +707,97 @@ export const payables = mysqlTable("payables", {
 });
 export type Payable = typeof payables.$inferSelect;
 export type InsertPayable = typeof payables.$inferInsert;
+
+// ─── SUPPLIERS ────────────────────────────────────────────────────────────────
+export const suppliers = mysqlTable("suppliers", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull(),
+  // Identificação
+  companyType: mysqlEnum("companyType", ["juridica", "fisica"]).default("juridica").notNull(),
+  corporateName: varchar("corporateName", { length: 255 }).notNull(),
+  tradeName: varchar("tradeName", { length: 255 }),
+  cnpj: varchar("cnpj", { length: 18 }),
+  cpf: varchar("cpf", { length: 14 }),
+  stateRegistration: varchar("stateRegistration", { length: 50 }),
+  municipalRegistration: varchar("municipalRegistration", { length: 50 }),
+  cnae: varchar("cnae", { length: 20 }),
+  foundingDate: varchar("foundingDate", { length: 10 }),
+  isActive: boolean("isActive").default(true).notNull(),
+  isPreferred: boolean("isPreferred").default(false).notNull(),
+  // Contato
+  emailPrimary: varchar("emailPrimary", { length: 320 }),
+  emailSecondary: varchar("emailSecondary", { length: 320 }),
+  phoneLandline: varchar("phoneLandline", { length: 20 }),
+  phoneMobile: varchar("phoneMobile", { length: 20 }),
+  phoneWhatsapp: varchar("phoneWhatsapp", { length: 20 }),
+  website: varchar("website", { length: 500 }),
+  contactName: varchar("contactName", { length: 255 }),
+  contactRole: varchar("contactRole", { length: 100 }),
+  // Endereço
+  zipCode: varchar("zipCode", { length: 9 }),
+  street: varchar("street", { length: 255 }),
+  number: varchar("number", { length: 20 }),
+  complement: varchar("complement", { length: 100 }),
+  neighborhood: varchar("neighborhood", { length: 100 }),
+  city: varchar("city", { length: 100 }),
+  state: varchar("state", { length: 2 }),
+  country: varchar("country", { length: 50 }).default("Brasil"),
+  // Dados Comerciais
+  supplierCategory: json("supplierCategory"), // string[]
+  paymentTerms: varchar("paymentTerms", { length: 100 }),
+  paymentMethodPreferred: mysqlEnum("paymentMethodPreferred", ["pix", "boleto", "transferencia", "cartao"]),
+  minimumOrder: decimal("minimumOrder", { precision: 12, scale: 2 }),
+  averageDeliveryDays: int("averageDeliveryDays"),
+  discountPercentage: decimal("discountPercentage", { precision: 5, scale: 2 }),
+  creditLimit: decimal("creditLimit", { precision: 12, scale: 2 }),
+  observationsCommercial: text("observationsCommercial"),
+  // Produtos e Marcas
+  brandsSupplied: json("brandsSupplied"), // string[]
+  productLines: json("productLines"), // string[]
+  catalogUrl: varchar("catalogUrl", { length: 500 }),
+  // Histórico e Avaliação
+  firstPurchaseDate: varchar("firstPurchaseDate", { length: 10 }),
+  lastPurchaseDate: varchar("lastPurchaseDate", { length: 10 }),
+  totalPurchasesAmount: decimal("totalPurchasesAmount", { precision: 14, scale: 2 }).default("0"),
+  rating: int("rating"), // 1-5
+  ratingNotes: text("ratingNotes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Supplier = typeof suppliers.$inferSelect;
+export type InsertSupplier = typeof suppliers.$inferInsert;
+
+// ─── SUPPLIER BANK ACCOUNTS ───────────────────────────────────────────────────
+export const supplierBankAccounts = mysqlTable("supplierBankAccounts", {
+  id: int("id").autoincrement().primaryKey(),
+  supplierId: int("supplierId").notNull(),
+  tenantId: int("tenantId").notNull(),
+  bankName: varchar("bankName", { length: 100 }),
+  bankCode: varchar("bankCode", { length: 10 }),
+  agency: varchar("agency", { length: 20 }),
+  accountNumber: varchar("accountNumber", { length: 30 }),
+  accountType: mysqlEnum("accountType", ["corrente", "poupanca", "pagamento"]).default("corrente"),
+  pixKey: varchar("pixKey", { length: 255 }),
+  pixKeyType: mysqlEnum("pixKeyType", ["cpf", "cnpj", "email", "telefone", "aleatoria"]),
+  accountHolder: varchar("accountHolder", { length: 255 }),
+  isDefault: boolean("isDefault").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type SupplierBankAccount = typeof supplierBankAccounts.$inferSelect;
+export type InsertSupplierBankAccount = typeof supplierBankAccounts.$inferInsert;
+
+// ─── SUPPLIER DOCUMENTS ───────────────────────────────────────────────────────
+export const supplierDocuments = mysqlTable("supplierDocuments", {
+  id: int("id").autoincrement().primaryKey(),
+  supplierId: int("supplierId").notNull(),
+  tenantId: int("tenantId").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  documentType: mysqlEnum("documentType", ["contrato", "tabela_precos", "certificado", "outros"]).default("outros"),
+  fileUrl: varchar("fileUrl", { length: 1000 }).notNull(),
+  fileKey: varchar("fileKey", { length: 500 }).notNull(),
+  mimeType: varchar("mimeType", { length: 100 }),
+  fileSizeBytes: int("fileSizeBytes"),
+  uploadedAt: timestamp("uploadedAt").defaultNow().notNull(),
+});
+export type SupplierDocument = typeof supplierDocuments.$inferSelect;
+export type InsertSupplierDocument = typeof supplierDocuments.$inferInsert;
