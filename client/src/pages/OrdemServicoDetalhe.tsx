@@ -690,6 +690,7 @@ export default function OrdemServicoDetalhe() {
             </CardHeader>
             <CardContent className="space-y-1.5 text-sm">
               <p className="font-semibold">{(os as any).clienteNome ?? "—"}</p>
+              {(os as any).clienteCpfCnpj && <p className="text-muted-foreground text-xs font-mono">{(os as any).clienteCpfCnpj}</p>}
               {(os as any).clienteWhatsapp && <p className="text-muted-foreground">{(os as any).clienteWhatsapp}</p>}
               {(os as any).clienteEmail && <p className="text-muted-foreground">{(os as any).clienteEmail}</p>}
               {os.clienteId && (
@@ -704,9 +705,11 @@ export default function OrdemServicoDetalhe() {
               <CardTitle className="text-sm flex items-center gap-2"><Smartphone className="w-4 h-4 text-purple-600" />Equipamento</CardTitle>
             </CardHeader>
             <CardContent className="space-y-1.5 text-sm">
-              <p className="font-semibold">{(os as any).equipamentoMarca} {(os as any).equipamentoModelo}</p>
+              <p className="font-semibold">{(os as any).equipamentoMarca ?? "—"} {(os as any).equipamentoModelo ?? ""}</p>
+              {(os as any).equipamentoCategoria && <p className="text-muted-foreground text-xs capitalize">{(os as any).equipamentoCategoria}</p>}
               {(os as any).equipamentoCor && <p className="text-muted-foreground">Cor: {(os as any).equipamentoCor}</p>}
-              {(os as any).equipamentoImei && <p className="text-muted-foreground font-mono text-xs">IMEI/Série: {(os as any).equipamentoImei}</p>}
+              {(os as any).equipamentoNumeroSerie && <p className="text-muted-foreground font-mono text-xs">Série: {(os as any).equipamentoNumeroSerie}</p>}
+              {(os as any).equipamentoImei && <p className="text-muted-foreground font-mono text-xs">IMEI: {(os as any).equipamentoImei}</p>}
               {(os as any).numeroLacre && (
                 <div className="flex items-center gap-1 text-orange-600">
                   <Shield className="w-3 h-3" />

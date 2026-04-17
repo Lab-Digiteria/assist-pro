@@ -435,8 +435,62 @@ export async function getOrdemServicoById(tenantId: number, id: number) {
   const db = await getDb();
   if (!db) return null;
   const result = await db
-    .select()
+    .select({
+      // OS fields
+      id: ordensServico.id,
+      tenantId: ordensServico.tenantId,
+      numero: ordensServico.numero,
+      status: ordensServico.status,
+      clienteId: ordensServico.clienteId,
+      equipamentoId: ordensServico.equipamentoId,
+      tecnicoId: ordensServico.tecnicoId,
+      attendantId: ordensServico.attendantId,
+      descricaoProblema: ordensServico.descricaoProblema,
+      laudoTecnico: ordensServico.laudoTecnico,
+      senhaDesbloqueio: ordensServico.senhaDesbloqueio,
+      acessoriosEntregues: ordensServico.acessoriosEntregues,
+      checklistEstadoFisico: ordensServico.checklistEstadoFisico,
+      checklistSintomas: ordensServico.checklistSintomas,
+      valorTotal: ordensServico.valorTotal,
+      valorPago: ordensServico.valorPago,
+      descontoValor: ordensServico.descontoValor,
+      statusOrcamento: ordensServico.statusOrcamento,
+      motivoReprovacao: ordensServico.motivoReprovacao,
+      prazoOrcamento: ordensServico.prazoOrcamento,
+      prazoEstimadoConclusao: ordensServico.prazoEstimadoConclusao,
+      validadeOrcamento: ordensServico.validadeOrcamento,
+      dataNotificacaoCliente: ordensServico.dataNotificacaoCliente,
+      dataFimGarantia: ordensServico.dataFimGarantia,
+      temGarantia: ordensServico.temGarantia,
+      garantiaDias: ordensServico.garantiaDias,
+      numeroLacre: ordensServico.numeroLacre,
+      semSolucaoPossivel: ordensServico.semSolucaoPossivel,
+      justificativaSemSolucao: ordensServico.justificativaSemSolucao,
+      assinaturaClienteUrl: ordensServico.assinaturaClienteUrl,
+      clientToken: ordensServico.clientToken,
+      clientTokenExpiresAt: ordensServico.clientTokenExpiresAt,
+      clientObservacoes: ordensServico.clientObservacoes,
+      createdAt: ordensServico.createdAt,
+      updatedAt: ordensServico.updatedAt,
+      // Cliente fields (prefixed)
+      clienteNome: clientes.nome,
+      clienteTipo: clientes.tipo,
+      clienteCpfCnpj: clientes.cpfCnpj,
+      clienteWhatsapp: clientes.whatsapp,
+      clienteEmail: clientes.email,
+      clienteClassificacao: clientes.classificacao,
+      // Equipamento fields (prefixed)
+      equipamentoCategoria: equipamentos.categoria,
+      equipamentoMarca: equipamentos.marca,
+      equipamentoModelo: equipamentos.modelo,
+      equipamentoNumeroSerie: equipamentos.numeroSerie,
+      equipamentoImei: equipamentos.imei,
+      equipamentoCapacidade: equipamentos.capacidade,
+      equipamentoCor: equipamentos.cor,
+    })
     .from(ordensServico)
+    .leftJoin(clientes, eq(ordensServico.clienteId, clientes.id))
+    .leftJoin(equipamentos, eq(ordensServico.equipamentoId, equipamentos.id))
     .where(and(eq(ordensServico.id, id), eq(ordensServico.tenantId, tenantId)))
     .limit(1);
   return result[0] ?? null;

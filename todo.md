@@ -555,18 +555,18 @@
 
 ## Redesign Completo UX/UI — Design System Maduro
 
-- [ ] Tokens CSS globais: paleta, tipografia, espaçamento, bordas e sombras (index.css)
-- [ ] Tema escuro GitHub-inspired aplicado em todo o sistema
-- [ ] Sidebar redesenhada: 220px, grupos com labels, item ativo com borda esquerda, avatar no rodapé
-- [ ] Topbar 48px com breadcrumb e título da página
-- [ ] Dashboard reformulado: 4 cards de métricas, gráfico barras 6 meses, tabela OS recentes, alertas
-- [ ] Tabelas compactas: linhas 40-48px, header --bg-surface-2, hover sutil, ações visíveis no hover
-- [ ] Badges de status padronizados com variantes por cor e borda
-- [ ] Botões padronizados com 5 variantes (primário, destaque, secundário, perigo, ghost)
-- [ ] Formulários com agrupamento visual e grid responsivo
-- [ ] Modais com overlay blur, animação fade+scale, separadores
-- [ ] Empty states em todas as listagens com ícone, título e CTA
-- [ ] Skeleton loading substituindo spinners de tela cheia
+- [x] Tokens CSS globais: paleta, tipografia, espaçamento, bordas e sombras (index.css)
+- [x] Tema escuro GitHub-inspired aplicado em todo o sistema
+- [x] Sidebar redesenhada: 220px, grupos com labels, item ativo com borda esquerda, avatar no rodapé
+- [x] Topbar 48px com breadcrumb e título da página
+- [x] Dashboard reformulado: 4 cards de métricas, gráfico barras 6 meses, tabela OS recentes, alertas
+- [x] Tabelas compactas: linhas 40-48px, header --bg-surface-2, hover sutil, ações visíveis no hover
+- [x] Badges de status padronizados com variantes por cor e borda
+- [x] Botões padronizados com 5 variantes (primário, destaque, secundário, perigo, ghost)
+- [x] Formulários com agrupamento visual e grid responsivo
+- [x] Modais com overlay blur, animação fade+scale, separadores
+- [x] Empty states em todas as listagens com ícone, título e CTA
+- [x] Skeleton loading substituindo spinners de tela cheia
 
 ## Redesign Completo UX/UI — Design System Maduro
 
@@ -579,3 +579,9 @@
 - [x] Listagem Estoque: tabela compacta com indicador de estoque baixo, ações inline, skeleton loading, empty state
 - [x] Classes CSS globais: .data-table, .data-table-container, .status-badge (todos os status de OS), .skeleton, .empty-state
 - [x] 48 testes passando, 0 erros TypeScript
+
+## Bugs — Auditoria 2026-04-17
+
+- [x] BUG #1: Cliente não renderiza no detalhe da OS — corrigido: LEFT JOIN com tabela clientes no getOrdemServicoById
+- [x] BUG #2: Equipamento vazio no detalhe da OS — corrigido: LEFT JOIN com tabela equipamentos no getOrdemServicoById
+- [x] BUG #3: ViaCEP não auto-preenche endereço — corrigido: busca automática ao digitar 8 dígitos no campo CEP de Clientes e Fornecedores

@@ -156,7 +156,33 @@ function ClienteForm({
       <TabsContent value="endereco" className="space-y-3">
         <div>
           <Label>CEP</Label>
-          <Input value={values.cep} onChange={(e) => onChange({ ...values, cep: e.target.value })} placeholder="00000-000" />
+          <div className="relative">
+            <Input
+              value={values.cep}
+              onChange={async (e) => {
+                const raw = e.target.value.replace(/\D/g, "").slice(0, 8);
+                const masked = raw.length > 5 ? raw.slice(0, 5) + "-" + raw.slice(5) : raw;
+                const updated = { ...values, cep: masked };
+                onChange(updated);
+                if (raw.length === 8) {
+                  try {
+                    const res = await fetch(`https://viacep.com.br/ws/${raw}/json/`);
+                    const data = await res.json();
+                    if (!data.erro) {
+                      onChange({
+                        ...updated,
+                        logradouro: data.logradouro || updated.logradouro,
+                        bairro: data.bairro || updated.bairro,
+                        cidade: data.localidade || updated.cidade,
+                        estado: data.uf || updated.estado,
+                      });
+                    }
+                  } catch { /* silently ignore */ }
+                }
+              }}
+              placeholder="00000-000"
+            />
+          </div>
         </div>
         <div>
           <Label>Logradouro</Label>
