@@ -417,6 +417,7 @@ export const ordensServicoRouter = router({
         descricao: z.string().min(1),
         descricaoTecnica: z.string().optional(),
         pecaId: z.number().optional(),
+        supplierId: z.number().optional(),
         quantidade: z.number().min(1),
         valorUnitario: z.number().min(0),
         valorCusto: z.number().optional(),

@@ -55,6 +55,7 @@ const BLANK_FORM = {
   reason: "stock_replenishment" as const,
   priority: "medium" as const,
   pecaId: undefined as number | undefined,
+  supplierId: undefined as number | undefined,
   notes: "",
 };
 
@@ -137,12 +138,14 @@ function NovoItemForm({
   form,
   setForm,
   pecas,
+  fornecedores,
   onSubmit,
   isPending,
 }: {
   form: typeof BLANK_FORM;
   setForm: (f: typeof BLANK_FORM) => void;
   pecas: { id: number; nome: string; codigo: string }[];
+  fornecedores: { id: number; tradeName: string | null; corporateName: string }[];
   onSubmit: () => void;
   isPending: boolean;
 }) {
@@ -234,9 +237,25 @@ function NovoItemForm({
       )}
 
       <div>
+        <Label>Fornecedor <span className="text-xs text-muted-foreground">(opcional)</span></Label>
+        <Select
+          value={form.supplierId ? String(form.supplierId) : "none"}
+          onValueChange={(v) => setForm({ ...form, supplierId: v === "none" ? undefined : Number(v) })}
+        >
+          <SelectTrigger><SelectValue placeholder="Selecionar fornecedor..." /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">Nenhum</SelectItem>
+            {fornecedores.map((f) => (
+              <SelectItem key={f.id} value={String(f.id)}>{f.tradeName || f.corporateName}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
         <Label>Observações</Label>
         <Textarea
-          placeholder="Fornecedor preferido, link, especificações..."
+          placeholder="Link, especificações adicionais..."
           value={form.notes}
           onChange={(e) => setForm({ ...form, notes: e.target.value })}
           rows={2}
@@ -353,6 +372,7 @@ export default function ListaCompras() {
   });
 
   const { data: pecas = [] } = trpc.estoque.list.useQuery({});
+  const { data: fornecedores = [] } = trpc.suppliers.list.useQuery({ isActive: true });
 
   const create = trpc.listaCompras.create.useMutation({
     onSuccess: () => {
@@ -467,11 +487,13 @@ export default function ListaCompras() {
                 form={form}
                 setForm={setForm}
                 pecas={pecas}
+                fornecedores={fornecedores as any[]}
                 onSubmit={() =>
                   create.mutate({
                     ...form,
                     partNumber: form.partNumber || undefined,
                     notes: form.notes || undefined,
+                    supplierId: form.supplierId ?? null,
                   })
                 }
                 isPending={create.isPending}
@@ -522,6 +544,11 @@ export default function ListaCompras() {
                           )}
                         </div>
 
+                        {(item as any).supplierName && (
+                          <span className="text-xs font-medium text-orange-700 bg-orange-50 px-1.5 py-0.5 rounded">
+                            🏭 {(item as any).supplierName}
+                          </span>
+                        )}
                         {item.notes && (
                           <p className="text-xs text-muted-foreground mt-1 italic line-clamp-1">
                             {item.notes}

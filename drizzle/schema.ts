@@ -301,6 +301,7 @@ export const osItens = mysqlTable("osItens", {
   valorUnitario: decimal("valorUnitario", { precision: 10, scale: 2 }).notNull(),
   valorCusto: decimal("valorCusto", { precision: 10, scale: 2 }),
   valorTotal: decimal("valorTotal", { precision: 10, scale: 2 }).notNull(),
+  supplierId: int("supplierId"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
@@ -619,6 +620,7 @@ export const listaCompras = mysqlTable("listaCompras", {
   priority: mysqlEnum("priority", ["low", "medium", "high"]).default("medium").notNull(),
   status: mysqlEnum("status", ["pending", "ordered", "received"]).default("pending").notNull(),
   notes: text("notes"),
+  supplierId: int("supplierId"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

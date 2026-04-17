@@ -47,6 +47,7 @@ export const listaComprasRouter = router({
         priority: z.enum(PRIORITIES).default("medium"),
         pecaId: z.number().optional(),
         serviceOrderId: z.number().optional(),
+        supplierId: z.number().nullable().optional(),
         notes: z.string().optional(),
       })
     )
@@ -65,6 +66,7 @@ export const listaComprasRouter = router({
         priority: z.enum(PRIORITIES).optional(),
         pecaId: z.number().nullable().optional(),
         serviceOrderId: z.number().nullable().optional(),
+        supplierId: z.number().nullable().optional(),
         notes: z.string().nullable().optional(),
       })
     )

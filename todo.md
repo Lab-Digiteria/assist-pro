@@ -522,3 +522,14 @@
 - [x] Rota /fornecedores e /fornecedores/:id registradas no App.tsx
 - [x] Link "Fornecedores" no sidebar
 - [x] 48 testes passando (7 arquivos)
+
+## Vínculo de Fornecedor nas OS e Lista de Compras
+
+- [x] Schema: campo `supplierId` (FK → suppliers) na tabela `osItens`
+- [x] Schema: campo `supplierId` (FK → suppliers) na tabela `listaCompras`
+- [x] Migration gerada e aplicada
+- [x] Router OS: aceitar supplierId no addItem, retornar supplierName via left join
+- [x] Router Lista de Compras: aceitar supplierId no create/update, retornar supplierName via left join
+- [x] Frontend OS: selector de fornecedor no modal de adicionar peça/serviço
+- [x] Frontend Lista de Compras: selector de fornecedor no formulário de novo item
+- [x] Exibir nome do fornecedor na listagem de itens da OS e na Lista de Compras

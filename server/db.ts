@@ -17,6 +17,7 @@ import {
   osPhotos,
   osStatusHistory,
   listaCompras,
+  suppliers,
   pecaModeloCompativel,
   pecas,
   tenantMembers,
@@ -628,16 +629,34 @@ export async function updateOrdemServico(
 export async function getOsItens(tenantId: number, osId: number) {
   const db = await getDb();
   if (!db) return [];
-  return db
-    .select()
+  const rows = await db
+    .select({
+      id: osItens.id,
+      osId: osItens.osId,
+      tenantId: osItens.tenantId,
+      tipo: osItens.tipo,
+      descricao: osItens.descricao,
+      descricaoTecnica: osItens.descricaoTecnica,
+      pecaId: osItens.pecaId,
+      estoqueReservado: osItens.estoqueReservado,
+      quantidade: osItens.quantidade,
+      valorUnitario: osItens.valorUnitario,
+      valorCusto: osItens.valorCusto,
+      valorTotal: osItens.valorTotal,
+      supplierId: osItens.supplierId,
+      supplierName: sql<string | null>`${suppliers.tradeName}`,
+      createdAt: osItens.createdAt,
+    })
     .from(osItens)
+    .leftJoin(suppliers, eq(osItens.supplierId, suppliers.id))
     .where(and(eq(osItens.osId, osId), eq(osItens.tenantId, tenantId)));
+  return rows;
 }
 
 export async function addOsItem(
   tenantId: number,
   osId: number,
-  data: { tipo: "servico" | "peca"; descricao: string; pecaId?: number; quantidade: number; valorUnitario: number; estoqueReservado?: boolean }
+  data: { tipo: "servico" | "peca"; descricao: string; pecaId?: number; supplierId?: number; quantidade: number; valorUnitario: number; valorCusto?: number; estoqueReservado?: boolean }
 ) {
   const db = await getDb();
   if (!db) throw new Error("DB unavailable");
@@ -648,9 +667,11 @@ export async function addOsItem(
     tipo: data.tipo,
     descricao: data.descricao,
     pecaId: data.pecaId,
+    supplierId: data.supplierId,
     estoqueReservado: data.estoqueReservado ?? false,
     quantidade: data.quantidade,
     valorUnitario: String(data.valorUnitario),
+    valorCusto: data.valorCusto != null ? String(data.valorCusto) : undefined,
     valorTotal: String(valorTotal),
   });
   // Recalculate OS total
@@ -1286,19 +1307,31 @@ export async function getListaCompras(
 ) {
   const db = await getDb();
   if (!db) return [];
-  let q = db
-    .select()
-    .from(listaCompras)
-    .where(eq(listaCompras.tenantId, tenantId))
-    .$dynamic();
 
   const conditions = [eq(listaCompras.tenantId, tenantId)];
   if (filters?.status) conditions.push(eq(listaCompras.status, filters.status as any));
   if (filters?.priority) conditions.push(eq(listaCompras.priority, filters.priority as any));
 
   return db
-    .select()
+    .select({
+      id: listaCompras.id,
+      tenantId: listaCompras.tenantId,
+      pecaId: listaCompras.pecaId,
+      itemDescription: listaCompras.itemDescription,
+      partNumber: listaCompras.partNumber,
+      quantityNeeded: listaCompras.quantityNeeded,
+      reason: listaCompras.reason,
+      serviceOrderId: listaCompras.serviceOrderId,
+      priority: listaCompras.priority,
+      status: listaCompras.status,
+      notes: listaCompras.notes,
+      supplierId: listaCompras.supplierId,
+      supplierName: sql<string | null>`${suppliers.tradeName}`,
+      createdAt: listaCompras.createdAt,
+      updatedAt: listaCompras.updatedAt,
+    })
     .from(listaCompras)
+    .leftJoin(suppliers, eq(listaCompras.supplierId, suppliers.id))
     .where(and(...conditions))
     .orderBy(
       sql`FIELD(${listaCompras.priority}, 'high', 'medium', 'low')`,

@@ -280,7 +280,8 @@ ${os.laudoTecnico ? `<h2>Laudo Técnico</h2><p style="white-space:pre-wrap">${os
 function AddItemModal({ osId, open, onOpenChange }: { osId: number; open: boolean; onOpenChange: (v: boolean) => void }) {
   const utils = trpc.useUtils();
   const { data: pecasEstoque = [] } = trpc.estoque.list.useQuery(undefined, { enabled: open });
-  const [form, setForm] = useState({ tipo: "servico" as "servico"|"peca", descricao: "", descricaoTecnica: "", quantidade: 1, valorUnitario: 0, valorCusto: 0 });
+  const { data: fornecedores = [] } = trpc.suppliers.list.useQuery({ isActive: true }, { enabled: open });
+  const [form, setForm] = useState({ tipo: "servico" as "servico"|"peca", descricao: "", descricaoTecnica: "", quantidade: 1, valorUnitario: 0, valorCusto: 0, supplierId: undefined as number | undefined });
   const [pecaSearch, setPecaSearch] = useState("");
   const [selectedPeca, setSelectedPeca] = useState<null | { id: number; nome: string; precoCusto: number | null; quantidadeAtual: number; quantidadeReservada: number }>(null);
   const [showNoCadastro, setShowNoCadastro] = useState(false);
@@ -296,7 +297,7 @@ function AddItemModal({ osId, open, onOpenChange }: { osId: number; open: boolea
       onOpenChange(false);
       utils.os.itens.invalidate();
       utils.os.get.invalidate();
-      setForm({ tipo: "servico", descricao: "", descricaoTecnica: "", quantidade: 1, valorUnitario: 0, valorCusto: 0 });
+      setForm({ tipo: "servico", descricao: "", descricaoTecnica: "", quantidade: 1, valorUnitario: 0, valorCusto: 0, supplierId: undefined });
       setSelectedPeca(null);
       setPecaSearch("");
       setShowNoCadastro(false);
@@ -388,6 +389,18 @@ function AddItemModal({ osId, open, onOpenChange }: { osId: number; open: boolea
               <Input type="number" step="0.01" value={form.valorCusto} onChange={e => setForm({...form, valorCusto: parseFloat(e.target.value)})} />
             </div>
           )}
+          <div>
+            <Label>Fornecedor <span className="text-xs text-muted-foreground">(opcional)</span></Label>
+            <Select value={form.supplierId ? String(form.supplierId) : "none"} onValueChange={v => setForm({...form, supplierId: v === "none" ? undefined : Number(v)})}>
+              <SelectTrigger><SelectValue placeholder="Selecionar fornecedor..." /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Nenhum</SelectItem>
+                {(fornecedores as any[]).map((f: any) => (
+                  <SelectItem key={f.id} value={String(f.id)}>{f.tradeName || f.corporateName}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <Button className="w-full" style={{ background: "#1B4F8A" }} disabled={addItem.isPending || (!form.descricao && !pecaSearch)}
             onClick={() => addItem.mutate({
               osId,
@@ -395,6 +408,7 @@ function AddItemModal({ osId, open, onOpenChange }: { osId: number; open: boolea
               descricao: form.tipo === "peca" ? (selectedPeca?.nome ?? pecaSearch) : form.descricao,
               descricaoTecnica: form.descricaoTecnica || undefined,
               pecaId: selectedPeca?.id,
+              supplierId: form.supplierId,
               quantidade: form.quantidade,
               valorUnitario: form.valorUnitario,
               valorCusto: form.tipo === "peca" ? form.valorCusto : undefined,
@@ -693,6 +707,7 @@ export default function OrdemServicoDetalhe() {
                           <span className="text-muted-foreground text-xs">x{i.quantidade}</span>
                         </div>
                         {(i as any).descricaoTecnica && <p className="text-xs text-muted-foreground mt-0.5 ml-0.5">{(i as any).descricaoTecnica}</p>}
+                        {(i as any).supplierName && <p className="text-xs text-muted-foreground mt-0.5 ml-0.5">🏭 {(i as any).supplierName}</p>}
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <span className="font-semibold text-sm">R$ {parseFloat(String(i.valorTotal)).toFixed(2)}</span>
