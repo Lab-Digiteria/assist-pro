@@ -239,7 +239,7 @@ export const leadRouter = router({
       // 10. Enviar e-mail de boas-vindas ao tenant
       try {
         const { sendEmail, buildWelcomeEmail } = await import("../email");
-        const origin = (ctx.req.headers.origin as string) ?? "https://assistpro.com.br";
+        const origin = (ctx.req.headers.origin as string) ?? "https://assistpro.click";
         const { subject, html } = buildWelcomeEmail({
           name: input.name,
           companyName: input.companyName,

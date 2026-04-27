@@ -740,7 +740,7 @@ export default function Home() {
             </div>
             <div>
               <p className="text-xs font-mono font-semibold text-white/40 uppercase tracking-wider mb-3">Contato</p>
-              <a href="mailto:suporte@assistpro.com.br" className="text-sm text-white/30 hover:text-white/60 transition-colors font-mono">suporte@assistpro.com.br</a>
+              <a href="mailto:suporte@assistpro.click" className="text-sm text-white/30 hover:text-white/60 transition-colors font-mono">suporte@assistpro.click</a>
             </div>
           </div>
           <div className="border-t border-[#1B6FD8]/8 pt-6 text-center text-xs text-white/20 font-mono">

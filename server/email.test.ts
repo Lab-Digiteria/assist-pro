@@ -58,7 +58,7 @@ describe("Email helper", () => {
       name: "João",
       companyName: "TechFix",
       trialDays: 14,
-      loginUrl: "https://assistpro.com.br/login",
+      loginUrl: "https://assistpro.click/login",
     });
     expect(subject).toContain("João");
     expect(subject).toContain("14 dias");
@@ -76,7 +76,7 @@ describe("Email helper", () => {
       name: "Maria",
       companyName: "ElectroFix",
       daysLeft: 3,
-      upgradeUrl: "https://assistpro.com.br/configuracoes",
+      upgradeUrl: "https://assistpro.click/configuracoes",
     });
     expect(subject).toContain("3 dia");
     expect(html).toContain("ElectroFix");
@@ -94,7 +94,7 @@ describe("Email helper", () => {
       companyName: "MobileFix",
       planName: "Plano Mensal",
       amount: "R$99,00",
-      loginUrl: "https://assistpro.com.br/login",
+      loginUrl: "https://assistpro.click/login",
     });
     expect(subject).toContain("Plano Mensal");
     expect(html).toContain("R$99,00");

@@ -48,7 +48,7 @@ export async function runTrialAlertJob() {
       name: tenant.name,
       companyName: tenant.name,
       daysLeft,
-      upgradeUrl: "https://assistpro.com.br/planos",
+      upgradeUrl: "https://assistpro.click/planos",
     });
 
     const sent = await sendEmail({ to: tenant.email, subject, html });

@@ -167,7 +167,7 @@ export function registerStripeWebhook(app: Express) {
                     companyName: tenant.name,
                     planName: planLabel,
                     amount: `R$ ${amount.toFixed(2)}`,
-                    loginUrl: "https://assistpro.com.br/login",
+                    loginUrl: "https://assistpro.click/login",
                   });
                   await sendEmail({ to: tenant.email, subject, html });
                 }

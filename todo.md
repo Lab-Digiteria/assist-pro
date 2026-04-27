@@ -636,3 +636,14 @@
 - [x] Footer com logo modular flat
 - [x] 0 erros TypeScript confirmados
 - [x] 48 testes passando confirmados
+
+## Migração para Domínio Definitivo assistpro.click
+
+- [x] client/index.html: canonical, og:url, og:image atualizados para https://assistpro.click
+- [x] client/src/pages/Home.tsx: e-mail suporte@assistpro.click no footer
+- [x] server/_core/env.ts: resendFromEmail fallback para noreply@assistpro.click
+- [x] server/routers/lead.ts: fallback de origin para https://assistpro.click
+- [x] server/stripe-webhook.ts: loginUrl nos e-mails transacionais para https://assistpro.click/login
+- [x] server/jobs/trialAlertJob.ts: upgradeUrl para https://assistpro.click/planos
+- [x] server/email.test.ts: URLs de teste atualizadas para assistpro.click
+- [x] Stripe Dashboard: configurar webhook endpoint para https://assistpro.click/api/stripe/webhook (instrução manual)
