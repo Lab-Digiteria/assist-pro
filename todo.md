@@ -609,3 +609,30 @@
 - [x] Frontend: modal com opção Indefinido / Com data de expiração + campo de observação interna
 - [x] Frontend: exibir data de expiração ou "indefinido" abaixo do badge de status
 - [x] 48 testes passando, 0 erros TypeScript
+
+## Reestilização da Landing Page — Identidade Visual Logomarca 1
+
+- [ ] Gerar logomarca opção 1 com fundo transparente (PNG)
+- [ ] Atualizar paleta: azul profundo #0A1628, cinza aço #1E2D3D, azul elétrico #1B6FD8, branco #FFFFFF
+- [ ] Substituir tipografia por Space Grotesk (geométrica/técnica)
+- [ ] Redesenhar hero section com blocos geométricos e logomarca nova
+- [ ] Redesenhar seção de features com cards de blocos modulares
+- [ ] Redesenhar seção de pricing com estilo técnico/corporativo
+- [ ] Remover qualquer elemento que remeta a IA (gradientes suaves, ilustrações orgânicas)
+- [ ] Salvar checkpoint final
+
+## Redesign Landing Page — Nova Identidade Visual (Logo Modular Option 1)
+
+- [x] Substituir ícone Wrench no header pelo logo modular flat (CDN WebP)
+- [x] Atualizar paleta: #0A1628 navy, #1B6FD8 electric blue, #4A6080 steel gray, branco puro
+- [x] Remover todos os blobs (rounded-full blur-3xl) — substituir por elementos geométricos (grid SVG, linhas horizontais, cantos angulares)
+- [x] Substituir emojis nos módulos por ícones Lucide (Wrench, Package, DollarSign, Users, BarChart2, Building2)
+- [x] Substituir emojis no financeiro por ícones Lucide (Inbox, Send, TrendingUp, Landmark)
+- [x] Substituir ✓ text por CheckCircle2 Lucide nos bullets de features
+- [x] Labels dos formulários em font-mono uppercase tracking-wider (estilo técnico)
+- [x] Cards de módulos com gap-px bg-[#1B6FD8]/8 (grid de linhas finas entre cards)
+- [x] Cards de preços sem border-radius (rounded-none, estilo industrial)
+- [x] FAQ com ChevronDown/Up Lucide em vez de +/-
+- [x] Footer com logo modular flat
+- [x] 0 erros TypeScript confirmados
+- [x] 48 testes passando confirmados
