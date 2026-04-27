@@ -20,6 +20,7 @@ import { z } from "zod";
 import { checkRateLimit, recordFailedAttempt, clearAttempts } from "../_core/rateLimiter";
 import {
   leads,
+  passwordResetTokens,
   plans,
   subscriptions,
   tenantMembers,
@@ -373,5 +374,87 @@ export const leadRouter = router({
         tenantId: tenant?.id,
         tenantSlug: tenant?.slug,
       };
+    }),
+
+  /** Solicita redefinição de senha: gera token e envia e-mail */
+  requestPasswordReset: publicProcedure
+    .input(z.object({
+      email: z.string().email(),
+      origin: z.string().url(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB indisponível" });
+
+      // Buscar usuário pelo e-mail (sem revelar se existe ou não)
+      const [user] = await db.select().from(users).where(eq(users.email, input.email)).limit(1);
+      if (user) {
+        // Invalidar tokens anteriores (deletar os não usados)
+        await db.delete(passwordResetTokens).where(
+          and(eq(passwordResetTokens.userId, user.id))
+        );
+
+        // Gerar token seguro
+        const token = crypto.randomBytes(48).toString("hex");
+        const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+
+        await db.insert(passwordResetTokens).values({
+          userId: user.id,
+          token,
+          expiresAt,
+        });
+
+        // Enviar e-mail
+        try {
+          const { sendEmail, buildPasswordResetEmail } = await import("../email");
+          const resetUrl = `${input.origin}/redefinir-senha?token=${token}`;
+          const { subject, html } = buildPasswordResetEmail({
+            name: user.name ?? "usuário",
+            resetUrl,
+          });
+          await sendEmail({ to: user.email!, subject, html });
+        } catch {
+          // Não bloqueia — silencia erros de e-mail
+        }
+      }
+
+      // Sempre retornar sucesso para não revelar se o e-mail existe
+      return { success: true };
+    }),
+
+  /** Redefine a senha usando um token válido */
+  resetPassword: publicProcedure
+    .input(z.object({
+      token: z.string().min(1),
+      newPassword: z.string().min(6, "Mínimo 6 caracteres"),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB indisponível" });
+
+      const [row] = await db
+        .select()
+        .from(passwordResetTokens)
+        .where(eq(passwordResetTokens.token, input.token))
+        .limit(1);
+
+      if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Token inválido ou expirado" });
+      if (row.usedAt) throw new TRPCError({ code: "BAD_REQUEST", message: "Token já utilizado" });
+      if (row.expiresAt < new Date()) throw new TRPCError({ code: "BAD_REQUEST", message: "Token expirado" });
+
+      // Atualizar senha
+      const passwordHash = await bcrypt.hash(input.newPassword, 12);
+      await db
+        .update(userPasswords)
+        .set({ passwordHash })
+        .where(eq(userPasswords.userId, row.userId));
+
+      // Marcar token como usado
+      await db
+        .update(passwordResetTokens)
+        .set({ usedAt: new Date() })
+        .where(eq(passwordResetTokens.id, row.id));
+
+      return { success: true };
     }),
 });

@@ -658,3 +658,15 @@
 - [x] Botão de submit com gradiente e animação de loading
 - [x] Link para trial grátis no rodapé do form
 - [x] Responsivo: colapsa para single-column em mobile
+
+## Recuperação de Senha
+
+- [x] Tabela password_reset_tokens no schema (token, tenantId, expiresAt, usedAt)
+- [x] Procedure lead.requestPasswordReset: gera token, envia e-mail com link
+- [x] Procedure lead.resetPassword: valida token, atualiza senha, marca token como usado
+- [x] Template de e-mail buildPasswordResetEmail em email.ts
+- [x] Página ForgotPassword.tsx com formulário de e-mail (estilo premium)
+- [x] Página ResetPassword.tsx com formulário de nova senha (estilo premium)
+- [x] Link "Esqueci minha senha" no Login.tsx abaixo do formulário
+- [x] Rotas /esqueci-senha e /redefinir-senha registradas no App.tsx
+- [x] Testes para as duas procedures

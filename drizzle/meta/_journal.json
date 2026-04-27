@@ -141,6 +141,13 @@
       "when": 1776467840111,
       "tag": "0019_thick_mister_fear",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "5",
+      "when": 1777319002167,
+      "tag": "0020_big_gunslinger",
+      "breakpoints": true
     }
   ]
 }

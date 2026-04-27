@@ -415,3 +415,38 @@ export function buildOrcamentoEmail(opts: {
     `),
   };
 }
+
+/** E-mail de redefinição de senha */
+export function buildPasswordResetEmail(opts: {
+  name: string;
+  resetUrl: string;
+}): { subject: string; html: string } {
+  return {
+    subject: `Redefinição de senha — Assist-Pró`,
+    html: baseLayout(`
+      <h2 style="margin:0 0 8px;color:#0f172a;font-size:24px;font-weight:700;">
+        Redefinição de senha
+      </h2>
+      <p style="margin:0 0 20px;color:#475569;font-size:15px;line-height:1.6;">
+        Olá, <strong>${opts.name}</strong>! Recebemos uma solicitação para redefinir a senha da sua conta no Assist-Pró.
+      </p>
+      <p style="margin:0 0 8px;color:#475569;font-size:15px;line-height:1.6;">
+        Clique no botão abaixo para criar uma nova senha. Este link é válido por <strong>1 hora</strong>.
+      </p>
+
+      <a href="${opts.resetUrl}"
+         style="display:inline-block;background:#1B6FD8;color:#ffffff;text-decoration:none;
+                font-size:16px;font-weight:700;padding:16px 32px;border-radius:8px;
+                margin:20px 0 24px;">
+        Redefinir minha senha →
+      </a>
+
+      <p style="margin:0 0 8px;color:#94a3b8;font-size:13px;line-height:1.6;">
+        Se você não solicitou a redefinição de senha, ignore este e-mail. Sua senha permanece a mesma.
+      </p>
+      <p style="margin:0;color:#94a3b8;font-size:12px;">
+        Por segurança, nunca compartilhe este link com ninguém.
+      </p>
+    `),
+  };
+}

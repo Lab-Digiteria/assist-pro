@@ -16,6 +16,8 @@ import Relatorios from "./pages/Relatorios";
 import Configuracoes from "./pages/Configuracoes";
 import Onboarding from "./pages/Onboarding";
 import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Planos from "./pages/Planos";
 import AreaCliente from "./pages/AreaCliente";
 import RevendedorLogin from "./pages/RevendedorLogin";
@@ -68,6 +70,8 @@ function Router() {
       {/* ── Público ─────────────────────────────────────────── */}
       <Route path="/" component={Home} />
       <Route path="/login" component={Login} />
+      <Route path="/esqueci-senha" component={ForgotPassword} />
+      <Route path="/redefinir-senha" component={ResetPassword} />
       <Route path="/planos" component={Planos} />
 
       {/* ── Área do Cliente (público, sem auth) ──────────────── */}

@@ -290,6 +290,16 @@ export default function Login() {
             </button>
           </form>
 
+          {/* Esqueci minha senha */}
+          <div className="text-right -mt-1">
+            <Link
+              href="/esqueci-senha"
+              className="text-xs font-mono text-white/35 hover:text-[#1B6FD8] transition-colors"
+            >
+              Esqueci minha senha
+            </Link>
+          </div>
+
           {/* Divisor */}
           <div className="flex items-center gap-3">
             <div className="flex-1 h-px bg-[#1B6FD8]/10" />
