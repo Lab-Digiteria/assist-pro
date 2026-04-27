@@ -647,3 +647,14 @@
 - [x] server/jobs/trialAlertJob.ts: upgradeUrl para https://assistpro.click/planos
 - [x] server/email.test.ts: URLs de teste atualizadas para assistpro.click
 - [x] Stripe Dashboard: configurar webhook endpoint para https://assistpro.click/api/stripe/webhook (instrução manual)
+
+## Redesign Página de Login — Alto Padrão Gráfico
+
+- [x] Layout full-screen split: painel esquerdo decorativo + painel direito com formulário
+- [x] Logomarca central em destaque (CDN WebP) com tamanho generoso
+- [x] Fundo navy #0A1628 com grid SVG geométrico e linhas diagonais
+- [x] Painel esquerdo: tagline, bullets de benefícios, depoimento curto
+- [x] Formulário com campos estilizados (font-mono labels, bordas #1B6FD8/30)
+- [x] Botão de submit com gradiente e animação de loading
+- [x] Link para trial grátis no rodapé do form
+- [x] Responsivo: colapsa para single-column em mobile
