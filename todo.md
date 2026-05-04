@@ -670,3 +670,12 @@
 - [x] Link "Esqueci minha senha" no Login.tsx abaixo do formulário
 - [x] Rotas /esqueci-senha e /redefinir-senha registradas no App.tsx
 - [x] Testes para as duas procedures
+
+## Proteção de Notificações para Usuários com Acesso Gratuito
+
+- [x] trialAlertJob.ts: filtro eq(freeAccessEnabled, false) adicionado à query — tenants com acesso gratuito nunca recebem alerta de trial expirando
+- [x] subscriptions.mySubscription: retorna status "active" quando freeAccessEnabled=true — suprime TrialBanner e SubscriptionGuard
+- [x] subscriptions.checkEntitlement: verifica freeAccessEnabled antes de bloquear acesso — tenants com acesso gratuito sempre passam
+- [x] stripe-webhook.ts: e-mails de confirmação de pagamento só são enviados após checkout real — usuários com acesso gratuito não passam pelo Stripe, portanto não recebem esses e-mails
+- [x] TrialBanner: já condicionado a sub.status === "trialing" — com freeAccess retornando "active", o banner nunca aparece
+- [x] SubscriptionGuard: já condicionado a BLOCKED_STATUSES — com freeAccess retornando "active", o guard nunca bloqueia

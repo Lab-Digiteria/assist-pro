@@ -28,6 +28,7 @@ export async function runTrialAlertJob() {
     .where(
       and(
         eq(tenants.subscriptionStatus, "trial"),
+        eq(tenants.freeAccessEnabled, false), // Nunca alertar tenants com acesso gratuito
         gte(tenants.trialEndsAt, in3Days),
         lte(tenants.trialEndsAt, in4Days)
       )

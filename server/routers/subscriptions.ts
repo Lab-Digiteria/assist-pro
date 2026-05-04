@@ -14,6 +14,7 @@ import { getTenantFromCtx } from "../tenant-ctx";
 export const subscriptionsRouter = router({
   /**
    * mySubscription — Retorna status e dias restantes do trial para o tenant atual.
+   * Tenants com freeAccessEnabled=true sempre recebem status "active" — sem banners de trial.
    */
   mySubscription: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
@@ -21,6 +22,31 @@ export const subscriptionsRouter = router({
 
     const tenantId = getTenantFromCtx(ctx);
     if (!tenantId) return null;
+
+    const now = Date.now();
+
+    // Verificar acesso gratuito antes de qualquer outra lógica
+    const [tenant] = await db
+      .select({ freeAccessEnabled: tenants.freeAccessEnabled, freeAccessExpiresAt: tenants.freeAccessExpiresAt })
+      .from(tenants)
+      .where(eq(tenants.id, tenantId))
+      .limit(1);
+
+    if (tenant?.freeAccessEnabled) {
+      const freeExpired = tenant.freeAccessExpiresAt && tenant.freeAccessExpiresAt.getTime() < now;
+      if (!freeExpired) {
+        // Acesso gratuito ativo: retornar "active" para suprimir todos os banners e guards
+        return {
+          id: 0,
+          status: "active" as const,
+          trialDaysLeft: null,
+          trialEndsAt: null,
+          currentPeriodEndsAt: tenant.freeAccessExpiresAt?.toISOString() ?? null,
+          planName: "Acesso Gratuito",
+          planSlug: "free",
+        };
+      }
+    }
 
     const [sub] = await db
       .select()
@@ -30,7 +56,6 @@ export const subscriptionsRouter = router({
 
     if (!sub) return null;
 
-    const now = Date.now();
     let trialDaysLeft: number | null = null;
     if (sub.status === "trialing" && sub.trialEndsAt) {
       const diff = sub.trialEndsAt.getTime() - now;
@@ -68,6 +93,19 @@ export const subscriptionsRouter = router({
     if (!db) return { allowed: true };
     const tenantId = getTenantFromCtx(ctx);
     if (!tenantId) return { allowed: true };
+
+    // Acesso gratuito ativo: sempre permitido
+    const [tenant] = await db
+      .select({ freeAccessEnabled: tenants.freeAccessEnabled, freeAccessExpiresAt: tenants.freeAccessExpiresAt })
+      .from(tenants)
+      .where(eq(tenants.id, tenantId))
+      .limit(1);
+
+    if (tenant?.freeAccessEnabled) {
+      const freeExpired = tenant.freeAccessExpiresAt && tenant.freeAccessExpiresAt.getTime() < Date.now();
+      if (!freeExpired) return { allowed: true, status: "active" };
+    }
+
     const [sub] = await db
       .select({ status: subscriptions.status })
       .from(subscriptions)
