@@ -133,7 +133,7 @@ export default function AdminPanel() {
                         <Input
                           type="number"
                           min={1}
-                          max={90}
+                          max={365}
                           placeholder="dias"
                           className="h-7 w-16 text-xs"
                           value={extendDays[t.id] ?? ""}

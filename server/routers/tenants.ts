@@ -113,7 +113,7 @@ export const tenantsRouter = router({
 
   // Admin: extend trial
   adminExtendTrial: protectedProcedure
-    .input(z.object({ tenantId: z.number(), days: z.number().min(1).max(90) }))
+    .input(z.object({ tenantId: z.number(), days: z.number().min(1).max(365) }))
     .mutation(async ({ ctx, input }) => {
       if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
       const db = await getDb();

@@ -256,7 +256,7 @@ export default function AdminTenants() {
           <div className="py-4">
             <label className="text-sm mb-2 block" style={{ color: "#94a3b8" }}>Dias adicionais</label>
             <Input
-              type="number" min="1" max="90" value={extendDays}
+              type="number" min="1" max="365" value={extendDays}
               onChange={(e) => setExtendDays(e.target.value)}
               style={{ background: "#0f1117", borderColor: "#1e2535", color: "#e2e8f0" }}
             />
