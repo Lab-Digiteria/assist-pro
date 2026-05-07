@@ -260,15 +260,12 @@ export default function Home() {
       <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? "bg-[#0A1628]/90 backdrop-blur-md border-b border-[#1B6FD8]/10 shadow-lg shadow-black/30" : "bg-transparent"}`}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3">
+          <Link href="/" className="flex items-center">
             <img
               src="https://d2xsxph8kpxj0f.cloudfront.net/310419663028604039/8gQd8FyXUu5BkEGDFjJzNt/logo-assistpro-flat-G6UeJNmHvJtnXumdSpoDst.webp"
               alt="AssistPró"
               className="h-12 w-auto"
             />
-            <span className="font-bold text-xl tracking-tight text-white">
-              Assist<span className="text-[#1B6FD8]">Pró</span>
-            </span>
           </Link>
           <nav className="hidden md:flex items-center gap-7 text-sm text-white/55">
             <a href="#funcionalidades" className="hover:text-white transition-colors">Funcionalidades</a>
@@ -722,15 +719,12 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <div className="grid sm:grid-cols-3 gap-8 mb-8">
             <div>
-              <div className="flex items-center gap-3 mb-3">
+              <div className="flex items-center mb-3">
                 <img
                   src="https://d2xsxph8kpxj0f.cloudfront.net/310419663028604039/8gQd8FyXUu5BkEGDFjJzNt/logo-assistpro-flat-G6UeJNmHvJtnXumdSpoDst.webp"
                   alt="AssistPró"
                   className="h-10 w-auto"
                 />
-                <span className="font-bold text-lg tracking-tight text-white">
-                  Assist<span className="text-[#1B6FD8]">Pró</span>
-                </span>
               </div>
               <p className="text-xs text-white/30 leading-relaxed font-mono">Gestão inteligente para assistências técnicas</p>
             </div>
