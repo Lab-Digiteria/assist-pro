@@ -48,6 +48,7 @@ import {
 // Control Plane — /super-admin (completamente isolado da área do tenant)
 // Acesso exclusivo via URL direta. Nunca aparece na navegação do tenant.
 import { SuperAdminGuard } from "./components/SuperAdminGuard";
+import SuperAdminLogin from "./pages/admin/SuperAdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminTenants from "./pages/admin/AdminTenants";
 import AdminPlans from "./pages/admin/AdminPlans";
@@ -123,6 +124,8 @@ function Router() {
       {/* ── Control Plane (/super-admin) — ISOLADO da área do tenant ── */}
       {/* Acesso via URL direta apenas. Guard verifica isPlatformAdmin=true. */}
       {/* Tenants são redirecionados para /dashboard mesmo digitando a URL. */}
+      {/* Login dedicado ao super-admin — sem guard, usa OAuth Manus */}
+      <Route path="/super-admin/login" component={SuperAdminLogin} />
       <Route path="/super-admin">{() => <SuperAdminGuard><AdminDashboard /></SuperAdminGuard>}</Route>
       <Route path="/super-admin/tenants">{() => <SuperAdminGuard><AdminTenants /></SuperAdminGuard>}</Route>
       <Route path="/super-admin/plans">{() => <SuperAdminGuard><AdminPlans /></SuperAdminGuard>}</Route>

@@ -685,3 +685,9 @@
 - [x] Configuracoes.tsx: exibir badge "Lifetime de parceiros" quando freeAccessEnabled=true
 - [x] Configuracoes.tsx: ocultar grid de planos de upgrade quando freeAccessEnabled=true
 - [x] Planos.tsx: substituir botão de assinar por badge "Lifetime de parceiros ativo" quando planSlug === "free"
+
+## Acesso Dedicado ao Super-Admin
+
+- [x] Criar página /super-admin/login com botão OAuth Manus dedicado (sem fluxo de tenant)
+- [x] Ajustar SuperAdminGuard para redirecionar a /super-admin/login quando não autenticado
+- [x] Garantir que o callback OAuth retorne corretamente para /super-admin após login

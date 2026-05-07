@@ -29,8 +29,8 @@ export function SuperAdminGuard({ children }: SuperAdminGuardProps) {
   useEffect(() => {
     if (loading) return;
     if (!user) {
-      // Não autenticado — redireciona para login
-      navigate("/login");
+      // Não autenticado — redireciona para login dedicado do super-admin (OAuth Manus)
+      navigate("/super-admin/login");
       return;
     }
     if (!isPlatformAdmin) {
