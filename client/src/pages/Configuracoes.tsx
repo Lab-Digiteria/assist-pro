@@ -103,27 +103,37 @@ export default function Configuracoes() {
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-center gap-3">
-              <Badge className={
-                tenant.subscriptionStatus === "active" ? "bg-green-100 text-green-700" :
-                tenant.subscriptionStatus === "trial" ? "bg-blue-100 text-blue-700" :
-                "bg-red-100 text-red-700"
-              }>
-                {SUBSCRIPTION_STATUS_LABELS[tenant.subscriptionStatus ?? "trial"] ?? tenant.subscriptionStatus}
-              </Badge>
-              {tenant.subscriptionStatus === "trial" && (
+              {tenant.freeAccessEnabled ? (
+                // Tarja discreta para parceiros com acesso gratuito
+                <Badge className="bg-indigo-50 text-indigo-700 border border-indigo-200 font-normal tracking-wide text-xs">
+                  ✦ Lifetime de parceiros
+                </Badge>
+              ) : (
+                <Badge className={
+                  tenant.subscriptionStatus === "active" ? "bg-green-100 text-green-700" :
+                  tenant.subscriptionStatus === "trial" ? "bg-blue-100 text-blue-700" :
+                  "bg-red-100 text-red-700"
+                }>
+                  {SUBSCRIPTION_STATUS_LABELS[tenant.subscriptionStatus ?? "trial"] ?? tenant.subscriptionStatus}
+                </Badge>
+              )}
+              {!tenant.freeAccessEnabled && tenant.subscriptionStatus === "trial" && (
                 <span className="text-sm text-muted-foreground">{daysLeft} dias restantes no trial</span>
               )}
             </div>
-            <div className="grid grid-cols-3 gap-3 mt-3">
-              {Object.entries(PLANS).map(([key, plan]) => (
-                <div key={key} className="border rounded-lg p-3 text-center">
-                  <p className="font-semibold text-sm">{plan.name}</p>
-                  <p className="text-primary font-bold mt-1 text-sm">{plan.priceLabel}</p>
-                  {plan.trialDays > 0 && <p className="text-xs text-muted-foreground mt-1">{plan.trialDays} dias grátis</p>}
-                  <StripeCheckoutButton planKey={key as any} />
-                </div>
-              ))}
-            </div>
+            {/* Ocultar opções de upgrade para usuários com acesso gratuito */}
+            {!tenant.freeAccessEnabled && (
+              <div className="grid grid-cols-3 gap-3 mt-3">
+                {Object.entries(PLANS).map(([key, plan]) => (
+                  <div key={key} className="border rounded-lg p-3 text-center">
+                    <p className="font-semibold text-sm">{plan.name}</p>
+                    <p className="text-primary font-bold mt-1 text-sm">{plan.priceLabel}</p>
+                    {plan.trialDays > 0 && <p className="text-xs text-muted-foreground mt-1">{plan.trialDays} dias grátis</p>}
+                    <StripeCheckoutButton planKey={key as any} />
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 

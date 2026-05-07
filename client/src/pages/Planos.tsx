@@ -67,6 +67,8 @@ function formatPrice(priceMonthly: number, slug: string): { main: string; sub: s
 export default function Planos() {
   const { isAuthenticated } = useAuth();
   const { data: plansList = [], isLoading } = trpc.subscriptions.listPlans.useQuery();
+  const { data: sub } = trpc.subscriptions.mySubscription.useQuery(undefined, { enabled: isAuthenticated });
+  const isFreePartner = isAuthenticated && sub?.planSlug === "free";
   const checkout = trpc.billing.createCheckout.useMutation({
     onSuccess: (data) => {
       if (data.url) {
@@ -140,17 +142,23 @@ export default function Planos() {
                         </li>
                       ))}
                     </ul>
-                    <Button
-                      className={`w-full ${
-                        config.highlight
-                          ? "bg-[#C4733A] hover:bg-[#a85e2f] text-white"
-                          : "bg-[#1B4F8A] hover:bg-[#163f6e] text-white"
-                      }`}
-                      disabled={checkout.isPending}
-                      onClick={() => handleSubscribe(plan.slug)}
-                    >
-                      {checkout.isPending ? "Aguarde..." : `Começar com ${plan.name}`}
-                    </Button>
+                    {isFreePartner ? (
+                      <div className="w-full text-center py-2 text-xs text-indigo-600 font-medium border border-indigo-100 rounded-md bg-indigo-50">
+                        ✦ Lifetime de parceiros ativo
+                      </div>
+                    ) : (
+                      <Button
+                        className={`w-full ${
+                          config.highlight
+                            ? "bg-[#C4733A] hover:bg-[#a85e2f] text-white"
+                            : "bg-[#1B4F8A] hover:bg-[#163f6e] text-white"
+                        }`}
+                        disabled={checkout.isPending}
+                        onClick={() => handleSubscribe(plan.slug)}
+                      >
+                        {checkout.isPending ? "Aguarde..." : `Começar com ${plan.name}`}
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               );

@@ -679,3 +679,9 @@
 - [x] stripe-webhook.ts: e-mails de confirmação de pagamento só são enviados após checkout real — usuários com acesso gratuito não passam pelo Stripe, portanto não recebem esses e-mails
 - [x] TrialBanner: já condicionado a sub.status === "trialing" — com freeAccess retornando "active", o banner nunca aparece
 - [x] SubscriptionGuard: já condicionado a BLOCKED_STATUSES — com freeAccess retornando "active", o guard nunca bloqueia
+
+## Tarja "Lifetime de Parceiros" para Acesso Gratuito
+
+- [x] Configuracoes.tsx: exibir badge "Lifetime de parceiros" quando freeAccessEnabled=true
+- [x] Configuracoes.tsx: ocultar grid de planos de upgrade quando freeAccessEnabled=true
+- [x] Planos.tsx: substituir botão de assinar por badge "Lifetime de parceiros ativo" quando planSlug === "free"
