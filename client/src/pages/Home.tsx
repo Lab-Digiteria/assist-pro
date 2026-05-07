@@ -259,21 +259,23 @@ export default function Home() {
       {/* ══ [1] HEADER ══════════════════════════════════════════════════════ */}
       <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? "bg-[#0A1628]/90 backdrop-blur-md border-b border-[#1B6FD8]/10 shadow-lg shadow-black/30" : "bg-transparent"}`}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          {/* Logo */}
-          <Link href="/" className="flex items-center">
-            <img
-              src="https://d2xsxph8kpxj0f.cloudfront.net/310419663028604039/8gQd8FyXUu5BkEGDFjJzNt/logo-assistpro-flat-G6UeJNmHvJtnXumdSpoDst.webp"
-              alt="AssistPró"
-              className="h-12 w-auto"
-            />
-          </Link>
+          {/* Logo — min-w igual ao bloco CTA para simetria perfeita */}
+          <div className="flex-1 flex items-center">
+            <Link href="/" className="flex items-center">
+              <img
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310419663028604039/8gQd8FyXUu5BkEGDFjJzNt/logo-assistpro-flat-G6UeJNmHvJtnXumdSpoDst.webp"
+                alt="AssistPró"
+                className="h-9 w-auto"
+              />
+            </Link>
+          </div>
           <nav className="hidden md:flex items-center gap-7 text-sm text-white/55">
             <a href="#funcionalidades" className="hover:text-white transition-colors">Funcionalidades</a>
             <a href="#precos" className="hover:text-white transition-colors">Preços</a>
             <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
             <a href="#revendedores" className="hover:text-white transition-colors">Revendedores</a>
           </nav>
-          <div className="hidden md:flex items-center gap-3">
+          <div className="flex-1 hidden md:flex items-center justify-end gap-3">
             {isAuthenticated ? (
               <button onClick={() => navigate("/dashboard")} className="text-sm font-semibold bg-[#1B6FD8] hover:bg-[#1558b0] text-white px-4 py-2 transition-colors">
                 Acessar Sistema
