@@ -116,25 +116,26 @@ export const SUBSCRIPTION_STATUS_LABELS: Record<string, string> = {
 };
 
 // ─── Plan Config ─────────────────────────────────────────────────────────────
+// IMPORTANT: keys must match the planSlug enum in server/routers/billing.ts
 export const PLANS = {
-  monthly: {
+  mensal: {
     name: "Mensal",
     price: 9900, // centavos
-    priceLabel: "R$ 99,00/mês",
+    priceLabel: "R$ 99/mês",
     interval: "month" as const,
     trialDays: 14,
   },
-  annual: {
+  anual: {
     name: "Anual",
     price: 79900,
-    priceLabel: "R$ 799,00/ano",
+    priceLabel: "R$ 799/ano",
     interval: "year" as const,
     trialDays: 14,
   },
-  lifetime: {
+  vitalicio: {
     name: "Vitalício",
     price: 149900,
-    priceLabel: "R$ 1.499,00",
+    priceLabel: "R$ 1.499 único",
     interval: null,
     trialDays: 0,
   },

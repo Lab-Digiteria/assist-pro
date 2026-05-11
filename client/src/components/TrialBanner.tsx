@@ -3,24 +3,15 @@
  * Exibe dias restantes e botão de upgrade quando o tenant está em trial.
  */
 import { trpc } from "@/lib/trpc";
-import { Button } from "@/components/ui/button";
-import { Clock, X } from "lucide-react";
+import { Clock, X, ArrowRight } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
+import { useLocation } from "wouter";
 
 export function TrialBanner() {
   const [dismissed, setDismissed] = useState(false);
+  const [, navigate] = useLocation();
   const { data: sub } = trpc.subscriptions.mySubscription.useQuery(undefined, {
     staleTime: 60_000,
-  });
-  const checkout = trpc.billing.createCheckout.useMutation({
-    onSuccess: (data) => {
-      if (data.url) {
-        toast.info("Redirecionando para o checkout...");
-        window.open(data.url, "_blank");
-      }
-    },
-    onError: (e) => toast.error(e.message),
   });
 
   if (dismissed || !sub || sub.status !== "trialing") return null;
@@ -36,31 +27,21 @@ export function TrialBanner() {
           : "bg-[#1B4F8A] text-white"
       }`}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-1 min-w-0">
         <Clock className="w-4 h-4 flex-shrink-0" />
-        <span>
+        <span className="truncate">
           {days === 0
             ? "Seu trial encerra hoje!"
-            : `Você está no período de teste — ${days} dia${days !== 1 ? "s" : ""} restante${days !== 1 ? "s" : ""}.`}
-          {" "}
-          <button
-            className="underline font-semibold hover:no-underline"
-            onClick={() => checkout.mutate({ planSlug: "mensal", origin: window.location.origin })}
-          >
-            Assinar agora
-          </button>
+            : `Período de teste — ${days} dia${days !== 1 ? "s" : ""} restante${days !== 1 ? "s" : ""}.`}
         </span>
       </div>
-      <div className="flex items-center gap-3">
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-6 text-xs bg-white text-[#1B4F8A] border-white hover:bg-gray-100 hover:text-[#1B4F8A]"
-          disabled={checkout.isPending}
-          onClick={() => checkout.mutate({ planSlug: "mensal", origin: window.location.origin })}
+      <div className="flex items-center gap-3 flex-shrink-0 ml-3">
+        <button
+          className="flex items-center gap-1 font-semibold underline hover:no-underline text-sm whitespace-nowrap"
+          onClick={() => navigate("/planos")}
         >
-          Assinar
-        </Button>
+          Ver planos <ArrowRight className="w-3 h-3" />
+        </button>
         <button
           onClick={() => setDismissed(true)}
           className="opacity-70 hover:opacity-100 transition-opacity"
