@@ -20,6 +20,7 @@ import {
   getTenantByMember,
   getTenantByOwner,
   removeOsItem,
+  updateOsItem,
   updateCliente,
   updateOrdemServico,
   updateOrdemServicoStatus,
@@ -455,6 +456,24 @@ export const ordensServicoRouter = router({
         }
       }
       await removeOsItem(tenantId, input.itemId);
+      return { success: true };
+    }),
+
+  updateItem: protectedProcedure
+    .input(
+      z.object({
+        itemId: z.number(),
+        descricao: z.string().min(1).optional(),
+        descricaoTecnica: z.string().optional(),
+        quantidade: z.number().min(1).optional(),
+        valorUnitario: z.number().min(0).optional(),
+        valorCusto: z.number().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const tenantId = await resolveTenantId(ctx.user.id);
+      const { itemId, ...data } = input;
+      await updateOsItem(tenantId, itemId, data);
       return { success: true };
     }),
 

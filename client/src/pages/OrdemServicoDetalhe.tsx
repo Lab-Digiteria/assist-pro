@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ArrowLeft, Plus, DollarSign, History, Package, Camera, PenLine,
   Shield, Link2, Copy, ClipboardList, AlertTriangle, Eye, Trash2,
-  Mail, Printer, ChevronDown, User, Smartphone, Lock, Wrench,
+  Mail, Printer, ChevronDown, User, Smartphone, Lock, Wrench, Pencil,
 } from "lucide-react";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Link, useParams } from "wouter";
@@ -573,6 +573,16 @@ export default function OrdemServicoDetalhe() {
   const addLanc = trpc.os.addLancamento.useMutation({ onSuccess: () => { toast.success("Pagamento registrado!"); setOpenLanc(false); utils.os.lancamentos.invalidate(); utils.os.get.invalidate(); }, onError: e => toast.error(e.message) });
   const updateStatus = trpc.os.updateStatus.useMutation({ onSuccess: () => { toast.success("Status atualizado!"); setOpenStatus(false); utils.os.get.invalidate(); utils.os.history.invalidate(); }, onError: e => toast.error(e.message) });
   const removeItem = trpc.os.removeItem.useMutation({ onSuccess: () => { utils.os.itens.invalidate(); utils.os.get.invalidate(); } });
+  const [editItemId, setEditItemId] = useState<number | null>(null);
+  const [editItemForm, setEditItemForm] = useState({ descricao: "", quantidade: 1, valorUnitario: 0 });
+  const updateItem = trpc.os.updateItem.useMutation({
+    onSuccess: () => { toast.success("Item atualizado!"); setEditItemId(null); utils.os.itens.invalidate(); utils.os.get.invalidate(); },
+    onError: e => toast.error(e.message),
+  });
+  const startEditItem = (i: typeof itens[0]) => {
+    setEditItemId(i.id);
+    setEditItemForm({ descricao: i.descricao, quantidade: parseFloat(String(i.quantidade)), valorUnitario: parseFloat(String(i.valorUnitario)) });
+  };
   const deletePhoto = trpc.os.deletePhoto.useMutation({ onSuccess: () => { refetchPhotos(); toast.success("Foto removida"); } });
   const saveSignature = trpc.os.saveSignature.useMutation({ onSuccess: () => { toast.success("Assinatura salva!"); setOpenSignature(false); utils.os.get.invalidate(); }, onError: e => toast.error(e.message) });
   const updateOS = trpc.os.update.useMutation({ onSuccess: () => { toast.success("OS atualizada!"); setEditLaudo(false); utils.os.get.invalidate(); utils.os.fieldAudit.invalidate(); }, onError: e => toast.error(e.message) });
@@ -831,24 +841,52 @@ export default function OrdemServicoDetalhe() {
               ) : (
                 <div className="space-y-0">
                   {itens.map(i => (
-                    <div key={i.id} className="flex items-start justify-between py-2 border-b last:border-0 text-sm gap-2">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${i.tipo === "peca" ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700"}`}>
-                            {i.tipo === "peca" ? "Peça" : "Serviço"}
-                          </span>
-                          <span className="font-medium truncate">{i.descricao}</span>
-                          <span className="text-muted-foreground text-xs">x{i.quantidade}</span>
+                    <div key={i.id} className="border-b last:border-0">
+                      {editItemId === i.id ? (
+                        <div className="py-2 space-y-2">
+                          <div>
+                            <label className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Descrição</label>
+                            <Input className="h-7 text-sm mt-0.5" value={editItemForm.descricao} onChange={e => setEditItemForm(f => ({ ...f, descricao: e.target.value }))} />
+                          </div>
+                          <div className="flex gap-2 items-end">
+                            <div className="w-20">
+                              <label className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Qtd</label>
+                              <Input className="h-7 text-sm mt-0.5" type="number" min={1} step={1} value={editItemForm.quantidade} onChange={e => setEditItemForm(f => ({ ...f, quantidade: parseFloat(e.target.value) || 1 }))} />
+                            </div>
+                            <div className="flex-1">
+                              <label className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Valor Unit. (R$)</label>
+                              <Input className="h-7 text-sm mt-0.5" type="number" min={0} step={0.01} value={editItemForm.valorUnitario} onChange={e => setEditItemForm(f => ({ ...f, valorUnitario: parseFloat(e.target.value) || 0 }))} />
+                            </div>
+                            <Button size="sm" className="h-7 px-3" onClick={() => updateItem.mutate({ itemId: i.id, ...editItemForm })} disabled={updateItem.isPending}>
+                              {updateItem.isPending ? "..." : "Salvar"}
+                            </Button>
+                            <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => setEditItemId(null)}>Cancelar</Button>
+                          </div>
                         </div>
-                        {(i as any).descricaoTecnica && <p className="text-xs text-muted-foreground mt-0.5 ml-0.5">{(i as any).descricaoTecnica}</p>}
-                        {(i as any).supplierName && <p className="text-xs text-muted-foreground mt-0.5 ml-0.5">🏭 {(i as any).supplierName}</p>}
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className="font-semibold text-sm">R$ {parseFloat(String(i.valorTotal)).toFixed(2)}</span>
-                        <button onClick={() => removeItem.mutate({ itemId: i.id })} className="text-destructive hover:text-destructive/80">
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
+                      ) : (
+                        <div className="flex items-start justify-between py-2 text-sm gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${i.tipo === "peca" ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700"}`}>
+                                {i.tipo === "peca" ? "Peça" : "Serviço"}
+                              </span>
+                              <span className="font-medium truncate">{i.descricao}</span>
+                              <span className="text-muted-foreground text-xs">x{i.quantidade}</span>
+                            </div>
+                            {(i as any).descricaoTecnica && <p className="text-xs text-muted-foreground mt-0.5 ml-0.5">{(i as any).descricaoTecnica}</p>}
+                            {(i as any).supplierName && <p className="text-xs text-muted-foreground mt-0.5 ml-0.5">🏢 {(i as any).supplierName}</p>}
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <span className="font-semibold text-sm">R$ {parseFloat(String(i.valorTotal)).toFixed(2)}</span>
+                            <button onClick={() => startEditItem(i)} className="text-muted-foreground hover:text-foreground" title="Editar item">
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            <button onClick={() => removeItem.mutate({ itemId: i.id })} className="text-destructive hover:text-destructive/80" title="Remover item">
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                   <div className="pt-2 space-y-1 text-sm">

@@ -745,6 +745,28 @@ export async function removeOsItem(tenantId: number, itemId: number) {
   await recalcOsTotal(tenantId, item[0].osId);
 }
 
+export async function updateOsItem(
+  tenantId: number,
+  itemId: number,
+  data: { descricao?: string; descricaoTecnica?: string; quantidade?: number; valorUnitario?: number; valorCusto?: number }
+) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  const [item] = await db.select().from(osItens).where(and(eq(osItens.id, itemId), eq(osItens.tenantId, tenantId))).limit(1);
+  if (!item) throw new Error("Item n\u00e3o encontrado");
+  const novaQtd = data.quantidade ?? parseFloat(String(item.quantidade));
+  const novoValorUnit = data.valorUnitario ?? parseFloat(String(item.valorUnitario));
+  const novoTotal = novaQtd * novoValorUnit;
+  const updates: Record<string, unknown> = { valorTotal: String(novoTotal) };
+  if (data.descricao !== undefined) updates.descricao = data.descricao;
+  if (data.descricaoTecnica !== undefined) updates.descricaoTecnica = data.descricaoTecnica;
+  if (data.quantidade !== undefined) updates.quantidade = data.quantidade;
+  if (data.valorUnitario !== undefined) updates.valorUnitario = String(data.valorUnitario);
+  if (data.valorCusto !== undefined) updates.valorCusto = String(data.valorCusto);
+  await db.update(osItens).set(updates as any).where(and(eq(osItens.id, itemId), eq(osItens.tenantId, tenantId)));
+  await recalcOsTotal(tenantId, item.osId);
+}
+
 async function recalcOsTotal(tenantId: number, osId: number) {
   const db = await getDb();
   if (!db) return;
