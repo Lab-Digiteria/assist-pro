@@ -14,10 +14,15 @@ import { getSessionCookieOptions } from "../_core/cookies";
 import { IMPERSONATE_COOKIE_NAME } from "../../shared/const";
 import { protectedProcedure, router } from "../_core/trpc";
 
-// Middleware admin-only
+// Middleware admin-only: replica as mesmas condições de isPlatformAdmin no auth.me
+// role=admin AND tenantId=null (sem tenant ativo) AND não está em impersonation
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
-  if (ctx.user.role !== "admin") {
-    throw new TRPCError({ code: "FORBIDDEN", message: "Acesso restrito ao administrador." });
+  const isPlatformAdmin =
+    ctx.user.role === "admin" &&
+    ctx.tenantId === null &&
+    !ctx.isImpersonating;
+  if (!isPlatformAdmin) {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Acesso restrito ao administrador da plataforma." });
   }
   return next({ ctx });
 });

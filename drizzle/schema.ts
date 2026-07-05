@@ -225,7 +225,7 @@ export const ordensServico = mysqlTable("ordensServico", {
   // Checklist JSON
   checklistEstadoFisico: json("checklistEstadoFisico"),
   checklistSintomas: json("checklistSintomas"),
-  senhaDesbloqueio: varchar("senhaDesbloqueio", { length: 100 }),
+  senhaDesbloqueio: varchar("senhaDesbloqueio", { length: 255 }),
   acessoriosEntregues: json("acessoriosEntregues"),
   // Observações
   descricaoProblema: text("descricaoProblema"),

@@ -691,3 +691,15 @@
 - [x] Criar página /super-admin/login com botão OAuth Manus dedicado (sem fluxo de tenant)
 - [x] Ajustar SuperAdminGuard para redirecionar a /super-admin/login quando não autenticado
 - [x] Garantir que o callback OAuth retorne corretamente para /super-admin após login
+
+## Correções Críticas (auditoria)
+
+- [ ] #1 CRÍTICO: Substituir bcrypt por AES-256-GCM na senhaDesbloqueio da OS
+- [ ] #1: Migração de OSs com hash bcrypt antigo (exibir "senha não disponível — recadastre")
+- [ ] #1: Garantir que senhaDesbloqueio não é exposta no endpoint público do cliente
+- [ ] #2 ALTO: UPDATE atômico condicional no banco para reserva/débito de estoque
+- [ ] #2: Transação Drizzle cobrindo estoque + updateOrdemServicoStatus
+- [ ] #2: Guarda de idempotência no handler de mudança de status para em_reparo
+- [ ] #2: Teste de concorrência de estoque (duas reservas simultâneas)
+- [ ] #3 MÉDIO: adminProcedure verificar tenantId === null e !isImpersonating
+- [ ] #3: Teste de bloqueio de admin com tenantId preenchido ou isImpersonating=true

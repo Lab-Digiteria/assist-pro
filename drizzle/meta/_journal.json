@@ -148,6 +148,13 @@
       "when": 1777319002167,
       "tag": "0020_big_gunslinger",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "5",
+      "when": 1783278869332,
+      "tag": "0021_flowery_norman_osborn",
+      "breakpoints": true
     }
   ]
 }

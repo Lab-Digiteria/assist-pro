@@ -101,19 +101,19 @@ describe("FORMA_PAGAMENTO_LABELS", () => {
 
 // ─── Plans Config ─────────────────────────────────────────────────────────────
 describe("PLANS", () => {
-  it("monthly plan has correct price and trial", () => {
-    expect(PLANS.monthly.price).toBe(9900);
-    expect(PLANS.monthly.trialDays).toBe(14);
-    expect(PLANS.monthly.interval).toBe("month");
+  it("plano mensal tem preço e trial corretos", () => {
+    expect(PLANS.mensal.price).toBe(9900);
+    expect(PLANS.mensal.trialDays).toBe(14);
+    expect(PLANS.mensal.interval).toBe("month");
   });
-  it("annual plan has correct price and trial", () => {
-    expect(PLANS.annual.price).toBe(79900);
-    expect(PLANS.annual.trialDays).toBe(14);
-    expect(PLANS.annual.interval).toBe("year");
+  it("plano anual tem preço e trial corretos", () => {
+    expect(PLANS.anual.price).toBe(79900);
+    expect(PLANS.anual.trialDays).toBe(14);
+    expect(PLANS.anual.interval).toBe("year");
   });
-  it("lifetime plan has correct price and no trial", () => {
-    expect(PLANS.lifetime.price).toBe(149900);
-    expect(PLANS.lifetime.trialDays).toBe(0);
-    expect(PLANS.lifetime.interval).toBeNull();
+  it("plano vitalicio tem preço correto e sem trial", () => {
+    expect(PLANS.vitalicio.price).toBe(149900);
+    expect(PLANS.vitalicio.trialDays).toBe(0);
+    expect(PLANS.vitalicio.interval).toBeNull();
   });
 });

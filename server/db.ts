@@ -26,6 +26,7 @@ import {
   type EQUIPMENT_CATEGORIES,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
+import { encryptField, decryptField } from "./_core/crypto";
 import { generateOsNumber, generatePartCode, generateSlug } from "../shared/utils";
 import { buildOsProntaEmail, buildOrcamentoEmail, sendEmail } from "./email";
 
@@ -493,9 +494,12 @@ export async function getOrdemServicoById(tenantId: number, id: number) {
     .leftJoin(equipamentos, eq(ordensServico.equipamentoId, equipamentos.id))
     .where(and(eq(ordensServico.id, id), eq(ordensServico.tenantId, tenantId)))
     .limit(1);
-  return result[0] ?? null;
+    if (!result[0]) return null;
+  const raw = result[0];
+  // Decrypt senhaDesbloqueio: AES-256-GCM (reversível). Legacy bcrypt hash → null (irrecuperável).
+  const senhaDesbloqueio = raw.senhaDesbloqueio ? decryptField(raw.senhaDesbloqueio) : null;
+  return { ...raw, senhaDesbloqueio };
 }
-
 export async function createOrdemServico(
   tenantId: number,
   data: Omit<typeof ordensServico.$inferInsert, "id" | "tenantId" | "numero" | "createdAt" | "updatedAt">
@@ -954,25 +958,44 @@ export async function movimentarEstoque(
   const db = await getDb();
   if (!db) throw new Error("DB unavailable");
 
-  const peca = await db
-    .select()
-    .from(pecas)
-    .where(and(eq(pecas.id, pecaId), eq(pecas.tenantId, tenantId)))
-    .limit(1);
-  if (!peca[0]) throw new Error("Peça não encontrada");
+  // Atomic UPDATE condicional: incrementa/decrementa sem SELECT prévio
+  // Para saida: só atualiza se quantidadeAtual >= quantidade (evita estoque negativo)
+  let updateResult;
+  if (tipo === "entrada" || tipo === "devolucao") {
+    updateResult = await db
+      .update(pecas)
+      .set({ quantidadeAtual: sql`${pecas.quantidadeAtual} + ${quantidade}` })
+      .where(and(eq(pecas.id, pecaId), eq(pecas.tenantId, tenantId)));
+  } else if (tipo === "saida") {
+    updateResult = await db
+      .update(pecas)
+      .set({ quantidadeAtual: sql`${pecas.quantidadeAtual} - ${quantidade}` })
+      .where(and(
+        eq(pecas.id, pecaId),
+        eq(pecas.tenantId, tenantId),
+        gte(pecas.quantidadeAtual, quantidade)
+      ));
+  } else {
+    // ajuste: SET direto
+    updateResult = await db
+      .update(pecas)
+      .set({ quantidadeAtual: quantidade })
+      .where(and(eq(pecas.id, pecaId), eq(pecas.tenantId, tenantId)));
+  }
 
-  const anterior = peca[0].quantidadeAtual;
-  let nova = anterior;
-  if (tipo === "entrada" || tipo === "devolucao") nova += quantidade;
-  else if (tipo === "saida") nova -= quantidade;
-  else nova = quantidade; // ajuste
+  // Verifica se alguma linha foi afetada (0 rows = peça não encontrada ou estoque insuficiente)
+  const affected = (updateResult as any)?.[0]?.affectedRows ?? (updateResult as any)?.rowsAffected ?? 1;
+  if (affected === 0) {
+    if (tipo === "saida") throw new Error("Estoque insuficiente");
+    throw new Error("Peça não encontrada");
+  }
 
-  if (nova < 0) throw new Error("Estoque insuficiente");
-
-  await db
-    .update(pecas)
-    .set({ quantidadeAtual: nova })
-    .where(eq(pecas.id, pecaId));
+  // Leitura pós-update para registrar os valores no histórico
+  const [peca] = await db.select().from(pecas).where(eq(pecas.id, pecaId)).limit(1);
+  const nova = peca?.quantidadeAtual ?? 0;
+  const anterior = tipo === "entrada" || tipo === "devolucao" ? nova - quantidade
+    : tipo === "saida" ? nova + quantidade
+    : nova; // ajuste: anterior desconhecido, usa nova como fallback
 
   await db.insert(estoqueMovimentacoes).values({
     tenantId,
@@ -1538,10 +1561,23 @@ export async function reservarEstoquePeca(
   if (!db) throw new Error("DB unavailable");
   const [peca] = await db.select().from(pecas).where(and(eq(pecas.id, pecaId), eq(pecas.tenantId, tenantId))).limit(1);
   if (!peca) throw new Error("Peça não encontrada");
-  const disponivel = peca.quantidadeAtual - peca.quantidadeReservada;
-  if (disponivel < quantidade) throw new Error(`Estoque insuficiente. Disponível: ${disponivel}, solicitado: ${quantidade}`);
-  await db.update(pecas).set({ quantidadeReservada: peca.quantidadeReservada + quantidade }).where(eq(pecas.id, pecaId));
-  await db.insert(estoqueMovimentacoes).values({ tenantId, pecaId, tipo: "ajuste", quantidade, quantidadeAnterior: peca.quantidadeAtual, quantidadeNova: peca.quantidadeAtual, osId, observacao: `Reservado para OS ${osNumero}`, userId });
+  // Atomic UPDATE condicional: reserva só se (quantidadeAtual - quantidadeReservada) >= quantidade
+  const reservaResult = await db
+    .update(pecas)
+    .set({ quantidadeReservada: sql`${pecas.quantidadeReservada} + ${quantidade}` })
+    .where(and(
+      eq(pecas.id, pecaId),
+      eq(pecas.tenantId, tenantId),
+      sql`(${pecas.quantidadeAtual} - ${pecas.quantidadeReservada}) >= ${quantidade}`
+    ));
+  const affected = (reservaResult as any)?.[0]?.affectedRows ?? (reservaResult as any)?.rowsAffected ?? 1;
+  if (affected === 0) {
+    const [p] = await db.select().from(pecas).where(eq(pecas.id, pecaId)).limit(1);
+    const disponivel = p ? p.quantidadeAtual - p.quantidadeReservada : 0;
+    throw new Error(`Estoque insuficiente. Disponível: ${disponivel}, solicitado: ${quantidade}`);
+  }
+  const [pecaAtual] = await db.select().from(pecas).where(eq(pecas.id, pecaId)).limit(1);
+  await db.insert(estoqueMovimentacoes).values({ tenantId, pecaId, tipo: "ajuste", quantidade, quantidadeAnterior: pecaAtual?.quantidadeAtual ?? 0, quantidadeNova: pecaAtual?.quantidadeAtual ?? 0, osId, observacao: `Reservado para OS ${osNumero}`, userId });
 }
 
 export async function liberarReservaEstoque(
@@ -1552,9 +1588,13 @@ export async function liberarReservaEstoque(
   if (!db) return;
   const [peca] = await db.select().from(pecas).where(and(eq(pecas.id, pecaId), eq(pecas.tenantId, tenantId))).limit(1);
   if (!peca) return;
-  const novaReserva = Math.max(0, peca.quantidadeReservada - quantidade);
-  await db.update(pecas).set({ quantidadeReservada: novaReserva }).where(eq(pecas.id, pecaId));
-  await db.insert(estoqueMovimentacoes).values({ tenantId, pecaId, tipo: "devolucao", quantidade, quantidadeAnterior: peca.quantidadeAtual, quantidadeNova: peca.quantidadeAtual, osId, observacao: `Reserva liberada — OS ${osNumero}`, userId });
+  // Atomic UPDATE: libera reserva sem SELECT prévio
+  await db
+    .update(pecas)
+    .set({ quantidadeReservada: sql`GREATEST(0, ${pecas.quantidadeReservada} - ${quantidade})` })
+    .where(and(eq(pecas.id, pecaId), eq(pecas.tenantId, tenantId)));
+  const [pecaAtual] = await db.select().from(pecas).where(eq(pecas.id, pecaId)).limit(1);
+  await db.insert(estoqueMovimentacoes).values({ tenantId, pecaId, tipo: "devolucao", quantidade, quantidadeAnterior: (pecaAtual?.quantidadeAtual ?? 0) + quantidade, quantidadeNova: pecaAtual?.quantidadeAtual ?? 0, osId, observacao: `Reserva liberada — OS ${osNumero}`, userId });
 }
 
 export async function confirmarSaidaEstoque(
@@ -1565,11 +1605,23 @@ export async function confirmarSaidaEstoque(
   if (!db) throw new Error("DB unavailable");
   const [peca] = await db.select().from(pecas).where(and(eq(pecas.id, pecaId), eq(pecas.tenantId, tenantId))).limit(1);
   if (!peca) throw new Error("Peça não encontrada");
-  const novaQtd = peca.quantidadeAtual - quantidade;
-  if (novaQtd < 0) throw new Error("Estoque insuficiente para confirmar saída");
-  const novaReserva = Math.max(0, peca.quantidadeReservada - quantidade);
-  await db.update(pecas).set({ quantidadeAtual: novaQtd, quantidadeReservada: novaReserva }).where(eq(pecas.id, pecaId));
-  await db.insert(estoqueMovimentacoes).values({ tenantId, pecaId, tipo: "saida", quantidade, quantidadeAnterior: peca.quantidadeAtual, quantidadeNova: novaQtd, osId, observacao: `Saída confirmada — OS ${osNumero}`, userId });
+  // Atomic UPDATE condicional: debita estoque e reserva em uma só operação
+  const saidaResult = await db
+    .update(pecas)
+    .set({
+      quantidadeAtual: sql`${pecas.quantidadeAtual} - ${quantidade}`,
+      quantidadeReservada: sql`GREATEST(0, ${pecas.quantidadeReservada} - ${quantidade})`
+    })
+    .where(and(
+      eq(pecas.id, pecaId),
+      eq(pecas.tenantId, tenantId),
+      gte(pecas.quantidadeAtual, quantidade)
+    ));
+  const affected = (saidaResult as any)?.[0]?.affectedRows ?? (saidaResult as any)?.rowsAffected ?? 1;
+  if (affected === 0) throw new Error("Estoque insuficiente para confirmar saída");
+  const [pecaAtual] = await db.select().from(pecas).where(eq(pecas.id, pecaId)).limit(1);
+  const novaQtd = pecaAtual?.quantidadeAtual ?? 0;
+  await db.insert(estoqueMovimentacoes).values({ tenantId, pecaId, tipo: "saida", quantidade, quantidadeAnterior: novaQtd + quantidade, quantidadeNova: novaQtd, osId, observacao: `Saída confirmada — OS ${osNumero}`, userId });
 }
 
 export async function liberarTodasReservasOs(tenantId: number, osId: number, osNumero: string, userId: number) {

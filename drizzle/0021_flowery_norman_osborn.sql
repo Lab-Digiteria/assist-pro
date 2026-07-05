@@ -1,0 +1,1 @@
+ALTER TABLE `ordensServico` MODIFY COLUMN `senhaDesbloqueio` varchar(255);

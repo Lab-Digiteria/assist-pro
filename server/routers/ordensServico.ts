@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { randomUUID } from "crypto";
 import { z } from "zod";
-import bcrypt from "bcryptjs";
+import { encryptField } from "../_core/crypto";
 import {
   addOsFieldAudit,
   addOsItem,
@@ -100,9 +100,9 @@ export const ordensServicoRouter = router({
       // Generate client token on creation
       const clientToken = randomUUID();
       const clientTokenExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
-      // Hash da senha de desbloqueio antes de salvar
-      const senhaHash = input.senhaDesbloqueio
-        ? await bcrypt.hash(input.senhaDesbloqueio, 10)
+      // Cifra AES-256-GCM (reversível) — substitui bcrypt que era irreversível
+      const senhaCifrada = input.senhaDesbloqueio
+        ? encryptField(input.senhaDesbloqueio)
         : undefined;
       return createOrdemServico(tenantId, {
         clienteId: input.clienteId,
@@ -113,7 +113,7 @@ export const ordensServicoRouter = router({
         descricaoProblema: input.descricaoProblema,
         checklistEstadoFisico: (input.checklistEstadoFisico ?? null) as any,
         checklistSintomas: (input.checklistSintomas ?? null) as any,
-        senhaDesbloqueio: senhaHash,
+        senhaDesbloqueio: senhaCifrada,
         acessoriosEntregues: (input.acessoriosEntregues ?? null) as any,
         laudoTecnico: input.laudoTecnico,
         numeroLacre: input.numeroLacre,
@@ -221,10 +221,10 @@ export const ordensServicoRouter = router({
       if (data.attendantId !== undefined) updates.attendantId = data.attendantId;
       if (data.descricaoProblema !== undefined) track("descricaoProblema", data.descricaoProblema);
       if (data.observacoesInternas !== undefined) updates.observacoesInternas = data.observacoesInternas;
-      // Hash da senha de desbloqueio antes de salvar
+      // Cifra AES-256-GCM (reversível) — substitui bcrypt que era irreversível
       if (data.senhaDesbloqueio !== undefined) {
         updates.senhaDesbloqueio = data.senhaDesbloqueio
-          ? await bcrypt.hash(data.senhaDesbloqueio, 10)
+          ? encryptField(data.senhaDesbloqueio)
           : null;
       }
       if (data.checklistEstadoFisico !== undefined) updates.checklistEstadoFisico = data.checklistEstadoFisico;
